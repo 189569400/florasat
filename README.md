@@ -16,5 +16,6 @@ FLoRaSat was recently tested using:
 
  The simulator also uses OpenSSL headers and libraries, which should be installed beforehand.
  
- **Note 1:** Move earth.jpg from  the simulations directory to omnetpp-6.0pre14/images/maps directory.
- **Note 2:** The scenario is executed using the omnetpp.ini located in the /simulations directory.
+ **Note 1:** Move `earth.jpg` from  the simulations directory to `omnetpp-6.0pre14/images/maps` directory.
+
+ **Note 2:** The scenario is executed using the `omnetpp.ini` located in the `/simulations` directory.
