@@ -42,8 +42,8 @@ module LoRaGW like INetworkNode
 
         int numEthInterfaces = default(0);  // minimum number of ethernet interfaces
         int numWlanInterfaces = 1;
-        double retardUp = default(1s) @unit(s);
-        double retardRight = default(1s) @unit(s);
+        double retardUp @mutable @unit(s) = default(1s);
+        double retardRight @mutable @unit(s) = default(1s);
 
         bool hasIpv4 = default(true);
         string networkLayerType = default("Ipv4NetworkLayer");
@@ -87,11 +87,12 @@ module LoRaGW like INetworkNode
         //ISLChannel: ISLChannel{
         //}
         islPacketForwarder: ISLPacketForwarder {
+            @display("p=146,88");
         }
-        eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredInterface {
-            parameters:
-                @display("p=340.656,442.17603,row,60;q=txQueue");
-        }
+        //eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredInterface {
+        //    parameters:
+        //        @display("p=340.656,442.17603,row,60;q=txQueue");
+        //}
         udp: <default(firstAvailableOrEmpty("Udp"))> like IUdp if hasUdp {
             parameters:
                 @display("p=422.25,177.90799");
@@ -114,18 +115,18 @@ module LoRaGW like INetworkNode
         islPacketForwarder.right1$i <-- right$i;
         islPacketForwarder.left1$i <-- left$i;
         islPacketForwarder.up1$i <-- up$i;
-        
-        
+
+
         packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
         LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
         //LoRaGWNic.right <--> right;
         packetForwarder.socketOut --> udp.appIn;
         packetForwarder.socketIn <-- udp.appOut;
-        for i=0..sizeof(ethg)-1 {
-            ethg[i] <--> { @display("m=s"); } <--> eth[i].phys;
-            eth[i].upperLayerOut --> ipv4.ifIn;
-            eth[i].upperLayerIn <-- ipv4.ifOut;
-        }
+        //for i=0..sizeof(ethg)-1 {
+        //    ethg[i] <--> { @display("m=s"); } <--> eth[i].phys;
+        //    eth[i].upperLayerOut --> ipv4.ifIn;
+        //    eth[i].upperLayerIn <-- ipv4.ifOut;
+        //}
         udp.ipOut --> ipv4.transportIn;
         udp.ipIn <-- ipv4.transportOut;
         //satPart.right <--> right;

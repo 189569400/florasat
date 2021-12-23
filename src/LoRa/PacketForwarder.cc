@@ -155,6 +155,15 @@ void PacketForwarder::handleMessage(cMessage *msg)
     } else if (msg->arrivedOn("socketIn")) {
         // FIXME : debug for now to see if LoRaMAC frame received correctly from network server
         EV << "Received UDP packet" << endl;
+
+        // FIXME : Catch Indication error for unroutable packets
+        EV_ERROR << "Catch Indication error...\n";
+        if (dynamic_cast<inet::Indication *>(msg)) {
+            EV_ERROR << "Indication error received -- discarding\n";
+            delete msg;
+            return;
+        }
+
         auto pkt = check_and_cast<Packet*>(msg);
 
         //const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
