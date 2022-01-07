@@ -297,16 +297,20 @@ void ISLPacketForwarder::handleMessage(cMessage *msg)
                        //frameToSend->setChunkLength(B(par("headerLength").intValue()));
                        pkt->insertAtFront(frame);
                        cGate* downGateo = myParentGW->gate("down$o");
-                       auto test4 = downGateo->getTransmissionChannel();
-                       test4->isBusy();
-                       //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
-                       if(test4->isBusy()==false){
-                           send(pkt,myParentGW->gate("down$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+
+                       if(downGateo->isConnected())
+                       {
+                           auto test4 = downGateo->getTransmissionChannel();
+                           test4->isBusy();
+                           //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
+                           if(test4->isBusy()==false){
+                               send(pkt,myParentGW->gate("down$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+                           }
+                           else{
+                               scheduleAt(test4->getTransmissionFinishTime(),msg);
+                           }
+                           //send(pkt,myParentGW->gate("down$o"));
                        }
-                       else{
-                           scheduleAt(test4->getTransmissionFinishTime(),msg);
-                       }
-                    //send(pkt,myParentGW->gate("down$o"));
                 }
                 else if(frame->getTmpPath1() == 1){
                     /////frame->setNumHop(frame->getNumHop());
@@ -331,16 +335,20 @@ void ISLPacketForwarder::handleMessage(cMessage *msg)
                     //frameToSend->setChunkLength(B(par("headerLength").intValue()));
                     pkt->insertAtFront(frame);
                     cGate* leftGateo = myParentGW->gate("left$o");
-                    auto test5 = leftGateo->getTransmissionChannel();
-                    test5->isBusy();
-                    //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
-                    if(test5->isBusy()==false){
-                        send(pkt,myParentGW->gate("left$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+
+                    if(leftGateo->isConnected())
+                    {
+                        auto test5 = leftGateo->getTransmissionChannel();
+                        test5->isBusy();
+                        //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
+                        if(test5->isBusy()==false){
+                            send(pkt,myParentGW->gate("left$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+                        }
+                        else{
+                            scheduleAt(test5->getTransmissionFinishTime(),msg);
+                        }
+                        //send(pkt,myParentGW->gate("left$o"));
                     }
-                    else{
-                        scheduleAt(test5->getTransmissionFinishTime(),msg);
-                    }
-                    //send(pkt,myParentGW->gate("left$o"));
                 }
             }
         }
@@ -350,7 +358,7 @@ void ISLPacketForwarder::handleMessage(cMessage *msg)
 //this function will help in updating ISL datarate in real time
 void ISLPacketForwarder::distanceCalculation(int devId){
 
-    string pathToFiles = "/home/mehdy/LEO_";
+    string pathToFiles = "files/LEO_";
     string endOfPathToFiles = "-LLA-Pos.csv";
 
     double lat_1;
@@ -370,8 +378,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
 
     //if(devId==4){
 
-    ifstream me(pathToFiles+to_string(devId)+endOfPathToFiles);
-    if(!me.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    ifstream me(pathToFiles+to_string(devId / 4)+"_"+to_string(devId % 4)+endOfPathToFiles);
+    if(!me.is_open()) std::cout <<"ERROR: File Open " << pathToFiles+to_string(devId / 4)+"_"+to_string(devId % 4)+endOfPathToFiles << '\n';
 
     string TIME;
     string LAT_1;
@@ -423,8 +431,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
                 int tmp4=devId;
                 if(tmp4!=15){
     //EV<<"MY ID IS !!!!!!!!!!!!!!!!!!!"<<devId<<endl;
-    ifstream upNeighbor(pathToFiles+to_string((devId+1))+endOfPathToFiles);
-    if(!upNeighbor.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    ifstream upNeighbor(pathToFiles+to_string((devId+1)/4)+"_"+to_string((devId+1)%4)+endOfPathToFiles);
+    if(!upNeighbor.is_open()) std::cout <<"ERROR: File Open "<< pathToFiles+to_string((devId+1)/4)+"_"+to_string((devId+1)%4)+endOfPathToFiles << '\n';
 
     string TIME2;
     string LAT_2;
@@ -504,8 +512,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
             }}}
     int tmp6=devId;
     if(tmp6<12){
-    ifstream rightNeighbor(pathToFiles+to_string((devId+4))+endOfPathToFiles);
-        if(!rightNeighbor.is_open()) std::cout <<"ERROR: File Open" << '\n';
+        ifstream rightNeighbor(pathToFiles+to_string((devId+4)/4)+"_"+to_string((devId+4)%4)+endOfPathToFiles);
+        if(!rightNeighbor.is_open()) std::cout <<"ERROR: File Open " << pathToFiles+to_string((devId+4)/4)+"_"+to_string((devId+4)%4)+endOfPathToFiles << '\n';
 
     string TIME3;
     string LAT_3;

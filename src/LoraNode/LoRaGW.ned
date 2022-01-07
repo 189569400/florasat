@@ -31,6 +31,7 @@ import inet.applications.contract.IApp;
 import inet.transportlayer.contract.IUdp;
 import inet.networklayer.contract.IRoutingTable;
 import flora.LoRa.ISLChannel;
+import inet.common.MessageDispatcher;
 
 module LoRaGW like INetworkNode
 {
@@ -61,7 +62,7 @@ module LoRaGW like INetworkNode
 
         //@display("bgb=611,560;i=device/antennatower");
     gates:
-        inout ethg[numEthInterfaces] @labels(EtherFrame-conn) @allowUnconnected;
+        inout ethg @labels(EtherFrame-conn) @allowUnconnected;
         input radioIn[numWlanInterfaces] @directIn;
         inout left;
         inout right;
@@ -69,6 +70,8 @@ module LoRaGW like INetworkNode
         inout down;
 
     submodules:
+
+        md: MessageDispatcher;
         interfaceTable: InterfaceTable {
             @display("p=30,26");
         }
@@ -89,10 +92,10 @@ module LoRaGW like INetworkNode
         islPacketForwarder: ISLPacketForwarder {
             @display("p=146,88");
         }
-        //eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredInterface {
-        //    parameters:
-        //        @display("p=340.656,442.17603,row,60;q=txQueue");
-        //}
+        eth: <default("EthernetInterface")> like IWiredInterface {
+            parameters:
+                @display("p=339,475,row,60;q=txQueue");
+        }
         udp: <default(firstAvailableOrEmpty("Udp"))> like IUdp if hasUdp {
             parameters:
                 @display("p=422.25,177.90799");
@@ -116,17 +119,24 @@ module LoRaGW like INetworkNode
         islPacketForwarder.left1$i <-- left$i;
         islPacketForwarder.up1$i <-- up$i;
 
-
         packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
         LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
         //LoRaGWNic.right <--> right;
         packetForwarder.socketOut --> udp.appIn;
         packetForwarder.socketIn <-- udp.appOut;
+
         //for i=0..sizeof(ethg)-1 {
         //    ethg[i] <--> { @display("m=s"); } <--> eth[i].phys;
         //    eth[i].upperLayerOut --> ipv4.ifIn;
         //    eth[i].upperLayerIn <-- ipv4.ifOut;
         //}
+
+        ethg <--> { @display("m=s"); } <--> eth.phys;
+        md.out++ --> eth.upperLayerIn;
+        md.in++ <-- eth.upperLayerOut;
+        ipv4.ifOut --> md.in++; // IP sends datagrams
+        ipv4.ifIn <-- md.out++; // IP receives datagrams
+
         udp.ipOut --> ipv4.transportIn;
         udp.ipIn <-- ipv4.transportOut;
         //satPart.right <--> right;

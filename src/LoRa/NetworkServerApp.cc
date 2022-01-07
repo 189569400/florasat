@@ -544,9 +544,9 @@ void NetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
 double NetworkServerApp::satToNodeDelayTime(int satNumber, int nodeNumber)
 {
-    string pathToFiles = "/home/mehdy/LEO_";
+    string pathToFiles = "files/LEO_";
     string endOfPathToFiles = "-LLA-Pos.csv";
-    string nodesFilePath = "/home/mehdy/SITES-LLA-Pos.csv";
+    string nodesFilePath = "files/SITES-LLA-Pos.csv";
     double lat_1;
     double lon_1;
     double alt_1;
@@ -556,8 +556,8 @@ double NetworkServerApp::satToNodeDelayTime(int satNumber, int nodeNumber)
     double alt_2;
     const double r = 6371; // Radius of Earth in Kilometres
 
-    ifstream me(pathToFiles+to_string(satNumber)+endOfPathToFiles);
-    if(!me.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    ifstream me(pathToFiles+to_string(satNumber/4)+"_"+to_string(satNumber%4)+endOfPathToFiles);
+    if(!me.is_open()) std::cout <<"ERROR: File Open " << pathToFiles+to_string(satNumber/4)+"_"+to_string(satNumber%4)+endOfPathToFiles << '\n';
 
     string TIME;
     string LAT_1;
@@ -592,7 +592,7 @@ double NetworkServerApp::satToNodeDelayTime(int satNumber, int nodeNumber)
 
 
     ifstream node(nodesFilePath);
-    if(!node.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    if(!node.is_open()) std::cout <<"ERROR: File Open "<< nodesFilePath << '\n';
 
     string TIME2;
     string LAT_2;
@@ -642,7 +642,7 @@ double NetworkServerApp::satToNodeDelayTime(int satNumber, int nodeNumber)
 }
 void NetworkServerApp::calculateDelayTime()
 {
-    string pathToFiles = "/home/mehdy/LEO_";
+    string pathToFiles = "files/LEO_";
     string endOfPathToFiles = "-LLA-Pos.csv";
 
     double lat_1;
@@ -662,8 +662,8 @@ void NetworkServerApp::calculateDelayTime()
 
     for(int y=0;y<16;y++){
 
-    ifstream me(pathToFiles+to_string(y)+endOfPathToFiles);
-    if(!me.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    ifstream me(pathToFiles+to_string(y/4)+"_"+to_string(y%4)+endOfPathToFiles);
+    if(!me.is_open()) std::cout <<"ERROR: File Open "<< pathToFiles+to_string(y/4)+"_"+to_string(y%4)+endOfPathToFiles << '\n';
 
     string TIME;
     string LAT_1;
@@ -705,8 +705,8 @@ void NetworkServerApp::calculateDelayTime()
                 int tmp4=y;
                 if(tmp4!=15){
 
-    ifstream upNeighbor(pathToFiles+to_string((y+1))+endOfPathToFiles);
-    if(!upNeighbor.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    ifstream upNeighbor(pathToFiles+to_string((y+1)/4)+"_"+to_string((y+1)%4)+endOfPathToFiles);
+    if(!upNeighbor.is_open()) std::cout <<"ERROR: File Open " << pathToFiles+to_string((y+1)/4)+"_"+to_string((y+1)%4)+endOfPathToFiles << '\n';
 
     string TIME2;
     string LAT_2;
@@ -756,8 +756,8 @@ void NetworkServerApp::calculateDelayTime()
             }}}
     int tmp6=y;
     if(tmp6<12){
-    ifstream rightNeighbor(pathToFiles+to_string((y+4))+endOfPathToFiles);
-        if(!rightNeighbor.is_open()) std::cout <<"ERROR: File Open" << '\n';
+    ifstream rightNeighbor(pathToFiles+to_string((y+4)/4)+"_"+to_string((y+4)%4)+endOfPathToFiles);
+        if(!rightNeighbor.is_open()) std::cout <<"ERROR: File Open " << pathToFiles+to_string((y+4)/4)+"_"+to_string((y+4)%4)+endOfPathToFiles<< '\n';
 
     string TIME3;
     string LAT_3;
