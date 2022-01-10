@@ -155,7 +155,7 @@ void SimpleLoRaApp::handleMessage(cMessage *msg)
                 //timer = simTime() + timeToNextPacket - ackTimeout;
             }
             EV<<"No ACK Message received";
-            receivedAck == false;
+            receivedAck = false;
         }
         if (msg == sendMeasurements)
         {
