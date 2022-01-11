@@ -26,6 +26,12 @@ module LoRaMac extends CsmaCaMac
         int blabla = 13;
         bitrate = 250bps;
         @class(LoRaMac);
+        
+        // Signals and Statistics
+        @signal[macDPAD];
+        
+        @statistic[macDPAD](title="macDPAD"; source="macDPAD"; record=mean,max,min,vector);
+        
     gates:
         input upperMgmtIn;
         output upperMgmtOut;

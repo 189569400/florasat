@@ -398,7 +398,7 @@ void ISLPacketForwarder::distanceCalculation(int devId){
 
 
         //std::cout<<"TIME: "<<TIME<< '\n';
-        std::cout<<"Lattitude: "<<LAT_1<< '\n';
+        //std::cout<<"Lattitude: "<<LAT_1<< '\n';
         //std::cout<<"Longitude: "<<LON_1<< '\n';
         //std::cout<<"Altitude: "<<ALT_1<< '\n';
 
@@ -410,11 +410,11 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     lon_1=strtod(LON_1.c_str(),NULL);
     alt_1=strtod(ALT_1.c_str(),NULL);
 
-    printf("MY LATITUDE IS : %lf \n",lat_1);
-    printf("MY LONGITUDE IS : %lf \n",lon_1);
-    printf("MY ALTITUDE IS : %lf \n",alt_1);
+    //printf("MY LATITUDE IS : %lf \n",lat_1);
+    //printf("MY LONGITUDE IS : %lf \n",lon_1);
+    //printf("MY ALTITUDE IS : %lf \n",alt_1);
 
-    printf("-------------------------- \n");
+    //printf("-------------------------- \n");
 
 
     double x_1 = (r + alt_1) * sin(lon_1) * cos(lat_1);
@@ -464,11 +464,11 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     alt_2=atof(ALT_2.c_str());
 
 
-    printf("UP NEIGHBOR LATITUDE IS : %lf \n",lat_2);
-    printf("UP NEIGHBOR LONGITUDE IS : %lf \n",lon_2);
-    printf("UP NEIGHBOR ALTITUDE IS : %lf \n",alt_2);
+    //printf("UP NEIGHBOR LATITUDE IS : %lf \n",lat_2);
+    //printf("UP NEIGHBOR LONGITUDE IS : %lf \n",lon_2);
+    //printf("UP NEIGHBOR ALTITUDE IS : %lf \n",alt_2);
 
-    printf("-------------------------- \n");
+    //printf("-------------------------- \n");
 
     double x_2 = (r + alt_2) * sin(lon_2) * cos(lat_2);
     double y_2 = (r + alt_2) * sin(lon_2) * sin(lat_2);
@@ -486,8 +486,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     double upDist = sqrt((d9*d9)+((alt_2-alt_1)*(alt_2-alt_1)));
     //double upDist = sqrt((x_2 - x_1) * (x_2 - x_1) + (y_2 - y_1) * (y_2 - y_1) + (z_2 - z_1) * (z_2 - z_1));
 
-    printf("UP DISTANCE IS : %lf \n",upDist);
-    printf("-------------------------- \n");
+    //printf("UP DISTANCE IS : %lf \n",upDist);
+    //printf("-------------------------- \n");
 
     myGW->par("retardUp")= (upDist / 200000);
     cGate* upGatei = myGW->gate("up$i");
@@ -506,8 +506,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     cDatarateChannel* downChannelo = (cDatarateChannel*)downGateo->getTransmissionChannel();
     downChannelo->setDelay(upDist/200000);
 */
-    std::cout<<"DELAY TO UP NEIGHBOR IS : "<<myGW->par("retardUp")<< '\n';
-    printf("-------------------------- \n");
+    //std::cout<<"DELAY TO UP NEIGHBOR IS : "<<myGW->par("retardUp")<< '\n';
+    //printf("-------------------------- \n");
     }
             }}}
     int tmp6=devId;
@@ -545,11 +545,11 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     lon_3=atof(LON_3.c_str());
     alt_3=atof(ALT_3.c_str());
 
-    printf("RIGHT NEIGHBOR LATITUDE IS : %lf \n",lat_3);
-    printf("RIGHT NEIGHBOR LONGITUDE IS : %lf \n",lon_3);
-    printf("RIGHT NEIGHBOR ALTITUDE IS : %lf \n",alt_3);
+    //printf("RIGHT NEIGHBOR LATITUDE IS : %lf \n",lat_3);
+    //printf("RIGHT NEIGHBOR LONGITUDE IS : %lf \n",lon_3);
+    //printf("RIGHT NEIGHBOR ALTITUDE IS : %lf \n",alt_3);
 
-    printf("-------------------------- \n");
+    //printf("-------------------------- \n");
 
     double x_3 = (r + alt_3) * sin(lon_3) * cos(lat_3);
     double y_3 = (r + alt_3) * sin(lon_3) * sin(lat_3);
@@ -567,8 +567,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     double rightDist = sqrt((d8*d8)+((alt_3-alt_1)*(alt_3-alt_1)));
     //double rightDist = sqrt((x_3 - x_1) * (x_3 - x_1) + (y_3 - y_1) * (y_3 - y_1) + (z_3 - z_1) * (z_3 - z_1));
 
-    printf("RIGHT DISTANCE IS : %lf \n",rightDist);
-    printf("-------------------------- \n");
+    //printf("RIGHT DISTANCE IS : %lf \n",rightDist);
+    //printf("-------------------------- \n");
 
     myGW->par("retardRight")= (rightDist / 200000);
 
@@ -588,8 +588,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
     cDatarateChannel* upChannelol = (cDatarateChannel*)upGateol->getTransmissionChannel();
     upChannelol->setDelay(rightDist/200000);
 */
-    std::cout<<"DELAY TO RIGHT NEIGHBOR IS : "<<myGW->par("retardRight")<< '\n';
-    printf("-------------------------- \n");
+    //std::cout<<"DELAY TO RIGHT NEIGHBOR IS : "<<myGW->par("retardRight")<< '\n';
+    //printf("-------------------------- \n");
 
     }
     //double lat_1 = pos.x;
@@ -627,8 +627,8 @@ void ISLPacketForwarder::distanceCalculation(int devId){
 
 
 
-    EV<<"THE DELAY BETWEEN SAT "<< devId <<" AND SAT "<<devId+1<< " IS APPROXIMATELY : "<<myGW->par("retardUp")<<endl;
-    EV<<"THE DELAY BETWEEN SAT "<< devId <<" AND SAT "<<devId+4<< " IS APPROXIMATELY : "<<myGW->par("retardRight")<<endl;
+    //EV<<"THE DELAY BETWEEN SAT "<< devId <<" AND SAT "<<devId+1<< " IS APPROXIMATELY : "<<myGW->par("retardUp")<<endl;
+    //EV<<"THE DELAY BETWEEN SAT "<< devId <<" AND SAT "<<devId+4<< " IS APPROXIMATELY : "<<myGW->par("retardRight")<<endl;
     //EV<<"HELLOOOOOOOOOOOOOO !!"<<dist<<endl;
     //}
 }

@@ -21,6 +21,10 @@ namespace flora {
 
 class LoRaMac : public MacProtocolBase
 {
+  private:
+    // Signal
+    simsignal_t macDPAD;
+
   protected:
     /**
      * @name Configuration parameters

@@ -46,6 +46,8 @@
 #include "inet/networklayer/ipv4/Ipv4Header_m.h"
 #include "NetworkServerApp.h"
 
+#include <iostream>
+using namespace std;
 
 
 namespace flora {
@@ -177,6 +179,8 @@ void LoRaMac::initialize(int stage)
     }
     else if (stage == INITSTAGE_LINK_LAYER)
         radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+
+    macDPAD = registerSignal("macDPAD");
 }
 
 void LoRaMac::finish()
@@ -293,6 +297,8 @@ void LoRaMac::handleLowerMessage(cMessage *msg)
         else if (frame->getPktType()==DOWNLINK){
             //const omnetpp::SimTime DPAD = simTime() - bdw;
             EV<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<endl;
+            std::cout<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<std::endl;
+            emit(macDPAD, DPAD.dbl());
             //auto pkt = check_and_cast<Packet *>(msg);
             //const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
             //if ()
