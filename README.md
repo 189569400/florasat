@@ -14,7 +14,7 @@ FLoRaSat was recently tested using:
 - [Omnetpp6.0Pre14](https://omnetpp.org/download/preview) (but should work on later Pre releases)
 - INET v4.3 (installed by default the first time Omnetpp IDE is launched)
 
- The simulator also uses OpenSSL headers and libraries, which should be installed beforehand.
+ The simulator also uses OpenSSL headers and libraries, which should be installed beforehand (`sudo apt-get install libssl-dev` in Ubuntu).
  
  **Note 1:** Move `earth.jpg` from  the simulations directory to `omnetpp-6.0pre14/images/maps` directory.
 
