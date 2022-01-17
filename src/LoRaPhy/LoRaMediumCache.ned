@@ -29,7 +29,7 @@ module LoRaMediumCache like IMediumLimitCache
         double minReceptionPower @unit(dBm) = default(0dBm/0);    // TODO: @unit(W) + dBm/dBW <--> W
         double maxAntennaGain @unit(dB) = default(0dB);           // maximum antenna gain on the medium, NaN means medium computes using antenna models
         double minInterferenceTime @unit(s) = default(1ps);       // minimum time interval to consider two overlapping signals interfering
-        double maxTransmissionDuration @unit(s) = default(10ms);  // maximum duration of a transmission on the medium
+        double maxTransmissionDuration @unit(s) = default(4s);    // maximum duration of a transmission on the medium
         double maxCommunicationRange @unit(m) = default(0m/0);    // maximum communication range on the medium, NaN means medium computes using transmitter and receiver models
         double maxInterferenceRange @unit(m) = default(0m/0);     // maximum interference range on the medium, NaN means medium computes using transmitter and receiver models
         @display("i=block/table2");
