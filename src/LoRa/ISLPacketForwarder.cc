@@ -65,11 +65,11 @@ void ISLPacketForwarder::initialize(int stage)
         localPort = par("localPort");
         destPort = par("destPort");
     } else if (stage == INITSTAGE_APPLICATION_LAYER) {
-        calculDistance = new cMessage("Calculate the distance");
+        updateISLDistance = new cMessage("Calculate the distance");
         sendRight = new cMessage("Sending Right");
         satelliteID = par("satelliteID");
         updateISLDistanceInterval = par("updateISLDistanceInterval");
-        scheduleAt(simTime(),calculDistance);
+        scheduleAt(simTime(),updateISLDistance);
         //  startUDP();
       //  getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent", this);
     }
@@ -124,10 +124,10 @@ void ISLPacketForwarder::handleMessage(cMessage *msg)
         std:cout << "ISLPacketForwarder (sat" << satelliteID << "): message arrived from local sat (sat" << oldSatID << ")" << std::endl;
     }
 
-    if (msg == calculDistance){
-        int devID = satelliteID;
-        distanceCalculation(devID);
-        scheduleAt(simTime()+updateISLDistanceInterval,calculDistance);
+    // Update ISL distance every interval
+    if (msg == updateISLDistance){
+        distanceCalculation(satelliteID);
+        scheduleAt(simTime() + updateISLDistanceInterval, updateISLDistance);
     }
 
     else {
@@ -640,7 +640,7 @@ void ISLPacketForwarder::distanceCalculation(int devId){
 void ISLPacketForwarder::finish()
 {
     recordScalar("LoRa_GW_DER", double(counterOfReceivedPackets)/counterOfSentPacketsFromNodes);
-    cancelAndDelete(calculDistance);
+    cancelAndDelete(updateISLDistance);
 }
 
 

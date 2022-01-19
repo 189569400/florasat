@@ -58,14 +58,14 @@ void LoRaGWMac::initialize(int stage)
         waitingForDC = false;
         dutyCycleTimer = new cMessage("Duty Cycle Timer");
         beaconPeriod = new cMessage("Beacon Timer");
-        //calculDistance = new cMessage("Calculate the distance");
+        //updateISLDistance = new cMessage("Calculate the distance");
         const char *usedClass = par("classUsed");
         //satelliteID = par("satelliteID");
         beaconTimer = par("beaconTimer");
         //updateISLDistanceInterval = par("updateISLDistanceInterval");
         pingNumber = par("pingNumber");
         //pingPeriod = par("PingPeriod");
-        //scheduleAt(simTime()+updateISLDistanceInterval,calculDistance);
+        //scheduleAt(simTime()+updateISLDistanceInterval,updateISLDistance);
         if (!strcmp(usedClass,"B")){
             scheduleAt(simTime() + 1, beaconPeriod);
             //int temp = simTime()+1;
@@ -94,7 +94,7 @@ void LoRaGWMac::finish()
     recordScalar("GW_droppedDC", GW_droppedDC);
     cancelAndDelete(dutyCycleTimer);
     cancelAndDelete(beaconPeriod);
-    //cancelAndDelete(calculDistance);
+    //cancelAndDelete(updateISLDistance);
 }
 
 
@@ -131,14 +131,14 @@ void LoRaGWMac::configureNetworkInterface()
 void LoRaGWMac::handleSelfMessage(cMessage *msg)
 {
     EV<<"HELLOOOOO Mehdy !!" << endl;
-/*    if(msg == calculDistance){
+/*    if(msg == updateISLDistance){
         //auto test = getContainingNode(this);
         //auto test2 = check_and_cast_nullable<BonnMotionMobility *>(test->getSubmodule("mobility"));
         //EV<<"THE POSITION OF THE GW IS :"<<test2->getCurrentPosition()<<endl;
         EV<<"MY ID IS "<<satelliteID<<endl;
         int devID = satelliteID;
         distanceCalculation(devID);
-        scheduleAt(simTime()+updateISLDistanceInterval,calculDistance);
+        scheduleAt(simTime()+updateISLDistanceInterval,updateISLDistance);
 
     }*/
     if(msg == beaconPeriod){

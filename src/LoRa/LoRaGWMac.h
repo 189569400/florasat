@@ -44,7 +44,7 @@ public:
     bool waitingForDC;
     cMessage *dutyCycleTimer;
     cMessage *beaconPeriod;
-//    cMessage *calculDistance;
+//    cMessage *updateISLDistance;
 
     virtual void initialize(int stage) override;
     virtual void finish() override;

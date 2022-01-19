@@ -50,7 +50,7 @@ class ISLPacketForwarder : public cSimpleModule, public cListener
   public:
     int k = 1201;
     void distanceCalculation(int devId);
-    cMessage *calculDistance;
+    cMessage *updateISLDistance;
     cMessage *sendRight;
       simsignal_t LoRa_GWPacketReceived;
       int counterOfSentPacketsFromNodes = 0;
