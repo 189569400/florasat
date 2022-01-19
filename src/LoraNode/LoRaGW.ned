@@ -104,10 +104,7 @@ module LoRaGW like INetworkNode
         }
     connections allowunconnected:
         packetForwarder.loRaPart <--> islPacketForwarder.satPart; //connection between the ISLPacketForwarder and PacketForwarder
-        //islPacketForwarder.down1$o --> down$o;
-        //islPacketForwarder.right$o --> right$o;
-        //islPacketForwarder.left1$o --> left$o;
-        //islPacketForwarder.up$o --> up$o;
+
         islPacketForwarder.down1$i <-- down$i;  //internal connection needed for the simulator
         islPacketForwarder.right1$i <-- right$i;
         islPacketForwarder.left1$i <-- left$i;
@@ -119,12 +116,6 @@ module LoRaGW like INetworkNode
         packetForwarder.socketOut --> udp.appIn;
         packetForwarder.socketIn <-- udp.appOut;
 
-        //for i=0..sizeof(ethg)-1 {
-        //    ethg[i] <--> { @display("m=s"); } <--> eth[i].phys;
-        //    eth[i].upperLayerOut --> ipv4.ifIn;
-        //    eth[i].upperLayerIn <-- ipv4.ifOut;
-        //}
-
         ethg <--> { @display("m=s"); } <--> eth.phys;
         md.out++ --> eth.upperLayerIn;
         md.in++ <-- eth.upperLayerOut;
@@ -133,8 +124,4 @@ module LoRaGW like INetworkNode
 
         udp.ipOut --> ipv4.transportIn;
         udp.ipIn <-- ipv4.transportOut;
-        //satPart.right <--> right;
-        //satPart.left <--> left;
-        //satPart.down <--> down;
-        //satPart.up <--> up;
 }

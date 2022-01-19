@@ -119,9 +119,9 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
         frame->setSatNumber(satelliteID);
         pkt->insertAtFront(frame);
 
-        std: cout << "ISLPacketForwarder (sat" << satelliteID
-                << "): message arrived from local sat (sat" << oldSatID << ")"
-                << std::endl;
+//        std::cout << "ISLPacketForwarder (sat" << satelliteID
+//                << "): message arrived from local sat"
+//                << std::endl;
     }
 
     // Update ISL distance every interval
@@ -129,100 +129,73 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
         distanceCalculation(satelliteID);
         scheduleAt(simTime() + updateISLDistanceInterval, updateISLDistance);
 
-    // Just any data packet arriving to this module
+    // Any data packet arriving to this module
     } else {
         auto pkt = check_and_cast<Packet*>(msg);
         pkt->trimFront();
         auto frame = pkt->removeAtFront<LoRaMacFrame>();
 
-        //
+        // Packet should be forwarded to the ground station / network server
         if (frame->getPktType() == UPLINK) {
-            cGate *gate = myParentGW->gate("right$o");
-            cGate *otherGate =
-                    gate->getType() == cGate::OUTPUT ?
-                            gate->getNextGate() : gate->getPreviousGate();
-            cGate *gate2 = myParentGW->gate("up$o");
-            cGate *otherGate2 =
-                    gate2->getType() == cGate::OUTPUT ?
-                            gate2->getNextGate() : gate2->getPreviousGate();
 
-            if (otherGate) {
-                /////pkt->trimFront();
-                EV << "gate is connected to: " << otherGate->getFullPath()
-                          << endl;
-                EV << "SENDING MESSAGE RIGHT !!!!" << endl;
+            // Gate to the neighbor on the right
+            cGate *gateToRightNeighbor = myParentGW->gate("right$o");
+            cGate *rightNeighborGate =
+                    gateToRightNeighbor->getType() == cGate::OUTPUT ?
+                            gateToRightNeighbor->getNextGate() : gateToRightNeighbor->getPreviousGate();
+            // Gate to the neighbor on the top
+            cGate *gateToUpperNeighbor = myParentGW->gate("up$o");
+            cGate *upperNeighborGate =
+                    gateToUpperNeighbor->getType() == cGate::OUTPUT ?
+                            gateToUpperNeighbor->getNextGate() : gateToUpperNeighbor->getPreviousGate();
+
+            // If available, first forward to the right neighbor
+            if (rightNeighborGate) {
+
+                // Store path in frame
                 frame->setNumHop(frame->getNumHop() + 1);
                 frame->setTmpPath6(frame->getTmpPath5());
                 frame->setTmpPath5(frame->getTmpPath4());
                 frame->setTmpPath4(frame->getTmpPath3());
                 frame->setTmpPath3(frame->getTmpPath2());
                 frame->setTmpPath2(frame->getTmpPath1());
-                frame->setTmpPath1(1);
-                ////////frame->setReceiverAddress(frame->getReceiverAddress());
-                //frameToSend->setiverAddress(frame->getReceiverAddress());
-                //FIXME: What value to set for LoRa TP
-                //frameToSend->setLoRaTP(pkt->getLoRaTP());
-                //////////frameToSend->setLoRaTP(frame->getLoRaTP());
-
-                //frameToSend->setLoRaTP(math::dBmW2mW(14));
-                /////////frameToSend->setLoRaCF(frame->getLoRaCF());
-                /////////frameToSend->setLoRaSF(frame->getLoRaSF());
-                /////////frameToSend->setLoRaBW(frame->getLoRaBW());
-                /////////frameToSend->setPktType(frame->getPktType());
-                /////////frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-                //frameToSend->setChunkLength(B(par("headerLength").intValue()));
+                frame->setTmpPath1(HORIZONTAL_HOP);
                 pkt->insertAtFront(frame);
-                cGate *rightGateo = myParentGW->gate("right$o");
-                auto test2 = rightGateo->getTransmissionChannel();
-                test2->isBusy();
-                //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
-                if (test2->isBusy() == false) {
-                    send(pkt, myParentGW->gate("right$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+
+                // Enqueue packet towards the right neighbor
+                if (gateToRightNeighbor->getTransmissionChannel()->isBusy() == false) {
+                    send(pkt, gateToRightNeighbor);
                 } else {
-                    scheduleAt(test2->getTransmissionFinishTime(), msg);
+                    scheduleAt(gateToRightNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                 }
-                //loramacframe thing
-            } else if (otherGate2) {
-                ////////pkt->trimFront();
-                EV << "gate is connected to: " << otherGate2->getFullPath()
-                          << endl;
-                EV << "SENDING MESSAGE UP !!!!" << endl;
+
+            // If right not available, forward to the upper neighbor
+            } else if (upperNeighborGate) {
+
+                // Store path in frame
                 frame->setNumHop(frame->getNumHop() + 1);
                 frame->setTmpPath6(frame->getTmpPath5());
                 frame->setTmpPath5(frame->getTmpPath4());
                 frame->setTmpPath4(frame->getTmpPath3());
                 frame->setTmpPath3(frame->getTmpPath2());
                 frame->setTmpPath2(frame->getTmpPath1());
-                frame->setTmpPath1(2);
-                //////////////frame->setReceiverAddress(frame->getReceiverAddress());
-
-                //frameToSend->setiverAddress(frame->getReceiverAddress());
-                //FIXME: What value to set for LoRa TP
-                //frameToSend->setLoRaTP(pkt->getLoRaTP());
-                ////////////frameToSend->setLoRaTP(frame->getLoRaTP());
-
-                //frameToSend->setLoRaTP(math::dBmW2mW(14));
-                ///////////////frameToSend->setLoRaCF(frame->getLoRaCF());
-                /////////frameToSend->setLoRaSF(frame->getLoRaSF());
-                /////////frameToSend->setLoRaBW(frame->getLoRaBW());
-                /////////frameToSend->setPktType(frame->getPktType());
-                /////////frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-                //frameToSend->setChunkLength(B(par("headerLength").intValue()));
+                frame->setTmpPath1(VERTICAL_HOP);
                 pkt->insertAtFront(frame);
-                cGate *upGateo = myParentGW->gate("up$o");
-                auto test3 = upGateo->getTransmissionChannel();
-                test3->isBusy();
-                //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
-                if (test3->isBusy() == false) {
-                    send(pkt, myParentGW->gate("up$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+
+                // Enqueue packet towards the upper neighbor
+                if (gateToUpperNeighbor->getTransmissionChannel()->isBusy() == false) {
+                    send(pkt, gateToUpperNeighbor);
                 } else {
-                    scheduleAt(test3->getTransmissionFinishTime(), msg);
+                    scheduleAt(gateToUpperNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                 }
-                //ssend(pkt,myParentGW->gate("up$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
-                //loramacframe thing
+
+            // If right nor upper are available, forward to the ground station
             } else {
-                //////////pkt->trimFront();
-                EV << "SENDING BACK TO PACKET FORWARDER" << endl;
+//                std::cout << "ISLPacketForwarder (sat" << satelliteID
+//                        << "): forwarding message to GS"
+//                        << std::endl;
+
+                // Store path in frame (unchaged)
                 frame->setNumHop(frame->getNumHop());
                 frame->setTmpPath6(frame->getTmpPath6());
                 frame->setTmpPath5(frame->getTmpPath5());
@@ -230,23 +203,15 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                 frame->setTmpPath3(frame->getTmpPath3());
                 frame->setTmpPath2(frame->getTmpPath2());
                 frame->setTmpPath1(frame->getTmpPath1());
-                /////////////frame->setReceiverAddress(frame->getReceiverAddress());
-                //frameToSend->setiverAddress(frame->getReceiverAddress());
-                //FIXME: What value to set for LoRa TP
-                //frameToSend->setLoRaTP(pkt->getLoRaTP());
-                ///////////frameToSend->setLoRaTP(frame->getLoRaTP());
-
-                //frameToSend->setLoRaTP(math::dBmW2mW(14));
-                ////////////frameToSend->setLoRaCF(frame->getLoRaCF());
-                /////////////frameToSend->setLoRaSF(frame->getLoRaSF());
-                //////////////frameToSend->setLoRaBW(frame->getLoRaBW());
-                //////////frameToSend->setPktType(frame->getPktType());
-                //////////frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-                //frameToSend->setChunkLength(B(par("headerLength").intValue()));
                 pkt->insertAtFront(frame);
+
                 send(pkt, "satPart$o");
             }
+
+        // Packet should be forwarded to a LoRaWAN node
         } else if (frame->getPktType() == DOWNLINK) {
+
+            // This hop is the local satellite, send to LoRaGWNic
             if (frame->getTmpPath1() == 0) {
                 frame->setNumHop(frame->getNumHop());
                 frame->setTmpPath6(frame->getTmpPath6());
@@ -256,78 +221,56 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                 frame->setTmpPath2(frame->getTmpPath2());
                 frame->setTmpPath1(frame->getTmpPath1());
                 pkt->insertAtFront(frame);
+
                 send(pkt, "satPart$o");
+
+            // This packet is not for the local satellite, keep forwarding it
             } else {
                 pkt->trimFront();
-                if (frame->getTmpPath1() == 2) {
-                    /////frame->setNumHop(frame->getNumHop());
+
+                // Forward to the bottom neighbor
+                if (frame->getTmpPath1() == VERTICAL_HOP) {
+
+                    // Update path
                     frame->setTmpPath1(frame->getTmpPath2());
                     frame->setTmpPath2(frame->getTmpPath3());
                     frame->setTmpPath3(frame->getTmpPath4());
                     frame->setTmpPath4(frame->getTmpPath5());
                     frame->setTmpPath5(frame->getTmpPath6());
-                    frame->setTmpPath6(0);
-                    /////frame->setReceiverAddress(frame->getReceiverAddress());
-                    //frameToSend->setiverAddress(frame->getReceiverAddress());
-                    //FIXME: What value to set for LoRa TP
-                    //frameToSend->setLoRaTP(pkt->getLoRaTP());
-                    ////////frameToSend->setLoRaTP(frame->getLoRaTP());
-
-                    //frameToSend->setLoRaTP(math::dBmW2mW(14));
-                    ///////frameToSend->setLoRaCF(frame->getLoRaCF());
-                    /////////frameToSend->setLoRaSF(frame->getLoRaSF());
-                    ////////frameToSend->setLoRaBW(frame->getLoRaBW());
-                    /////////frameToSend->setPktType(frame->getPktType());
-                    /////////frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-                    //frameToSend->setChunkLength(B(par("headerLength").intValue()));
+                    frame->setTmpPath6(0); // last is local hop
                     pkt->insertAtFront(frame);
-                    cGate *downGateo = myParentGW->gate("down$o");
 
-                    if (downGateo->isConnected()) {
-                        auto test4 = downGateo->getTransmissionChannel();
-                        test4->isBusy();
-                        //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
-                        if (test4->isBusy() == false) {
-                            send(pkt, myParentGW->gate("down$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+                    cGate *gateToBottomNeighbor = myParentGW->gate("down$o");
+
+                    if (gateToBottomNeighbor->isConnected()) {
+                        auto test4 = gateToBottomNeighbor->getTransmissionChannel();
+                        if (gateToBottomNeighbor->getTransmissionChannel()->isBusy() == false) {
+                            send(pkt, gateToBottomNeighbor);
                         } else {
-                            scheduleAt(test4->getTransmissionFinishTime(), msg);
+                            scheduleAt(gateToBottomNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                         }
-                        //send(pkt,myParentGW->gate("down$o"));
                     }
-                } else if (frame->getTmpPath1() == 1) {
-                    /////frame->setNumHop(frame->getNumHop());
+
+                // Forward to the left neighbor
+                } else if (frame->getTmpPath1() == HORIZONTAL_HOP) {
+
+                    // Update path
                     frame->setTmpPath1(frame->getTmpPath2());
                     frame->setTmpPath2(frame->getTmpPath3());
                     frame->setTmpPath3(frame->getTmpPath4());
                     frame->setTmpPath4(frame->getTmpPath5());
                     frame->setTmpPath5(frame->getTmpPath6());
-                    frame->setTmpPath6(0);
-                    ///////frameToSend->setReceiverAddress(frame->getReceiverAddress());
-                    //frameToSend->setiverAddress(frame->getReceiverAddress());
-                    //FIXME: What value to set for LoRa TP
-                    //frameToSend->setLoRaTP(pkt->getLoRaTP());
-                    //////frameToSend->setLoRaTP(frame->getLoRaTP());
-
-                    //frameToSend->setLoRaTP(math::dBmW2mW(14));
-                    ////////frameToSend->setLoRaCF(frame->getLoRaCF());
-                    ///////frameToSend->setLoRaSF(frame->getLoRaSF());
-                    ////////frameToSend->setLoRaBW(frame->getLoRaBW());
-                    ////////frameToSend->setPktType(frame->getPktType());
-                    ///////frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-                    //frameToSend->setChunkLength(B(par("headerLength").intValue()));
+                    frame->setTmpPath6(0);  // last is local hop
                     pkt->insertAtFront(frame);
-                    cGate *leftGateo = myParentGW->gate("left$o");
 
-                    if (leftGateo->isConnected()) {
-                        auto test5 = leftGateo->getTransmissionChannel();
-                        test5->isBusy();
-                        //cDatarateChannel* upChanneli = (cDatarateChannel*)rightGateo->is
-                        if (test5->isBusy() == false) {
-                            send(pkt, myParentGW->gate("left$o")); // MAAAAYBEEE CHAAAANGE THIS !!!!
+                    cGate *gateToLeftNeighbor = myParentGW->gate("left$o");
+
+                    if (gateToLeftNeighbor->isConnected()) {
+                        if (gateToLeftNeighbor->getTransmissionChannel()->isBusy() == false) {
+                            send(pkt, gateToLeftNeighbor);
                         } else {
-                            scheduleAt(test5->getTransmissionFinishTime(), msg);
+                            scheduleAt(gateToLeftNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                         }
-                        //send(pkt,myParentGW->gate("left$o"));
                     }
                 }
             }

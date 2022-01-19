@@ -26,6 +26,9 @@
 #include "inet/applications/base/ApplicationBase.h"
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 
+#define HORIZONTAL_HOP 1
+#define VERTICAL_HOP 2
+
 namespace flora {
 
 class ISLPacketForwarder : public cSimpleModule, public cListener

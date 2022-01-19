@@ -23,31 +23,30 @@
 #include "../LoRaPhy/LoRaRadioControlInfo_m.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 
-
 namespace flora {
 
 Define_Module(PacketForwarder);
 
-
-void PacketForwarder::initialize(int stage)
-{
+void PacketForwarder::initialize(int stage) {
     if (stage == 0) {
         LoRa_GWPacketReceived = registerSignal("LoRa_GWPacketReceived");
         localPort = par("localPort");
         destPort = par("destPort");
     } else if (stage == INITSTAGE_APPLICATION_LAYER) {
         startUDP();
-        getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent", this);
+        getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent",
+                this);
     }
 }
 
-
-void PacketForwarder::startUDP()
-{
+void PacketForwarder::startUDP() {
     EV << "Wywalamy sie tutaj" << endl;
     socket.setOutputGate(gate("socketOut"));
     const char *localAddress = par("localAddress");
-    socket.bind(*localAddress ? L3AddressResolver().resolve(localAddress) : L3Address(), localPort);
+    socket.bind(
+            *localAddress ?
+                    L3AddressResolver().resolve(localAddress) : L3Address(),
+            localPort);
     EV << "Dojechalismy za pierwszy resolv" << endl;
     // TODO: is this required?
     //setSocketOptions();
@@ -72,9 +71,7 @@ void PacketForwarder::startUDP()
     EV << "Dojechalismy do konca" << endl;
 }
 
-
-void PacketForwarder::handleMessage(cMessage *msg)
-{
+void PacketForwarder::handleMessage(cMessage *msg) {
     EV << msg->getArrivalGate() << endl;
     //auto meh = getContainingNode(this);
     //auto meh2 = check_and_cast_nullable<ISLPacketForwarder *>(meh->getSubmodule("islPacketForwarder"));
@@ -87,40 +84,36 @@ void PacketForwarder::handleMessage(cMessage *msg)
         pkt->trimFront();
         auto frame = pkt->removeAtFront<LoRaMacFrame>();
 
-      //  auto myRealGW = getContainingNode(this);
-       // auto theTruth = myRealGW->getSubmodule("IslPacketForwarder");
+        //  auto myRealGW = getContainingNode(this);
+        // auto theTruth = myRealGW->getSubmodule("IslPacketForwarder");
 
         //frame->setSatNumber(theTruth->par("satelliteID"));
         frame->setPktType(UPLINK);
         ////////const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
-/*
-        auto frameToSend = makeShared<LoRaMacFrame>();
-        frameToSend->setChunkLength(B(8));
-        //frame2->setLoRaSF(11);
-        frameToSend->setPktType(UPLINK);
-        frameToSend->setReceiverAddress(frame->getReceiverAddress());
-        //frameToSend->setiverAddress(frame->getReceiverAddress());
-        //FIXME: What value to set for LoRa TP
-        //frameToSend->setLoRaTP(pkt->getLoRaTP());
-        frameToSend->setLoRaTP(frame->getLoRaTP());
+        /*
+         auto frameToSend = makeShared<LoRaMacFrame>();
+         frameToSend->setChunkLength(B(8));
+         //frame2->setLoRaSF(11);
+         frameToSend->setPktType(UPLINK);
+         frameToSend->setReceiverAddress(frame->getReceiverAddress());
+         //frameToSend->setiverAddress(frame->getReceiverAddress());
+         //FIXME: What value to set for LoRa TP
+         //frameToSend->setLoRaTP(pkt->getLoRaTP());
+         frameToSend->setLoRaTP(frame->getLoRaTP());
 
-        //frameToSend->setLoRaTP(math::dBmW2mW(14));
-        frameToSend->setLoRaCF(frame->getLoRaCF());
-        frameToSend->setLoRaSF(frame->getLoRaSF());
-        frameToSend->setLoRaBW(frame->getLoRaBW());
-        frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-        //frameToSend->setChunkLength(B(par("headerLength").intValue()));
-*/
+         //frameToSend->setLoRaTP(math::dBmW2mW(14));
+         frameToSend->setLoRaCF(frame->getLoRaCF());
+         frameToSend->setLoRaSF(frame->getLoRaSF());
+         frameToSend->setLoRaBW(frame->getLoRaBW());
+         frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
+         //frameToSend->setChunkLength(B(par("headerLength").intValue()));
+         */
         //////pkt->trimFront();
         /////pkt->removeAtFront<LoRaMacFrame>();
         //auto frame2 = pkt->removeAtFront<LoRaMacFrame>();
-
         pkt->insertAtFront(frame);
 
-
-
-
-      //  LoRaMacFrame *frameToSend = new LoRaMacFrame("ADRPacket");
+        //  LoRaMacFrame *frameToSend = new LoRaMacFrame("ADRPacket");
 
         //frameToSend->encapsulate(mgmtPacket);
         //frameToSend->setReceiverAddress(frame->getReceiverAddress());
@@ -145,10 +138,9 @@ void PacketForwarder::handleMessage(cMessage *msg)
         //pktBack->insertAtFront(frameToSend);
         //sendDown(pktBack);
 
-        send(pkt,"loRaPart$o");
+        send(pkt, "loRaPart$o");
         //if(frame->getReceiverAddress() == MacAddress::BROADCAST_ADDRESS)
-            //processLoraMACPacket(pkt);
-
+        //processLoraMACPacket(pkt);
 
         //send(msg, "upperLayerOut");
         //sendPacket();
@@ -158,7 +150,7 @@ void PacketForwarder::handleMessage(cMessage *msg)
 
         // FIXME : Catch Indication error for unroutable packets
         EV_ERROR << "Catch Indication error...\n";
-        if (dynamic_cast<inet::Indication *>(msg)) {
+        if (dynamic_cast<inet::Indication*>(msg)) {
             EV_ERROR << "Indication error received -- discarding\n";
             delete msg;
             return;
@@ -172,85 +164,78 @@ void PacketForwarder::handleMessage(cMessage *msg)
         auto frame = pkt->removeAtFront<LoRaMacFrame>();
 
         frame->setPktType(DOWNLINK);
-/*
-        auto frameToSend = makeShared<LoRaMacFrame>();
-        frameToSend->setChunkLength(B(8));
-        //frame2->setLoRaSF(11);
-        frameToSend->setPktType(DOWNLINK);
-        frameToSend->setReceiverAddress(frame->getReceiverAddress());
-        //frameToSend->setiverAddress(frame->getReceiverAddress());
-        //FIXME: What value to set for LoRa TP
-        //frameToSend->setLoRaTP(pkt->getLoRaTP());
-        frameToSend->setLoRaTP(frame->getLoRaTP());
+        /*
+         auto frameToSend = makeShared<LoRaMacFrame>();
+         frameToSend->setChunkLength(B(8));
+         //frame2->setLoRaSF(11);
+         frameToSend->setPktType(DOWNLINK);
+         frameToSend->setReceiverAddress(frame->getReceiverAddress());
+         //frameToSend->setiverAddress(frame->getReceiverAddress());
+         //FIXME: What value to set for LoRa TP
+         //frameToSend->setLoRaTP(pkt->getLoRaTP());
+         frameToSend->setLoRaTP(frame->getLoRaTP());
 
-        //frameToSend->setLoRaTP(math::dBmW2mW(14));
-        frameToSend->setLoRaCF(frame->getLoRaCF());
-        frameToSend->setLoRaSF(frame->getLoRaSF());
-        frameToSend->setLoRaBW(frame->getLoRaBW());
-        frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
-        frameToSend->setNumHop(frame->getNumHop());
-        frameToSend->setTmpPath6(frame->getTmpPath6());
-        frameToSend->setTmpPath5(frame->getTmpPath5());
-        frameToSend->setTmpPath4(frame->getTmpPath4());
-        frameToSend->setTmpPath3(frame->getTmpPath3());
-        frameToSend->setTmpPath2(frame->getTmpPath2());
-        frameToSend->setTmpPath1(frame->getTmpPath1());
-        frameToSend->setReceiverAddress(frame->getReceiverAddress());
-*/
+         //frameToSend->setLoRaTP(math::dBmW2mW(14));
+         frameToSend->setLoRaCF(frame->getLoRaCF());
+         frameToSend->setLoRaSF(frame->getLoRaSF());
+         frameToSend->setLoRaBW(frame->getLoRaBW());
+         frameToSend->setTransmitterAddress(frame->getTransmitterAddress());
+         frameToSend->setNumHop(frame->getNumHop());
+         frameToSend->setTmpPath6(frame->getTmpPath6());
+         frameToSend->setTmpPath5(frame->getTmpPath5());
+         frameToSend->setTmpPath4(frame->getTmpPath4());
+         frameToSend->setTmpPath3(frame->getTmpPath3());
+         frameToSend->setTmpPath2(frame->getTmpPath2());
+         frameToSend->setTmpPath1(frame->getTmpPath1());
+         frameToSend->setReceiverAddress(frame->getReceiverAddress());
+         */
         //frameToSend->setChunkLength(B(par("headerLength").intValue()));
-
         /////pkt->trimFront();
         /////pkt->removeAtFront<LoRaMacFrame>();
         //auto frame2 = pkt->removeAtFront<LoRaMacFrame>();
-
         pkt->insertAtFront(frame);
         send(pkt, "loRaPart$o");
 
         //if (frame == nullptr)
-          //  throw cRuntimeError("Packet type error");
-
+        //  throw cRuntimeError("Packet type error");
 
         //EV << frame->getLoRaTP() << endl;
         //delete frame;
 
-       /* auto loraTag = pkt->addTagIfAbsent<LoRaTag>();
-        pkt->setBandwidth(loRaBW);
-        pkt->setCarrierFrequency(loRaCF);
-        pkt->setSpreadFactor(loRaSF);
-        pkt->setCodeRendundance(loRaCR);
-        pkt->setPower(W(loRaTP));*/
+        /* auto loraTag = pkt->addTagIfAbsent<LoRaTag>();
+         pkt->setBandwidth(loRaBW);
+         pkt->setCarrierFrequency(loRaCF);
+         pkt->setSpreadFactor(loRaSF);
+         pkt->setCodeRendundance(loRaCR);
+         pkt->setPower(W(loRaTP));*/
 
         //send(pkt, "lowerLayerOut");
-
         //
-    }
-    else if (msg->arrivedOn("loRaPart$i")){
+    } else if (msg->arrivedOn("loRaPart$i")) {
         auto pkt = check_and_cast<Packet*>(msg);
         const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
-        if(frame->getPktType() == UPLINK){
-        if(frame->getReceiverAddress() == MacAddress::BROADCAST_ADDRESS)
-        processLoraMACPacket(pkt);
-        }
-        else if(frame->getPktType()==DOWNLINK){
+        if (frame->getPktType() == UPLINK) {
+            if (frame->getReceiverAddress() == MacAddress::BROADCAST_ADDRESS)
+                processLoraMACPacket(pkt);
+        } else if (frame->getPktType() == DOWNLINK) {
             if (frame == nullptr)
                 throw cRuntimeError("Packet type error");
             //EV << frame->getLoRaTP() << endl;
             //delete frame;
 
-           /* auto loraTag = pkt->addTagIfAbsent<LoRaTag>();
-            pkt->setBandwidth(loRaBW);
-            pkt->setCarrierFrequency(loRaCF);
-            pkt->setSpreadFactor(loRaSF);
-            pkt->setCodeRendundance(loRaCR);
-            pkt->setPower(W(loRaTP));*/
+            /* auto loraTag = pkt->addTagIfAbsent<LoRaTag>();
+             pkt->setBandwidth(loRaBW);
+             pkt->setCarrierFrequency(loRaCF);
+             pkt->setSpreadFactor(loRaSF);
+             pkt->setCodeRendundance(loRaCR);
+             pkt->setPower(W(loRaTP));*/
 
             send(pkt, "lowerLayerOut");
         }
     }
 }
 
-void PacketForwarder::processLoraMACPacket(Packet *pk)
-{
+void PacketForwarder::processLoraMACPacket(Packet *pk) {
     // FIXME: Change based on new implementation of MAC frame.
     emit(LoRa_GWPacketReceived, 42);
     if (simTime() >= getSimulation()->getWarmupPeriod())
@@ -263,7 +248,7 @@ void PacketForwarder::processLoraMACPacket(Packet *pk)
     auto signalPowerInd = pk->getTag<SignalPowerInd>();
 
     W w_rssi = signalPowerInd->getPower();
-    double rssi = w_rssi.get()*1000;
+    double rssi = w_rssi.get() * 1000;
     frame->setRSSI(math::mW2dBmW(rssi));
     frame->setSNIR(snirInd->getMinimumSnir());
     pk->insertAtFront(frame);
@@ -275,13 +260,12 @@ void PacketForwarder::processLoraMACPacket(Packet *pk)
     // FIXME : Identify network server message is destined for.
     L3Address destAddr = destAddresses[0];
     if (pk->getControlInfo())
-       delete pk->removeControlInfo();
+        delete pk->removeControlInfo();
 
     socket.sendTo(pk, destAddr, destPort);
 }
 
-void PacketForwarder::sendPacket()
-{
+void PacketForwarder::sendPacket() {
 //    LoRaAppPacket *mgmtCommand = new LoRaAppPacket("mgmtCommand");
 //    mgmtCommand->setMsgType(TXCONFIG);
 //    LoRaOptions newOptions;
@@ -299,17 +283,15 @@ void PacketForwarder::sendPacket()
 
 }
 
-void PacketForwarder::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
-{
+void PacketForwarder::receiveSignal(cComponent *source, simsignal_t signalID,
+        intval_t value, cObject *details) {
     if (simTime() >= getSimulation()->getWarmupPeriod())
         counterOfSentPacketsFromNodes++;
 }
 
-void PacketForwarder::finish()
-{
-    recordScalar("LoRa_GW_DER", double(counterOfReceivedPackets)/counterOfSentPacketsFromNodes);
+void PacketForwarder::finish() {
+    recordScalar("LoRa_GW_DER",
+            double(counterOfReceivedPackets) / counterOfSentPacketsFromNodes);
 }
-
-
 
 } //namespace inet
