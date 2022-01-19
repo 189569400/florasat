@@ -65,7 +65,7 @@ public:
     virtual MacAddress getAddress();
 
 protected:
-    //int deviceID;
+    //int satelliteID;
     int outGate = -1;
     MacAddress address;
     //UdpSocket socket;

@@ -78,7 +78,7 @@ void PacketForwarder::handleMessage(cMessage *msg)
     EV << msg->getArrivalGate() << endl;
     //auto meh = getContainingNode(this);
     //auto meh2 = check_and_cast_nullable<ISLPacketForwarder *>(meh->getSubmodule("islPacketForwarder"));
-    //int myActualID = meh2->par("deviceID");
+    //int myActualID = meh2->par("satelliteID");
     if (msg->arrivedOn("lowerLayerIn")) {
         EV << "Received LoRaMAC frame" << endl;
 
@@ -90,7 +90,7 @@ void PacketForwarder::handleMessage(cMessage *msg)
       //  auto myRealGW = getContainingNode(this);
        // auto theTruth = myRealGW->getSubmodule("IslPacketForwarder");
 
-        //frame->setSatNumber(theTruth->par("deviceID"));
+        //frame->setSatNumber(theTruth->par("satelliteID"));
         frame->setPktType(UPLINK);
         ////////const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
 /*

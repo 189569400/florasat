@@ -25,7 +25,7 @@ import inet.linklayer.contract.IMacProtocol;
 module LoRaGWMac extends MacProtocolBase like IMacProtocol
 {
     parameters:
-        //int deviceID;
+        //int satelliteID;
         string radioModule = default("^.radio"); // The path to the Radio module  //FIXME remove default value
         string address @mutable = default("auto"); 
         string classUsed = default("A");

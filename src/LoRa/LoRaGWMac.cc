@@ -60,7 +60,7 @@ void LoRaGWMac::initialize(int stage)
         beaconPeriod = new cMessage("Beacon Timer");
         //calculDistance = new cMessage("Calculate the distance");
         const char *usedClass = par("classUsed");
-        //deviceID = par("deviceID");
+        //satelliteID = par("satelliteID");
         beaconTimer = par("beaconTimer");
         //calculateDistance = par("calculateDistance");
         pingNumber = par("pingNumber");
@@ -135,8 +135,8 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
         //auto test = getContainingNode(this);
         //auto test2 = check_and_cast_nullable<BonnMotionMobility *>(test->getSubmodule("mobility"));
         //EV<<"THE POSITION OF THE GW IS :"<<test2->getCurrentPosition()<<endl;
-        EV<<"MY ID IS "<<deviceID<<endl;
-        int devID = deviceID;
+        EV<<"MY ID IS "<<satelliteID<<endl;
+        int devID = satelliteID;
         distanceCalculation(devID);
         scheduleAt(simTime()+calculateDistance,calculDistance);
 
@@ -229,7 +229,7 @@ void LoRaGWMac::handleLowerMessage(cMessage *msg)
     //EV<<"THE NEW VALUE IS"<<test->par("test8");
 
     if(frame->getReceiverAddress() == MacAddress::BROADCAST_ADDRESS){
-       // if(deviceID==15)
+       // if(satelliteID==15)
             //sendUp(pkt);
         //else
             //send(pkt,"right");

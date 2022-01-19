@@ -34,7 +34,7 @@ class ISLPacketForwarder : public cSimpleModule, public cListener
     std::vector<L3Address> destAddresses;
     int localPort = -1, destPort = -1;
     int calculateDistance;
-    int deviceID;
+    int satelliteID;
     // state
     UdpSocket socket;
     cMessage *selfMsg = nullptr;

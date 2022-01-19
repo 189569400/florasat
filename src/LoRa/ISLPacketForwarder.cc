@@ -67,7 +67,7 @@ void ISLPacketForwarder::initialize(int stage)
     } else if (stage == INITSTAGE_APPLICATION_LAYER) {
         calculDistance = new cMessage("Calculate the distance");
         sendRight = new cMessage("Sending Right");
-        deviceID = par("deviceID");
+        satelliteID = par("satelliteID");
         calculateDistance = par("calculateDistance");
         scheduleAt(simTime(),calculDistance);
         //  startUDP();
@@ -111,16 +111,18 @@ void ISLPacketForwarder::handleMessage(cMessage *msg)
 {
     auto myParentGW = getContainingNode(this);
     EV << msg->getArrivalGate() << endl;
+
+    // Messaged arrived from the local satellite (LoRa or GS)
     if(msg->arrivedOn("satPart$i")){
         auto pkt = check_and_cast<Packet*>(msg);
 
         pkt->trimFront();
         auto frame = pkt->removeAtFront<LoRaMacFrame>();
-        frame->setSatNumber(deviceID);
+        frame->setSatNumber(satelliteID);
         pkt->insertAtFront(frame);
     }
     if (msg == calculDistance){
-        int devID = deviceID;
+        int devID = satelliteID;
         distanceCalculation(devID);
         scheduleAt(simTime()+calculateDistance,calculDistance);
     }

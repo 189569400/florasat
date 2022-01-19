@@ -27,7 +27,7 @@ simple ISLPacketForwarder like IApp
     string destAddresses = default(""); // list of IP addresses, separated by spaces ("": don't send)
     string localAddress = default("");
     int destPort;
-    int deviceID;
+    int satelliteID;
     int calculateDistance = default(1);
 
 
