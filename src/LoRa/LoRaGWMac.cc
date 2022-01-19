@@ -62,10 +62,10 @@ void LoRaGWMac::initialize(int stage)
         const char *usedClass = par("classUsed");
         //satelliteID = par("satelliteID");
         beaconTimer = par("beaconTimer");
-        //calculateDistance = par("calculateDistance");
+        //updateISLDistanceInterval = par("updateISLDistanceInterval");
         pingNumber = par("pingNumber");
         //pingPeriod = par("PingPeriod");
-        //scheduleAt(simTime()+calculateDistance,calculDistance);
+        //scheduleAt(simTime()+updateISLDistanceInterval,calculDistance);
         if (!strcmp(usedClass,"B")){
             scheduleAt(simTime() + 1, beaconPeriod);
             //int temp = simTime()+1;
@@ -138,7 +138,7 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
         EV<<"MY ID IS "<<satelliteID<<endl;
         int devID = satelliteID;
         distanceCalculation(devID);
-        scheduleAt(simTime()+calculateDistance,calculDistance);
+        scheduleAt(simTime()+updateISLDistanceInterval,calculDistance);
 
     }*/
     if(msg == beaconPeriod){

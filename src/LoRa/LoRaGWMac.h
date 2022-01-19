@@ -71,7 +71,7 @@ protected:
     //UdpSocket socket;
     int lastSentMeasurement;
     int beaconTimer;
-    //int calculateDistance;
+    //int updateISLDistanceInterval;
     int pingNumber;
     IRadio *radio = nullptr;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;

@@ -28,7 +28,7 @@ simple ISLPacketForwarder like IApp
     string localAddress = default("");
     int destPort;
     int satelliteID;
-    int calculateDistance = default(1);
+    int updateISLDistanceInterval = default(1);
 
 
     gates:

@@ -34,7 +34,7 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         bool prioritizeByUP = default(false); // use priority queueing, based on IEEE 802.1d User Priority (UP)
         bool useAck = default(true);
         int beaconTimer = default(128);
-        //int calculateDistance = default(1);
+        //int updateISLDistanceInterval = default(1);
         int pingNumber = default(4);
         int headerLength @unit(B) = default(8B);
         int ackLength @unit(B) = default(headerLength);

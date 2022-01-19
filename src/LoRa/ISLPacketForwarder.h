@@ -33,7 +33,7 @@ class ISLPacketForwarder : public cSimpleModule, public cListener
   protected:
     std::vector<L3Address> destAddresses;
     int localPort = -1, destPort = -1;
-    int calculateDistance;
+    int updateISLDistanceInterval;
     int satelliteID;
     // state
     UdpSocket socket;

@@ -68,7 +68,7 @@ void ISLPacketForwarder::initialize(int stage)
         calculDistance = new cMessage("Calculate the distance");
         sendRight = new cMessage("Sending Right");
         satelliteID = par("satelliteID");
-        calculateDistance = par("calculateDistance");
+        updateISLDistanceInterval = par("updateISLDistanceInterval");
         scheduleAt(simTime(),calculDistance);
         //  startUDP();
       //  getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent", this);
@@ -112,23 +112,24 @@ void ISLPacketForwarder::handleMessage(cMessage *msg)
     auto myParentGW = getContainingNode(this);
     EV << msg->getArrivalGate() << endl;
 
-    // Messaged arrived from the local satellite (LoRa or GS)
+    // Messaged arrived from the local satellite (LoRa or GS interfaces)
     if(msg->arrivedOn("satPart$i")){
         auto pkt = check_and_cast<Packet*>(msg);
-
         pkt->trimFront();
         auto frame = pkt->removeAtFront<LoRaMacFrame>();
+        int oldSatID = frame->getSatNumber();
         frame->setSatNumber(satelliteID);
         pkt->insertAtFront(frame);
+
+        std:cout << "ISLPacketForwarder (sat" << satelliteID << "): message arrived from local sat (sat" << oldSatID << ")" << std::endl;
     }
+
     if (msg == calculDistance){
         int devID = satelliteID;
         distanceCalculation(devID);
-        scheduleAt(simTime()+calculateDistance,calculDistance);
+        scheduleAt(simTime()+updateISLDistanceInterval,calculDistance);
     }
-   /* if (msg == sendRight){
-        send(pkt,myParentGW->gate("right$o"))
-    }*/
+
     else {
         EV<<"I STARTED !!!"<<endl;
         auto pkt = check_and_cast<Packet*>(msg);
