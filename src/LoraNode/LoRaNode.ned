@@ -19,9 +19,6 @@ import inet.mobility.static.StationaryMobility;
 import inet.networklayer.common.InterfaceTable;
 import flora.LoRa.LoRaNic;
 import flora.LoRaApp.SimpleLoRaApp;
-//import inet.networklayer.contract.IRoutingTable;
-//import inet.networklayer.contract.INetworkLayer;
-
 
 module LoRaNode
 {
@@ -30,36 +27,24 @@ module LoRaNode
         double maxGatewayDistance = default(320.0);
         double gatewayX = default(320.0);
         double gatewayY = default(320.0);
-        //bool hasIpv4 = default(true);
         @networkNode();
         *.interfaceTableModule = default(absPath(".interfaceTable"));
-        //*.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
-        //string routingTableType = default("Ipv4RoutingTable");
-        //string networkLayerType = default("Ipv4NetworkLayer");
-        @display("bgb=297,313;i=device/accesspoint;is=vs");
+        @display("bgb=297,313;i=device/accesspoint,gold,90;is=s");
+
     submodules:
         interfaceTable: InterfaceTable {
-            @display("p=30,26");
+            @display("p=72,32");
         }
         mobility: StationaryMobility {
-            @display("p=24,88");
+            @display("p=72,152");
         }
         LoRaNic: LoRaNic {
-            @display("p=137,239");
+            @display("p=202,152");
         }
         SimpleLoRaApp: SimpleLoRaApp {
-            @display("p=137,32");
+            @display("p=202,32");
         }
-//        routingTable: <routingTableType> like IRoutingTable if routingTableType != "" {
-//            parameters:
-//                @display("p=37,200;is=s");
-//        }
-//        ipv4: <default("Ipv4NetworkLayer")> like INetworkLayer if hasIpv4 {
-//            parameters:
-//                @display("p=363.698,284.878;q=queue");
-//        }
-        
-        
+
     connections allowunconnected:
 
         SimpleLoRaApp.appOut --> LoRaNic.upperLayerIn;

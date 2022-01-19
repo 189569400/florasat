@@ -52,15 +52,12 @@ module LoRaGW like INetworkNode
         int numUdpApps = default(0);
         bool hasUdp = default(firstAvailableOrEmpty("Udp") != "");
         string udpType = default(firstAvailableOrEmpty("UDP"));
-        //int ID = default(0);
 
         LoRaGWNic.radio.antenna.mobilityModule = default("^.^.^.mobility");
 
         *.mobilityModule = default(exists(mobility) ? absPath(".mobility") : "");
-        @display("i=device/satellite");//;r=2800,red,red
-        //@display("i=abstract/cutesat");
+        @display("i=device/satellite,red,90;is=s");//;r=2800,red,red
 
-        //@display("bgb=611,560;i=device/antennatower");
     gates:
         inout ethg @labels(EtherFrame-conn) @allowUnconnected;
         input radioIn[numWlanInterfaces] @directIn;
@@ -71,42 +68,39 @@ module LoRaGW like INetworkNode
 
     submodules:
 
-        md: MessageDispatcher;
+        md: MessageDispatcher {
+            @display("p=403,259");
+        }
         interfaceTable: InterfaceTable {
-            @display("p=30,26");
+            @display("p=71,77");
         }
         mobility: <default("StationaryMobility")> like IMobility {
-            @display("p=24,88");
+            @display("p=71,158");
         }
         LoRaGWNic: LoRaGWNic {
-            @display("p=163.56,367.728");
+            @display("p=202,345");
         }
         packetForwarder: PacketForwarder {
-            @display("p=256.056,162.432;is=vl");
+            @display("p=202,185;is=vl");
         }
-        //SatToSatAntenna: SatToSatAntenna {
-            //@display("p=140.56,367.728");
-        //}
-        //ISLChannel: ISLChannel{
-        //}
         islPacketForwarder: ISLPacketForwarder {
-            @display("p=146,88");
+            @display("p=202,77");
         }
         eth: <default("EthernetInterface")> like IWiredInterface {
             parameters:
-                @display("p=339,475,row,60;q=txQueue");
+                @display("p=403,345,row,60;q=txQueue");
         }
         udp: <default(firstAvailableOrEmpty("Udp"))> like IUdp if hasUdp {
             parameters:
-                @display("p=422.25,177.90799");
+                @display("p=321,185");
         }
         ipv4: <default("Ipv4NetworkLayer")> like INetworkLayer if hasIpv4 {
             parameters:
-                @display("p=363.698,284.878;q=queue");
+                @display("p=403,185;q=queue");
         }
         routingTable: <routingTableType> like IRoutingTable if routingTableType != "" {
             parameters:
-                @display("p=53,250;is=s");
+                @display("p=71,235;is=s");
         }
     connections allowunconnected:
         packetForwarder.loRaPart <--> islPacketForwarder.satPart; //connection between the ISLPacketForwarder and PacketForwarder
