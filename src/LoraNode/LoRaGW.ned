@@ -105,15 +105,10 @@ module LoRaGW like INetworkNode
     connections allowunconnected:
         packetForwarder.loRaPart <--> islPacketForwarder.satPart; //connection between the ISLPacketForwarder and PacketForwarder
 
-        islPacketForwarder.down1$i <-- down$i;  //internal connection needed for the simulator
-        islPacketForwarder.right1$i <-- right$i;
-        islPacketForwarder.left1$i <-- left$i;
-        islPacketForwarder.up1$i <-- up$i;
-        
-        islPacketForwarder.down1$o --> down$o;  //internal connection needed for the simulator
-        islPacketForwarder.right1$o --> right$o;
-        islPacketForwarder.left1$o --> left$o;
-        islPacketForwarder.up1$o --> up$o;
+        islPacketForwarder.down1 <--> down;  //internal connection needed for the simulator
+        islPacketForwarder.right1 <--> right;
+        islPacketForwarder.left1 <--> left;
+        islPacketForwarder.up1 <--> up;
 
         packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
         LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
