@@ -109,6 +109,11 @@ module LoRaGW like INetworkNode
         islPacketForwarder.right1$i <-- right$i;
         islPacketForwarder.left1$i <-- left$i;
         islPacketForwarder.up1$i <-- up$i;
+        
+        islPacketForwarder.down1$o --> down$o;  //internal connection needed for the simulator
+        islPacketForwarder.right1$o --> right$o;
+        islPacketForwarder.left1$o --> left$o;
+        islPacketForwarder.up1$o --> up$o;
 
         packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
         LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
