@@ -24,6 +24,7 @@ class LoRaMac : public MacProtocolBase
   private:
     // Signal
     simsignal_t macDPAD;
+    simsignal_t macDPADOwnTraffic;
 
   protected:
     /**
