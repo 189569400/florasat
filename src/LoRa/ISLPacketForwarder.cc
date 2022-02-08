@@ -139,18 +139,15 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
         if (frame->getPktType() == UPLINK) {
 
             // Gate to the neighbor on the right
-            cGate *gateToRightNeighbor = myParentGW->gate("right$o");
-            cGate *rightNeighborGate =
-                    gateToRightNeighbor->getType() == cGate::OUTPUT ?
-                            gateToRightNeighbor->getNextGate() : gateToRightNeighbor->getPreviousGate();
+            cGate *externalGateToRightNeighbor = myParentGW->gate("right$o");
+            cGate *internalGateToRightNeighbor = externalGateToRightNeighbor->getPathStartGate();
+
             // Gate to the neighbor on the top
-            cGate *gateToUpperNeighbor = myParentGW->gate("up$o");
-            cGate *upperNeighborGate =
-                    gateToUpperNeighbor->getType() == cGate::OUTPUT ?
-                            gateToUpperNeighbor->getNextGate() : gateToUpperNeighbor->getPreviousGate();
+            cGate *externalGateToUpperNeighbor = myParentGW->gate("up$o");
+            cGate *internalGateToUpperNeighbor = externalGateToUpperNeighbor->getPathStartGate();
 
             // If available, first forward to the right neighbor
-            if (rightNeighborGate) {
+            if (externalGateToRightNeighbor->isConnected()) {
 
                 // Store path in frame
                 frame->setNumHop(frame->getNumHop() + 1);
@@ -163,14 +160,14 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                 pkt->insertAtFront(frame);
 
                 // Enqueue packet towards the right neighbor
-                if (gateToRightNeighbor->getTransmissionChannel()->isBusy() == false) {
-                    send(pkt, gateToRightNeighbor);
+                if (internalGateToRightNeighbor->getTransmissionChannel()->isBusy() == false) {
+                    send(pkt, internalGateToRightNeighbor);
                 } else {
-                    scheduleAt(gateToRightNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+                    scheduleAt(internalGateToRightNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                 }
 
             // If right not available, forward to the upper neighbor
-            } else if (upperNeighborGate) {
+            } else if (externalGateToUpperNeighbor->isConnected()) {
 
                 // Store path in frame
                 frame->setNumHop(frame->getNumHop() + 1);
@@ -183,10 +180,10 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                 pkt->insertAtFront(frame);
 
                 // Enqueue packet towards the upper neighbor
-                if (gateToUpperNeighbor->getTransmissionChannel()->isBusy() == false) {
-                    send(pkt, gateToUpperNeighbor);
+                if (internalGateToUpperNeighbor->getTransmissionChannel()->isBusy() == false) {
+                    send(pkt, internalGateToUpperNeighbor);
                 } else {
-                    scheduleAt(gateToUpperNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+                    scheduleAt(internalGateToUpperNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                 }
 
             // If right nor upper are available, forward to the ground station
@@ -240,14 +237,15 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                     frame->setTmpPath6(0); // last is local hop
                     pkt->insertAtFront(frame);
 
-                    cGate *gateToBottomNeighbor = myParentGW->gate("down$o");
+                    cGate *externalGateToBottomNeighbor = myParentGW->gate("down$o");
+                    cGate *internalGateToBottomNeighbor = externalGateToBottomNeighbor->getPathStartGate();
 
-                    if (gateToBottomNeighbor->isConnected()) {
-                        auto test4 = gateToBottomNeighbor->getTransmissionChannel();
-                        if (gateToBottomNeighbor->getTransmissionChannel()->isBusy() == false) {
-                            send(pkt, gateToBottomNeighbor);
+                    if (externalGateToBottomNeighbor->isConnected()) {
+
+                        if (internalGateToBottomNeighbor->getTransmissionChannel()->isBusy() == false) {
+                            send(pkt, internalGateToBottomNeighbor);
                         } else {
-                            scheduleAt(gateToBottomNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+                            scheduleAt(internalGateToBottomNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                         }
                     }
 
@@ -263,13 +261,15 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                     frame->setTmpPath6(0);  // last is local hop
                     pkt->insertAtFront(frame);
 
-                    cGate *gateToLeftNeighbor = myParentGW->gate("left$o");
+                    cGate *externalGateToLeftNeighbor = myParentGW->gate("left$o");
+                    cGate *internalGateToLeftNeighbor = externalGateToLeftNeighbor->getPathStartGate();
 
-                    if (gateToLeftNeighbor->isConnected()) {
-                        if (gateToLeftNeighbor->getTransmissionChannel()->isBusy() == false) {
-                            send(pkt, gateToLeftNeighbor);
+                    if (externalGateToLeftNeighbor->isConnected()) {
+
+                        if (internalGateToLeftNeighbor->getTransmissionChannel()->isBusy() == false) {
+                            send(pkt, internalGateToLeftNeighbor);
                         } else {
-                            scheduleAt(gateToLeftNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+                            scheduleAt(internalGateToLeftNeighbor->getTransmissionChannel()->getTransmissionFinishTime(), msg);
                         }
                     }
                 }

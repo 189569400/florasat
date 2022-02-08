@@ -181,6 +181,7 @@ void LoRaMac::initialize(int stage)
         radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
 
     macDPAD = registerSignal("macDPAD");
+    macDPADOwnTraffic = registerSignal("macDPADOwnTraffic");
 }
 
 void LoRaMac::finish()
@@ -299,6 +300,12 @@ void LoRaMac::handleLowerMessage(cMessage *msg)
             EV<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<endl;
             std::cout<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<std::endl;
             emit(macDPAD, DPAD.dbl());
+
+            if (isForUs(frame)){
+                emit(macDPADOwnTraffic, DPAD.dbl());
+            }
+
+
             //auto pkt = check_and_cast<Packet *>(msg);
             //const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
             //if ()

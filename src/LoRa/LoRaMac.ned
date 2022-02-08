@@ -29,8 +29,10 @@ module LoRaMac extends CsmaCaMac
         
         // Signals and Statistics
         @signal[macDPAD];
+        @signal[macDPADOwnTraffic];
         
         @statistic[macDPAD](title="macDPAD"; source="macDPAD"; record=mean,max,min,vector);
+        @statistic[macDPADOwnTraffic](title="macDPADOwnTraffic"; source="macDPADOwnTraffic"; record=mean,max,min,vector);
         
     gates:
         input upperMgmtIn;
