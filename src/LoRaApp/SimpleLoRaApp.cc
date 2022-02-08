@@ -19,68 +19,68 @@
 #include "inet/common/packet/Packet.h"
 #include "LoRa/ISLChannel.h"
 
-
 namespace flora {
 
 Define_Module(SimpleLoRaApp);
 
-void SimpleLoRaApp::initialize(int stage)
-{
+void SimpleLoRaApp::initialize(int stage) {
     cSimpleModule::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        //auto test = makeShared<ISLChannel>();
-        //auto test = getContainingNode(this);
-        //auto test2 = check_and_cast<ISLChannel *>(test->getSubmodule("ISLChannel"));
-        //test->setDistance(30000);
-        //ISLChannel *test;
-        //test->setDistance(40000);
-        //int um = test->distance;
-        std::pair<double,double> coordsValues = std::make_pair(-1, -1);
-        cModule *host = getContainingNode(this);
-        // Generate random location for nodes if circle deployment type
-        if (strcmp(host->par("deploymentType").stringValue(), "circle")==0) {
-           coordsValues = generateUniformCircleCoordinates(host->par("maxGatewayDistance").doubleValue(), host->par("gatewayX").doubleValue(), host->par("gatewayY").doubleValue());
-           StationaryMobility *mobility = check_and_cast<StationaryMobility *>(host->getSubmodule("mobility"));
-           mobility->par("initialX").setDoubleValue(coordsValues.first);
-           mobility->par("initialY").setDoubleValue(coordsValues.second);
-        }
-    }
-    else if (stage == INITSTAGE_APPLICATION_LAYER) {
-        bool isOperational;
-        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
-        isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
-        if (!isOperational)
-            throw cRuntimeError("This module doesn't support starting in node DOWN state");
-        do {
-            timeToFirstPacket = par("timeToFirstPacket");
-            ackTimeout = par("ackTimeout"); //acknowledgment timeout
-            timer = par("timer"); //timer used for acknowledgment implementation
-            EV << "Wylosowalem czas :" << timeToFirstPacket << endl;
-            //if(timeToNextPacket < 5) error("Time to next packet must be grater than 3");
-        } while(timeToFirstPacket <= 5);
 
-        //timeToFirstPacket = par("timeToFirstPacket");
+        cModule *loRaNodeModule = getContainingNode(this);
+
+        // Generate node location if circle configuration
+        std::pair<double, double> coordsValues = std::make_pair(-1, -1);
+        if (strcmp(loRaNodeModule->par("deploymentType").stringValue(),
+                "circle") == 0) {
+            coordsValues = generateUniformCircleCoordinates(
+                    loRaNodeModule->par("maxGatewayDistance").doubleValue(),
+                    loRaNodeModule->par("gatewayX").doubleValue(),
+                    loRaNodeModule->par("gatewayY").doubleValue());
+            StationaryMobility *mobility = check_and_cast<StationaryMobility*>(
+                    loRaNodeModule->getSubmodule("mobility"));
+            mobility->par("initialX").setDoubleValue(coordsValues.first);
+            mobility->par("initialY").setDoubleValue(coordsValues.second);
+        }
+    } else if (stage == INITSTAGE_APPLICATION_LAYER) {
+
+        bool isOperational;
+        NodeStatus *nodeStatus = dynamic_cast<NodeStatus*>(findContainingNode(
+                this)->getSubmodule("status"));
+        isOperational = (!nodeStatus)
+                || nodeStatus->getState() == NodeStatus::UP;
+        if (!isOperational)
+            throw cRuntimeError(
+                    "This module doesn't support starting in node DOWN state");
+
+        // Parameters
+        timeToFirstPacket = par("timeToFirstPacket");
+        ackTimeout = par("ackTimeout"); //acknowledgment timeout
+        timer = par("timer"); //timer used for acknowledgment implementation
+
+        // Messages
         endAckTime = new cMessage("acknowledgment Timeout"); //signal to notice about end of ACK time
         sendMeasurements = new cMessage("sendMeasurements");
         synchronizer = new cMessage("Ask for device local time"); //signal for future use
         joining = new cMessage("Try to reach GW"); //signal for future use
         joiningAns = new cMessage("Can't reach GW ? .."); //signal for future use
-        scheduleAt(simTime()+timeToFirstPacket, sendMeasurements);
-        timer = simTime()+timeToFirstPacket;
-        usingAck = par("usingAck");
-        if(usingAck==true){
-            EV<<"Scheduling ACK TIMEOUT !!! "<<endl;
-            scheduleAt(simTime()+timeToFirstPacket+ackTimeout, endAckTime);
-        }
 
+        // Schedule first packet
+        scheduleAt(simTime() + timeToFirstPacket, sendMeasurements);
+        timer = simTime() + timeToFirstPacket;
+
+        // Schedule first packet ack timeout
+        if (par("usingAck").boolValue() == true)
+            scheduleAt(simTime() + timeToFirstPacket + ackTimeout, endAckTime);
+
+        // Initialize  metrics
         receivedAckPackets = 0;
         sentPackets = 0;
         receivedADRCommands = 0;
+
+        // Initialize parameters
         numberOfPacketsToSend = par("numberOfPacketsToSend");
-
         LoRa_AppPacketSent = registerSignal("LoRa_AppPacketSent");
-
-        //LoRa physical layer parameters
         loRaTP = par("initialLoRaTP").doubleValue();
         loRaCF = units::values::Hz(par("initialLoRaCF").doubleValue());
         loRaSF = par("initialLoRaSF");
@@ -88,8 +88,6 @@ void SimpleLoRaApp::initialize(int stage)
         loRaCR = par("initialLoRaCR");
         loRaUseHeader = par("initialUseHeader");
         pingSlot = par("initialPingSlot");
-        //classA = par("InitClassA");
-        //classB = par("InitClassB");
         evaluateADRinNode = par("evaluateADRinNode");
         sfVector.setName("SF Vector");
         tpVector.setName("TP Vector");
@@ -97,10 +95,10 @@ void SimpleLoRaApp::initialize(int stage)
     }
 }
 
-std::pair<double,double> SimpleLoRaApp::generateUniformCircleCoordinates(double radius, double gatewayX, double gatewayY)
-{
-    double randomValueRadius = uniform(0,(radius*radius));
-    double randomTheta = uniform(0,2*M_PI);
+std::pair<double, double> SimpleLoRaApp::generateUniformCircleCoordinates(
+        double radius, double gatewayX, double gatewayY) {
+    double randomValueRadius = uniform(0, (radius * radius));
+    double randomTheta = uniform(0, 2 * M_PI);
 
     // generate coordinates for circle with origin at 0,0
     double x = sqrt(randomValueRadius) * cos(randomTheta);
@@ -108,14 +106,14 @@ std::pair<double,double> SimpleLoRaApp::generateUniformCircleCoordinates(double 
     // Change coordinates based on coordinate system used in OMNeT, with origin at top left
     x = x + gatewayX;
     y = gatewayY - y;
-    std::pair<double,double> coordValues = std::make_pair(x,y);
+    std::pair<double, double> coordValues = std::make_pair(x, y);
     return coordValues;
 }
 
-void SimpleLoRaApp::finish()
-{
-    cModule *host = getContainingNode(this);
-    StationaryMobility *mobility = check_and_cast<StationaryMobility *>(host->getSubmodule("mobility"));
+void SimpleLoRaApp::finish() {
+    cModule *loRaNodeModule = getContainingNode(this);
+    StationaryMobility *mobility = check_and_cast<StationaryMobility*>(
+            loRaNodeModule->getSubmodule("mobility"));
     Coord coord = mobility->getCurrentPosition();
     recordScalar("positionX", coord.x);
     recordScalar("positionY", coord.y);
@@ -127,98 +125,91 @@ void SimpleLoRaApp::finish()
     recordScalar("receivedADRCommands", receivedADRCommands);
 }
 
-void SimpleLoRaApp::handleMessage(cMessage *msg)
-{
+void SimpleLoRaApp::handleMessage(cMessage *msg) {
+
+    // Either ack timer expired, or send measurement
     if (msg->isSelfMessage()) {
-        if (msg == endAckTime)
-        {
-            //delete msg;
-            if(numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend)
-            {
-                double time;
-                if(loRaSF == 7) time = 7.808;
-                if(loRaSF == 8) time = 13.9776;
-                if(loRaSF == 9) time = 24.6784;
-                if(loRaSF == 10) time = 49.3568;
-                if(loRaSF == 11) time = 85.6064;
-                if(loRaSF == 12) time = 171.2128;
-                do {
-                    timeToNextPacket = par("timeToNextPacket");
-                    //if(timeToNextPacket < 3) error("Time to next packet must be grater than 3");
-                } while(timeToNextPacket <= time);
+
+        // Ack timer expired, No Ack received
+        if (msg == endAckTime) {
+            receivedAck = false;
+
+            // More packets to send
+            if (numberOfPacketsToSend == 0
+                    || sentPackets < numberOfPacketsToSend) {
+
+                // Schedule next packet
+                timeToNextPacket = par("timeToNextPacket");
                 sendMeasurements = new cMessage("sendMeasurements");
-                scheduleAt(simTime() + timeToNextPacket - ackTimeout, sendMeasurements);
-                EV<<"I AM INSIDE END ACK SELF MESSAGE SCHEDULING NEXT DATA AT "<<simTime() + timeToNextPacket - ackTimeout<<endl;
+                scheduleAt(simTime() + timeToNextPacket - ackTimeout,
+                        sendMeasurements);
+
+                // Schedule next packet ack timeout
                 endAckTime = new cMessage("Ack Timeout");
                 scheduleAt(simTime() + timeToNextPacket, endAckTime);
                 timer = timeToNextPacket + timer;
-                //timer = simTime() + timeToNextPacket - ackTimeout;
             }
-            EV<<"No ACK Message received";
-            receivedAck = false;
         }
-        if (msg == sendMeasurements)
-        {
-            if (simTime() >= getSimulation()->getWarmupPeriod())
-                sentPackets++;
-            sendJoinRequest();
+
+        // New packet to send
+        if (msg == sendMeasurements) {
+
             delete msg;
-            if(usingAck==false){
-            if(numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend)
-            {
-                double time;
-                if(loRaSF == 7) time = 7.808;
-                if(loRaSF == 8) time = 13.9776;
-                if(loRaSF == 9) time = 24.6784;
-                if(loRaSF == 10) time = 49.3568;
-                if(loRaSF == 11) time = 85.6064;
-                if(loRaSF == 12) time = 171.2128;
-                do {
-                    timeToNextPacket = par("timeToNextPacket");
-                    //if(timeToNextPacket < 3) error("Time to next packet must be grater than 3");
-                } while(timeToNextPacket <= time);
+
+            // Send new packet
+            sendJoinRequest();
+            sentPackets++;
+
+            // More packets to send
+            if (numberOfPacketsToSend == 0
+                    || sentPackets < numberOfPacketsToSend) {
+
+                // Schedule next packet
+                timeToNextPacket = par("timeToNextPacket");
                 sendMeasurements = new cMessage("sendMeasurements");
                 scheduleAt(simTime() + timeToNextPacket, sendMeasurements);
+
+                // Schedule next packet ack timeout
+                if (par("usingAck").boolValue() == true){
+                    endAckTime = new cMessage("Ack Timeout");
+                    scheduleAt(simTime() + timeToNextPacket, endAckTime);
+                    timer = timeToNextPacket + timer;
+                }
             }
-        }
+
         }
     }
-    else
-    {
+
+    // Message from lower layer
+    else {
         handleMessageFromLowerLayer(msg);
         delete msg;
-        //cancelAndDelete(sendMeasurements);
-        //sendMeasurements = new cMessage("sendMeasurements");
-        //scheduleAt(simTime(), sendMeasurements);
     }
 }
 
-void SimpleLoRaApp::handleMessageFromLowerLayer(cMessage *msg)
-{
-//    LoRaAppPacket *packet = check_and_cast<LoRaAppPacket *>(msg);
-    auto pkt = check_and_cast<Packet *>(msg);
-    const auto & packet = pkt->peekAtFront<LoRaAppPacket>();
-    if(packet->getMsgType() == ACK){
+void SimpleLoRaApp::handleMessageFromLowerLayer(cMessage *msg) {
+
+    auto pkt = check_and_cast<Packet*>(msg);
+    const auto &packet = pkt->peekAtFront<LoRaAppPacket>();
+
+    // Received ACK
+    if (packet->getMsgType() == ACK) {
+
         cancelEvent(endAckTime);
         receivedAckPackets++;
         receivedAck = true;
-        EV<<"I GOT IT !"<<endl;
-        if(numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend)
-        {
-            double time;
-            if(loRaSF == 7) time = 7.808;
-            if(loRaSF == 8) time = 13.9776;
-            if(loRaSF == 9) time = 24.6784;
-            if(loRaSF == 10) time = 49.3568;
-            if(loRaSF == 11) time = 85.6064;
-            if(loRaSF == 12) time = 171.2128;
-            do {
-                timeToNextPacket = par("timeToNextPacket");
-                //if(timeToNextPacket < 3) error("Time to next packet must be grater than 3");
-            } while(timeToNextPacket <= time);
+
+        EV << "I GOT IT !" << endl;
+
+        // More packets to send
+        if (numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend) {
+
+            // Schedule next packet
+            timeToNextPacket = par("timeToNextPacket");
             sendMeasurements = new cMessage("sendMeasurements");
             scheduleAt(timer + timeToNextPacket, sendMeasurements);
-            EV<<"SCHEDULING NEXT DATA AT "<<timer+timeToNextPacket<<endl;
+
+            // Schedule next packet ack timeout
             endAckTime = new cMessage("Ack Timeout");
             scheduleAt(timer + timeToNextPacket + ackTimeout, endAckTime);
             timer = timeToNextPacket + timer;
@@ -226,27 +217,26 @@ void SimpleLoRaApp::handleMessageFromLowerLayer(cMessage *msg)
 
         ADR_ACK_CNT = 0;
     }
-    if(packet->getMsgType() == Beacon){
+
+    // Received beacon
+    if (packet->getMsgType() == Beacon) {
         //receive and set the pingSlot value to the value read from the GW beacon message
-        pingSlot= packet->getOptions().getPingSlot();
-        EV<<pingSlot<<endl;
+        pingSlot = packet->getOptions().getPingSlot();
+        EV << pingSlot << endl;
     }
-    if(packet->getMsgType() == TXCONFIG)
-    {
-        //classA = packet->getOptions().get
+
+    // Received TxConfig
+    if (packet->getMsgType() == TXCONFIG) {
 
         ADR_ACK_CNT = 0;
-        if(evaluateADRinNode)
-        {
-            if (simTime() >= getSimulation()->getWarmupPeriod()){
-                    receivedADRCommands++;
+        if (evaluateADRinNode) {
+            if (simTime() >= getSimulation()->getWarmupPeriod()) {
+                receivedADRCommands++;
             }
-            if(packet->getOptions().getLoRaTP() != -1)
-            {
+            if (packet->getOptions().getLoRaTP() != -1) {
                 loRaTP = packet->getOptions().getLoRaTP();
             }
-            if(packet->getOptions().getLoRaSF() != -1)
-            {
+            if (packet->getOptions().getLoRaSF() != -1) {
                 loRaSF = packet->getOptions().getLoRaSF();
             }
             EV << "New TP " << loRaTP << endl;
@@ -256,20 +246,16 @@ void SimpleLoRaApp::handleMessageFromLowerLayer(cMessage *msg)
 
 }
 
-bool SimpleLoRaApp::handleOperationStage(LifecycleOperation *operation, IDoneCallback *doneCallback)
-{
+bool SimpleLoRaApp::handleOperationStage(LifecycleOperation *operation,
+        IDoneCallback *doneCallback) {
     Enter_Method_Silent();
 
-    throw cRuntimeError("Unsupported lifecycle operation '%s'", operation->getClassName());
+    throw cRuntimeError("Unsupported lifecycle operation '%s'",
+            operation->getClassName());
     return true;
 }
 
-//void SimpleLoRaApp::repeatSendJoinRequest()
-//{
-
-//}
-void SimpleLoRaApp::sendJoinRequest()
-{
+void SimpleLoRaApp::sendJoinRequest() {
     auto pktRequest = new Packet("DataFrame");
     pktRequest->setKind(DATA);
 
@@ -279,15 +265,13 @@ void SimpleLoRaApp::sendJoinRequest()
     lastSentMeasurement = rand();
     payload->setSampleMeasurement(lastSentMeasurement);
 
-    if(evaluateADRinNode && sendNextPacketWithADRACKReq)
-    {
+    if (evaluateADRinNode && sendNextPacketWithADRACKReq) {
         auto opt = payload->getOptions();
         opt.setADRACKReq(true);
         payload->setOptions(opt);
         //request->getOptions().setADRACKReq(true);
         sendNextPacketWithADRACKReq = false;
     }
-
 
     auto loraTag = pktRequest->addTagIfAbsent<LoRaTag>();
     loraTag->setBandwidth(loRaBW);
@@ -297,38 +281,41 @@ void SimpleLoRaApp::sendJoinRequest()
     loraTag->setPower(mW(math::dBmW2mW(loRaTP)));
 
     //add LoRa control info
-  /*  LoRaMacControlInfo *cInfo = new LoRaMacControlInfo();
-    cInfo->setLoRaTP(loRaTP);
-    cInfo->setLoRaCF(loRaCF);
-    cInfo->setLoRaSF(loRaSF);
-    cInfo->setLoRaBW(loRaBW);
-    cInfo->setLoRaCR(loRaCR);
-    pktRequest->setControlInfo(cInfo);*/
+    /*  LoRaMacControlInfo *cInfo = new LoRaMacControlInfo();
+     cInfo->setLoRaTP(loRaTP);
+     cInfo->setLoRaCF(loRaCF);
+     cInfo->setLoRaSF(loRaSF);
+     cInfo->setLoRaBW(loRaBW);
+     cInfo->setLoRaCR(loRaCR);
+     pktRequest->setControlInfo(cInfo);*/
 
     sfVector.record(loRaSF);
     tpVector.record(loRaTP);
     pktRequest->insertAtBack(payload);
+
+    // Send packet
     send(pktRequest, "appOut");
-    if(evaluateADRinNode && receivedAck==false)
-    {
+
+    // Evaluate ADR
+    if (evaluateADRinNode && receivedAck == false) {
         ADR_ACK_CNT++;
-        EV<<ADR_ACK_CNT<<endl;
-        if(ADR_ACK_CNT == ADR_ACK_LIMIT) sendNextPacketWithADRACKReq = true;
-        if(ADR_ACK_CNT >= ADR_ACK_LIMIT + ADR_ACK_DELAY)
-        {
+        EV << ADR_ACK_CNT << endl;
+        if (ADR_ACK_CNT == ADR_ACK_LIMIT)
+            sendNextPacketWithADRACKReq = true;
+        if (ADR_ACK_CNT >= ADR_ACK_LIMIT + ADR_ACK_DELAY) {
             ADR_ACK_CNT = 0;
             increaseSFIfPossible();
-            EV<<"i'm working on the ADRNode "<< endl;
-            EV<<loRaSF<<endl;
-            EV<<loRaTP<<endl;
+            EV << "i'm working on the ADRNode " << endl;
+            EV << loRaSF << endl;
+            EV << loRaTP << endl;
         }
     }
     emit(LoRa_AppPacketSent, loRaSF);
 }
 
-void SimpleLoRaApp::increaseSFIfPossible()
-{
-    if(loRaSF < 12) loRaSF++;
+void SimpleLoRaApp::increaseSFIfPossible() {
+    if (loRaSF < 12)
+        loRaSF++;
 }
 
 } //end namespace inet
