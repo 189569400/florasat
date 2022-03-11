@@ -33,6 +33,13 @@ namespace flora {
 
 class ISLPacketForwarder : public cSimpleModule, public cListener
 {
+
+  private:
+    simsignal_t sentPacketsUp;
+    simsignal_t sentPacketsRight;
+    simsignal_t sentPacketsDown;
+    simsignal_t sentPacketsLeft;
+
   protected:
     std::vector<L3Address> destAddresses;
     int localPort = -1, destPort = -1;

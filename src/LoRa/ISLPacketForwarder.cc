@@ -70,6 +70,11 @@ void ISLPacketForwarder::initialize(int stage) {
         //  startUDP();
         //  getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent", this);
     }
+
+    sentPacketsUp = registerSignal("sentPacketsUp");
+    sentPacketsRight = registerSignal("sentPacketsRight");
+    sentPacketsDown = registerSignal("sentPacketsDown");
+    sentPacketsLeft = registerSignal("sentPacketsLeft");
 }
 
 void ISLPacketForwarder::startUDP() {
@@ -159,6 +164,8 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                 frame->setTmpPath1(HORIZONTAL_HOP);
                 pkt->insertAtFront(frame);
 
+                emit(sentPacketsRight, true);
+
                 // Enqueue packet towards the right neighbor
                 if (internalGateToRightNeighbor->getTransmissionChannel()->isBusy() == false) {
                     send(pkt, internalGateToRightNeighbor);
@@ -178,6 +185,8 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                 frame->setTmpPath2(frame->getTmpPath1());
                 frame->setTmpPath1(VERTICAL_HOP);
                 pkt->insertAtFront(frame);
+
+                emit(sentPacketsUp, true);
 
                 // Enqueue packet towards the upper neighbor
                 if (internalGateToUpperNeighbor->getTransmissionChannel()->isBusy() == false) {
@@ -242,6 +251,8 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
 
                     if (externalGateToBottomNeighbor->isConnected()) {
 
+                        emit(sentPacketsDown, true);
+
                         if (internalGateToBottomNeighbor->getTransmissionChannel()->isBusy() == false) {
                             send(pkt, internalGateToBottomNeighbor);
                         } else {
@@ -265,6 +276,8 @@ void ISLPacketForwarder::handleMessage(cMessage *msg) {
                     cGate *internalGateToLeftNeighbor = externalGateToLeftNeighbor->getPathStartGate();
 
                     if (externalGateToLeftNeighbor->isConnected()) {
+
+                        emit(sentPacketsLeft, true);
 
                         if (internalGateToLeftNeighbor->getTransmissionChannel()->isBusy() == false) {
                             send(pkt, internalGateToLeftNeighbor);
@@ -584,6 +597,11 @@ void ISLPacketForwarder::finish() {
     recordScalar("LoRa_GW_DER",
             double(counterOfReceivedPackets) / counterOfSentPacketsFromNodes);
     cancelAndDelete(updateISLDistance);
+
+    recordScalar("sentPacketsUp", sentPacketsUp);
+    recordScalar("sentPacketsRight", sentPacketsRight);
+    recordScalar("sentPacketsDown", sentPacketsDown);
+    recordScalar("sentPacketsLeft", sentPacketsLeft);
 }
 
 } //namespace inet

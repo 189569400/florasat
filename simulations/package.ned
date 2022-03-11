@@ -23,6 +23,7 @@ network FLoRaSatNetwork
         int networkSizeZ = default(70000);
         double del @unit(s) = default(0s);
         double dis @unit(m) = default(40000m);
+        int ISLDatarate @unit(kbps)= default(20kbps);
 
         @display("bgb=28260,19980;bgi=maps/earth,s;bgg=5000,2,grey95;bgu=km");
 
@@ -30,7 +31,7 @@ network FLoRaSatNetwork
         channel DatarateChannel2 extends ned.DatarateChannel
         {
             delay = dis / 200000km * 1s;
-            datarate = 100Mbps;
+            datarate = 20kbps;
             @display("ls=blue,2");
         }
 
@@ -73,29 +74,29 @@ network FLoRaSatNetwork
         gwRouter.ethg++ <--> {  datarate = 100Mbps; delay = 0.002s; } <--> loRaGW[15].ethg;
 
 		// Inter-Satellite Links (grid shape)
-        loRaGW[0].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[1].down;
-        loRaGW[0].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[4].left;
-        loRaGW[1].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[2].down;
-        loRaGW[1].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[5].left;
-        loRaGW[2].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[3].down;
-        loRaGW[2].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[6].left;
-        loRaGW[4].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[5].down;
-        loRaGW[4].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[8].left;
-        loRaGW[5].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[6].down;
-        loRaGW[5].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[9].left;
-        loRaGW[6].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[7].down;
-        loRaGW[6].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[10].left;
-        loRaGW[8].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[9].down;
-        loRaGW[8].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[12].left;
-        loRaGW[9].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[10].down;
-        loRaGW[9].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[13].left;
-        loRaGW[10].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[11].down;
-        loRaGW[10].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[14].left;
-        loRaGW[3].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[7].left;
-        loRaGW[7].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[11].left;
-        loRaGW[11].right <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[15].left;
-        loRaGW[12].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[13].down;
-        loRaGW[13].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[14].down;
-        loRaGW[14].up <--> {  datarate = 20kbps; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[15].down;
+        loRaGW[0].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[1].down;
+        loRaGW[0].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[4].left;
+        loRaGW[1].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[2].down;
+        loRaGW[1].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[5].left;
+        loRaGW[2].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[3].down;
+        loRaGW[2].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[6].left;
+        loRaGW[4].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[5].down;
+        loRaGW[4].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[8].left;
+        loRaGW[5].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[6].down;
+        loRaGW[5].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[9].left;
+        loRaGW[6].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[7].down;
+        loRaGW[6].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[10].left;
+        loRaGW[8].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[9].down;
+        loRaGW[8].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[12].left;
+        loRaGW[9].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[10].down;
+        loRaGW[9].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[13].left;
+        loRaGW[10].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[11].down;
+        loRaGW[10].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[14].left;
+        loRaGW[3].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[7].left;
+        loRaGW[7].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[11].left;
+        loRaGW[11].right <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[15].left;
+        loRaGW[12].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[13].down;
+        loRaGW[13].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[14].down;
+        loRaGW[14].up <--> {  datarate = parent.ISLDatarate; delay = 0s;@display("ls=blue,2"); } <--> loRaGW[15].down;
 }
 
