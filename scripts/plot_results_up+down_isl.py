@@ -2,9 +2,10 @@ import sqlite3
 import networkx as nx
 import matplotlib.pyplot as plt
 
-NODES = [100, 500, 1000]
+# NODES = [100, 500, 1000]
+NODES = [5, 10, 100, 500]
 
-fig, ax = plt.subplots(1, 3, figsize=(20,8))
+fig, ax = plt.subplots(1, 4, figsize=(25,8))
 vmin = 0
 vmax = 4275.0
 cmap=plt.cm.jet
@@ -107,9 +108,10 @@ for n, nodes_number in enumerate(NODES):
     ax[n].title.set_text("Number of Nodes = " + str(nodes_number) +
                          "\nTotal packets sent = " + str(int(sum(values))))
 
-plt.suptitle("uplink + downlink", fontsize=16, x=0.465)
+#plt.suptitle("uplink + downlink", fontsize=16, x=0.465)
 fig.subplots_adjust(right=0.8)
 sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
 cbar_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
 plt.colorbar(sm, cax=cbar_ax)
 plt.savefig("up+down.png")
+plt.savefig("up+down.pdf")
