@@ -1,5 +1,3 @@
-# set to the inet 4.3 directory (use relative dir)
-INET_DIR = ../inet4.3
 
 all: checkmakefiles
 	@cd src && $(MAKE)
@@ -13,7 +11,7 @@ cleanall: checkmakefiles
 	@rm -f src/Makefile
 
 makefiles:
-	@cd src && opp_makemake --make-so -o flora -O out -f --deep -KINET_PROJ=../$(INET_DIR) -DINET_IMPORT -I. -I$$\(INET_PROJ\)/src -L$$\(INET_PROJ\)/src -lINET$$\(D\)
+	@cd src && opp_makemake --make-so -o flora -O out -f --deep -KINET_PROJ=..$(INET_ROOT) -DINET_IMPORT -I. -I$$\(INET_PROJ\)/src -L$$\(INET_PROJ\)/src -lINET$$\(D\)
 
 checkmakefiles:
 	@if [ ! -f src/Makefile ]; then \

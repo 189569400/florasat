@@ -1,8 +1,11 @@
 #!/bin/bash
 
-FILES=examples/*
-for f in $FILES
-do
-  echo "Started network $f:"
-  $(dirname $0)/../src/run_flora -u Cmdenv -f $f
+parentdir=$(dirname $0)
+
+for ini in $parentdir/examples/*; do
+  if [ -f "$ini" ]; then
+    echo "Started network $ini:"
+    $parentdir/../src/run_flora -u Cmdenv -f $ini
+  fi
 done
+

@@ -8,14 +8,26 @@ Currently, we support a single sample scenario comprising 16 satellites in a gri
 
 Please consider the the simulator is under active development, and it should **not** be considered a final stable version at the moment.
 
+
 ## Installation
 
-FLoRaSat was recently tested using: 
-- [Omnetpp6.0Pre14](https://omnetpp.org/download/preview) (but should work on later Pre releases)
-- INET v4.3 (installed by default the first time Omnetpp IDE is launched)
+- The simulator uses OpenSSL headers and libraries. Install with `sudo apt-get install libssl-dev` in Ubuntu
 
- The simulator also uses OpenSSL headers and libraries, which should be installed beforehand (`sudo apt-get install libssl-dev` in Ubuntu).
- 
- **Note 1:** Move `earth.jpg` from  the `images/maps` directory to `omnetpp-6.0pre14/images/maps` directory.
+- Install [Omnetpp6.0Pre14](https://omnetpp.org/download/preview) (but should work on later Pre releases)
 
- **Note 2:** The scenario is executed using the `omnetpp.ini` located in the `/simulations` directory.
+- Install [INETv4.3](https://inet.omnetpp.org/Installation.html)
+
+- Add INETv4.3 to the environment by executing setinet.sh passing the absolute path to the INET root directory. Example: `sh setinet.sh /home/diego/Diego/AGORA/omnetprojects/inet4.3`
+
+- Copy FLoRaSat resources to the Omnetpp6 reosources. Execute `sh setup.sh`
+
+**IMPORTANT** FLoRaSat will not with Omnetpp5 due to source code path inconsistency with version Omnetpp6
+
+
+## Run simulations
+
+- The scenario is executed using the `omnetpp.ini` located in the `/simulations` directory
+
+
+
+
