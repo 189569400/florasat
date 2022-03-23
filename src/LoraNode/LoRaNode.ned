@@ -19,6 +19,7 @@ import inet.mobility.static.StationaryMobility;
 import inet.networklayer.common.InterfaceTable;
 import flora.LoRa.LoRaNic;
 import flora.LoRaApp.SimpleLoRaApp;
+import leosatellites.mobility.GroundStationMobility;
 
 module LoRaNode
 {
@@ -35,7 +36,7 @@ module LoRaNode
         interfaceTable: InterfaceTable {
             @display("p=72,32");
         }
-        mobility: StationaryMobility {
+        mobility: GroundStationMobility {
             @display("p=72,152");
         }
         LoRaNic: LoRaNic {

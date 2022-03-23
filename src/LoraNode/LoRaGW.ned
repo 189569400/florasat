@@ -21,17 +21,22 @@ import inet.mobility.contract.IMobility;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.contract.INetworkLayer;
 import inet.linklayer.loopback.LoopbackInterface;
+
 import flora.LoRa.LoRaGWNic;
 import flora.LoRaApp.SimpleLoRaApp;
 import flora.LoRa.PacketForwarder;
 import flora.LoRa.ISLPacketForwarder;
 //import flora.LoRa.SatToSatAntenna;
+
 import inet.linklayer.contract.IWiredInterface;
 import inet.applications.contract.IApp;
 import inet.transportlayer.contract.IUdp;
 import inet.networklayer.contract.IRoutingTable;
 import flora.LoRa.ISLChannel;
 import inet.common.MessageDispatcher;
+
+import leosatellites.mobility.NoradA;
+import leosatellites.mobility.SatelliteMobility;
 
 module LoRaGW like INetworkNode
 {
@@ -55,8 +60,8 @@ module LoRaGW like INetworkNode
 
         LoRaGWNic.radio.antenna.mobilityModule = default("^.^.^.mobility");
 
-        *.mobilityModule = default(exists(mobility) ? absPath(".mobility") : "");
-        @display("i=device/satellite,red,90;is=s");//;r=2800,red,red
+        //*.mobilityModule = default(exists(mobility) ? absPath(".mobility") : "");
+        //@display("i=device/satellite,red,90;is=s");//;r=2800,red,red
 
     gates:
         inout ethg @labels(EtherFrame-conn) @allowUnconnected;
@@ -74,7 +79,7 @@ module LoRaGW like INetworkNode
         interfaceTable: InterfaceTable {
             @display("p=71,77");
         }
-        mobility: <default("StationaryMobility")> like IMobility {
+        mobility: SatelliteMobility {
             @display("p=71,158");
         }
         LoRaGWNic: LoRaGWNic {
@@ -102,6 +107,11 @@ module LoRaGW like INetworkNode
             parameters:
                 @display("p=71,235;is=s");
         }
+        NoradModule: NoradA { // Module for transformation between omnet and libNorad
+            parameters:
+                @display("p=71,300");
+        }
+
     connections allowunconnected:
         packetForwarder.loRaPart <--> islPacketForwarder.satPart; //connection between the ISLPacketForwarder and PacketForwarder
 

@@ -133,7 +133,7 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
     EV<<"HELLOOOOO Mehdy !!" << endl;
 /*    if(msg == updateISLDistance){
         //auto test = getContainingNode(this);
-        //auto test2 = check_and_cast_nullable<BonnMotionMobility *>(test->getSubmodule("mobility"));
+        //auto test2 = check_and_cast_nullable<SatelliteMobilityMobility *>(test->getSubmodule("mobility"));
         //EV<<"THE POSITION OF THE GW IS :"<<test2->getCurrentPosition()<<endl;
         EV<<"MY ID IS "<<satelliteID<<endl;
         int devID = satelliteID;
@@ -216,14 +216,14 @@ void LoRaGWMac::handleLowerMessage(cMessage *msg)
     auto test = getContainingNode(this);
     auto test4 = getContainingNode(test);
     //auto test5 = check_and_cast_nullable<ISLChannel *>(test->getSubmodule("ISLChannel"));
-    auto test2 = check_and_cast_nullable<BonnMotionMobility *>(test->getSubmodule("mobility"));
+    // auto test2 = check_and_cast_nullable<SatelliteMobility *>(test->getSubmodule("mobility"));
     //test5->par("test9")=50;
     //test5->distance=50;
     //test2->test3 = 40000;
 
     //test->par("test8")=50;
 
-    EV<<"THE POSITION OF THE GW IS :"<<test2->getCurrentPosition()<<endl;
+    //EV<<"THE POSITION OF THE GW IS :"<<test2->getCurrentPosition()<<endl;
     //test2->par("distance")=30000;
 
     //EV<<"THE NEW VALUE IS"<<test->par("test8");

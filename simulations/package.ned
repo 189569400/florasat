@@ -24,7 +24,7 @@ network FLoRaSatNetwork
         double del @unit(s) = default(0s);
         double dis @unit(m) = default(40000m);
 
-        @display("bgb=28260,19980;bgi=maps/earth,s;bgg=5000,2,grey95;bgu=km");
+        @display("bgb=27842.156,15554.88;bgi=background_earth,s");
 
     types:
         channel DatarateChannel2 extends ned.DatarateChannel
@@ -39,13 +39,13 @@ network FLoRaSatNetwork
             @display("p=5555.552,9832.128;is=vs");
         }
         loRaGW[numberOfGateways]: LoRaGW {
-            @display("p=3157.472,6394.88;is=s");
+            @display("p=3157.472,6394.88;i=satellit_blue");
         }
         LoRaMedium: LoRaMedium {
             @display("p=8673.056,1159.072");
         }
         networkServer: StandardHost {
-                @display("p=14228.607,8633.088;is=s");
+            @display("p=14228.607,8633.088;is=s");
         }
         configurator: Ipv4NetworkConfigurator {
             parameters:

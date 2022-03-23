@@ -64,7 +64,7 @@ void ISLPacketForwarder::initialize(int stage) {
     } else if (stage == INITSTAGE_APPLICATION_LAYER) {
         updateISLDistance = new cMessage("Calculate the distance");
         sendRight = new cMessage("Sending Right");
-        satelliteID = par("satelliteID");
+        satelliteID = par("satIndex");
         updateISLDistanceInterval = par("updateISLDistanceInterval");
         scheduleAt(simTime(), updateISLDistance);
         //  startUDP();
