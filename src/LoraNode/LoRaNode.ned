@@ -15,11 +15,11 @@
 
 package flora.LoraNode;
 
-import inet.mobility.static.StationaryMobility;
 import inet.networklayer.common.InterfaceTable;
+import inet.mobility.contract.IMobility;
 import flora.LoRa.LoRaNic;
 import flora.LoRaApp.SimpleLoRaApp;
-import leosatellites.mobility.GroundStationMobility;
+import flora.mobility.UniformGroundMobility;
 
 module LoRaNode
 {
@@ -36,7 +36,7 @@ module LoRaNode
         interfaceTable: InterfaceTable {
             @display("p=72,32");
         }
-        mobility: GroundStationMobility {
+        mobility: <default("UniformGroundMobility")> like IMobility if typename != "" {
             @display("p=72,152");
         }
         LoRaNic: LoRaNic {

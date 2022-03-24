@@ -20,18 +20,20 @@ import inet.queueing.contract.IPacketQueue;
 
 simple ISLPacketForwarder like IApp
 {
-    @signal[LoRa_GWPacketReceived](type=long); // optional
-    @statistic[LoRa_GWPacketReceived](source=LoRa_GWPacketReceived; record=count);
-    int test3 = default(1);
-    int localPort = default(-1);  // local port (-1: use ephemeral port)
-    string destAddresses = default(""); // list of IP addresses, separated by spaces ("": don't send)
-    string localAddress = default("");
-    int destPort;
-    int satIndex;
-    int updateISLDistanceInterval = default(1);
+    parameters:
+        @signal[LoRa_GWPacketReceived](type=long); // optional
+        @statistic[LoRa_GWPacketReceived](source=LoRa_GWPacketReceived; record=count);
+        int test3 = default(1);
+        int localPort = default(-1);  // local port (-1: use ephemeral port)
+        string destAddresses = default(""); // list of IP addresses, separated by spaces ("": don't send)
+        string localAddress = default("");
+        int destPort;
+        int satIndex;
+        int updateISLDistanceInterval = default(1);
 
 
     gates:
+        
         inout satPart;
         inout left1;
         inout right1;
@@ -41,7 +43,8 @@ simple ISLPacketForwarder like IApp
         input socketIn @labels(UdpControlInfo/down);
 
         input lowerLayerIn @labels(PacketForwarder/up);
-        output lowerLayerOut @labels(PacketForwarder/down);  
+        output lowerLayerOut @labels(PacketForwarder/down);
+        
     //submodules:
         //queue: <default("DropTailQueue")> like IPacketQueue {
             //parameters:

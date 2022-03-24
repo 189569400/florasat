@@ -16,7 +16,6 @@
 package flora.LoraNode;
 
 import inet.node.inet.INetworkNode;
-import inet.mobility.static.StationaryMobility;
 import inet.mobility.contract.IMobility;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.contract.INetworkLayer;
@@ -60,8 +59,6 @@ module LoRaGW like INetworkNode
 
         LoRaGWNic.radio.antenna.mobilityModule = default("^.^.^.mobility");
 
-        //*.mobilityModule = default(exists(mobility) ? absPath(".mobility") : "");
-        //@display("i=device/satellite,red,90;is=s");//;r=2800,red,red
 
     gates:
         inout ethg @labels(EtherFrame-conn) @allowUnconnected;
@@ -107,15 +104,18 @@ module LoRaGW like INetworkNode
             parameters:
                 @display("p=71,235;is=s");
         }
-        NoradModule: NoradA { // Module for transformation between omnet and libNorad
+        NoradModule: NoradA {
             parameters:
                 @display("p=71,300");
         }
 
     connections allowunconnected:
-        packetForwarder.loRaPart <--> islPacketForwarder.satPart; //connection between the ISLPacketForwarder and PacketForwarder
+        
+        //connection between the ISLPacketForwarder and PacketForwarder
+        packetForwarder.loRaPart <--> islPacketForwarder.satPart;
 
-        islPacketForwarder.down1 <--> down;  //internal connection needed for the simulator
+		//internal connection needed for the simulator
+        islPacketForwarder.down1 <--> down;
         islPacketForwarder.right1 <--> right;
         islPacketForwarder.left1 <--> left;
         islPacketForwarder.up1 <--> up;
@@ -123,15 +123,19 @@ module LoRaGW like INetworkNode
         packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
         LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
         //LoRaGWNic.right <--> right;
+        
         packetForwarder.socketOut --> udp.appIn;
         packetForwarder.socketIn <-- udp.appOut;
 
-        ethg <--> { @display("m=s"); } <--> eth.phys;
-        md.out++ --> eth.upperLayerIn;
-        md.in++ <-- eth.upperLayerOut;
-        ipv4.ifOut --> md.in++; // IP sends datagrams
-        ipv4.ifIn <-- md.out++; // IP receives datagrams
-
         udp.ipOut --> ipv4.transportIn;
         udp.ipIn <-- ipv4.transportOut;
+        
+        ipv4.ifOut --> md.in++; // IP sends datagrams
+        ipv4.ifIn <-- md.out++; // IP receives datagrams
+        
+        md.out++ --> eth.upperLayerIn;
+        md.in++ <-- eth.upperLayerOut;
+
+		ethg <--> { @display("m=s"); } <--> eth.phys;
+
 }
