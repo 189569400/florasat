@@ -419,24 +419,29 @@ void LoRaRadio::decapsulate(Packet *packet) const
 
 void LoRaRadio::endReception(cMessage *timer)
 {
-
-    EV<<"I AM ALREADY INSIDE ENDRECEPTION !!!!"<<endl;
     auto part = (IRadioSignal::SignalPart)timer->getKind();
     auto signal = static_cast<WirelessSignal *>(timer->getControlInfo());
     auto arrival = signal->getArrival();
     auto reception = signal->getReception();
-    if (timer == receptionTimer && isReceiverMode(radioMode) && arrival->getEndTime() == simTime()) {
-        EV<<"I AM NOW INSIDE THE IF !!!!"<<endl;
+
+    if (timer == receptionTimer && isReceiverMode(radioMode) && arrival->getEndTime() == simTime())
+        {
         auto transmission = signal->getTransmission();
+
         // TODO: this would draw twice from the random number generator in isReceptionSuccessful: auto isReceptionSuccessful = medium->isReceptionSuccessful(this, transmission, part);
         auto isReceptionSuccessful = medium->getReceptionDecision(this, signal->getListening(), transmission, part)->isReceptionSuccessful();
-        EV_INFO << "Reception ended: " << (isReceptionSuccessful ? "\x1b[1msuccessfully\x1b[0m" : "\x1b[1munsuccessfully\x1b[0m") << " for " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
+        EV_INFO << "Reception ended: " << (isReceptionSuccessful ? "\x1b[1msuccessfully\x1b[0m" : "\x1b[1munsuccessfully\x1b[0m") << " for "
+                << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
+
         auto macFrame = medium->receivePacket(this, signal);
         take(macFrame);
         decapsulate(macFrame);
+
         if (isReceptionSuccessful)
             sendUp(macFrame);
-        else {
+
+        else
+        {
             emit(LoRaRadio::droppedPacket, 0);
             delete macFrame;
         }

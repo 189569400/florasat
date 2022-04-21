@@ -55,6 +55,7 @@ class LoRaMacFrame extends inet::FieldsChunk {
     int PingPeriod = 32;
     int PingOffset;
     int BeaconTime;
+    
     int numHop = 0;
     int tmpPath1;
     int tmpPath2;
@@ -64,4 +65,10 @@ class LoRaMacFrame extends inet::FieldsChunk {
     int tmpPath6;
     int satNumber;
     //int SlotLen;
+    
+    // route store satellite indexes realying this message
+    // timestamps store the time when this message is relayed 
+    int route[];
+    simtime_t timestamps[];
+    
 }

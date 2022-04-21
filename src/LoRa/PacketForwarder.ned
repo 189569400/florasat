@@ -22,7 +22,7 @@ simple PacketForwarder like IApp
 {
     @signal[LoRa_GWPacketReceived](type=long); // optional
     @statistic[LoRa_GWPacketReceived](source=LoRa_GWPacketReceived; record=count);
-    int test3 = default(1);
+
     int localPort = default(-1);  // local port (-1: use ephemeral port)
     string destAddresses = default(""); // list of IP addresses, separated by spaces ("": don't send)
     string localAddress = default("");

@@ -48,10 +48,9 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
         void sendDownMgmtPacket();
 
 
-
-
         //bool usingAck = true;
         bool receivedAck = true;
+
         int numberOfPacketsToSend;
         int sentPackets;
         int receivedAckPackets;
@@ -59,11 +58,13 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
         int lastSentMeasurement;
         simtime_t timeToFirstPacket;
         simtime_t timeToNextPacket;
+
         simtime_t ackTimeout;
         simtime_t timer;
 
         cMessage *configureLoRaParameters;
         cMessage *sendMeasurements;
+
         cMessage *endAckTime;
         cMessage *synchronizer;
         cMessage *joining;
@@ -85,6 +86,7 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
     public:
         SimpleLoRaApp() {}
         simsignal_t LoRa_AppPacketSent;
+
         //LoRa physical layer parameters
         double loRaTP;
         units::values::Hz loRaCF;

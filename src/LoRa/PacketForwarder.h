@@ -32,7 +32,8 @@ class PacketForwarder : public cSimpleModule, public cListener
 {
   protected:
     std::vector<L3Address> destAddresses;
-    int localPort = -1, destPort = -1;
+    int localPort = -1;
+    int destPort = -1;
     // state
     UdpSocket socket;
     cMessage *selfMsg = nullptr;
@@ -47,6 +48,7 @@ class PacketForwarder : public cSimpleModule, public cListener
     void setSocketOptions();
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     void receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details) override;
+
   public:
       simsignal_t LoRa_GWPacketReceived;
       int counterOfSentPacketsFromNodes = 0;

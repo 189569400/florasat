@@ -13,27 +13,14 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-//based on Ieee802154NarrowbandMac
+package flora.satellite;
 
-package flora.LoRa;
+import inet.queueing.contract.IPacketQueue;
+import inet.linklayer.base.MacProtocolBase;
+import inet.linklayer.contract.IMacProtocol;
 
-import inet.linklayer.csmaca.CsmaCaMac;
-
-module LoRaMac extends CsmaCaMac
+module UHFGWMac extends MacProtocolBase like IMacProtocol
 {
-    parameters:
-        string classUsed  = default("A");
-        bitrate = 250bps;
-        @class(LoRaMac);
-        
-        // Signals and Statistics
-        @signal[macDPAD];
-        @signal[macDPADOwnTraffic];
-        
-        @statistic[macDPAD](title="macDPAD"; source="macDPAD"; record=mean,max,min,vector);
-        @statistic[macDPADOwnTraffic](title="macDPADOwnTraffic"; source="macDPADOwnTraffic"; record=mean,max,min,vector);
-        
-    gates:
-        input upperMgmtIn;
-        output upperMgmtOut;
+    
 }
+

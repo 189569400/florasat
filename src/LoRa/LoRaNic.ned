@@ -19,13 +19,5 @@ import inet.linklayer.common.WirelessInterface;
 
 module LoRaNic extends WirelessInterface 
 {
-    parameters:
-        @display("i=block/ifcard");
-        *.interfaceTableModule = default(absPath(this.interfaceTableModule));
-        radio.typename = default("LoRaRadio");
-        radio.antenna.mobilityModule = "^.^.^.mobility";
-        radio.transmitter.typename = "LoRaTransmitter";
-        radio.transmitter.headerLength = 0B;
-        radio.receiver.typename = "LoRaReceiver";
-        mac.typename = "LoRaMac";
+
 }

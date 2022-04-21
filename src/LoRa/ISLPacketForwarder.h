@@ -48,17 +48,17 @@ class ISLPacketForwarder : public cSimpleModule, public cListener
     virtual void handleMessage(cMessage *msg) override;
     virtual void finish() override;
     void startUDP();
-
     void setSocketOptions();
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+
   public:
     int k = 1201;
     void distanceCalculation(int devId);
     cMessage *updateISLDistance;
     cMessage *sendRight;
-      simsignal_t LoRa_GWPacketReceived;
-      int counterOfSentPacketsFromNodes = 0;
-      int counterOfReceivedPackets = 0;
+    simsignal_t LoRa_GWPacketReceived;
+    int counterOfSentPacketsFromNodes = 0;
+    int counterOfReceivedPackets = 0;
 };
 } //namespace inet
 #endif

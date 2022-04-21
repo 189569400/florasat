@@ -27,55 +27,51 @@ namespace flora {
 
 Define_Module(PacketForwarder);
 
-void PacketForwarder::initialize(int stage) {
-    if (stage == 0) {
+void PacketForwarder::initialize(int stage)
+{
+    if (stage == 0)
+    {
         LoRa_GWPacketReceived = registerSignal("LoRa_GWPacketReceived");
         localPort = par("localPort");
         destPort = par("destPort");
-    } else if (stage == INITSTAGE_APPLICATION_LAYER) {
+    }
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
         startUDP();
-        getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent",
-                this);
+        getSimulation()->getSystemModule()->subscribe("LoRa_AppPacketSent", this);
     }
 }
 
-void PacketForwarder::startUDP() {
-    EV << "Wywalamy sie tutaj" << endl;
-    socket.setOutputGate(gate("socketOut"));
+void PacketForwarder::startUDP()
+{
+    const char *token;
     const char *localAddress = par("localAddress");
-    socket.bind(
-            *localAddress ?
-                    L3AddressResolver().resolve(localAddress) : L3Address(),
-            localPort);
-    EV << "Dojechalismy za pierwszy resolv" << endl;
+    const char *destAddrs = par("destAddresses");
+
+    socket.setOutputGate(gate("socketOut"));
+    socket.bind(*localAddress ? L3AddressResolver().resolve(localAddress) : L3Address(), localPort);
+
     // TODO: is this required?
     //setSocketOptions();
 
-    const char *destAddrs = par("destAddresses");
-    cStringTokenizer tokenizer(destAddrs);
-    const char *token;
-
     // Create UDP sockets to multiple destination addresses (network servers)
+    cStringTokenizer tokenizer(destAddrs);
     while ((token = tokenizer.nextToken()) != nullptr) {
-        EV << "Wchodze w petle" << endl;
-        EV << token << endl;
         L3Address result;
         L3AddressResolver().tryResolve(token, result);
-        EV << "Wychodze z petli" << endl;
+
         if (result.isUnspecified())
             EV_ERROR << "cannot resolve destination address: " << token << endl;
         else
             EV << "Got destination address: " << token << endl;
+
         destAddresses.push_back(result);
     }
-    EV << "Dojechalismy do konca" << endl;
 }
 
-void PacketForwarder::handleMessage(cMessage *msg) {
+void PacketForwarder::handleMessage(cMessage *msg)
+{
     EV << msg->getArrivalGate() << endl;
-    //auto meh = getContainingNode(this);
-    //auto meh2 = check_and_cast_nullable<ISLPacketForwarder *>(meh->getSubmodule("islPacketForwarder"));
-    //int myActualID = meh2->par("satelliteID");
     if (msg->arrivedOn("lowerLayerIn")) {
         EV << "Received LoRaMAC frame" << endl;
 

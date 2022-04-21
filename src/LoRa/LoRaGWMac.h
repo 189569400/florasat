@@ -40,15 +40,14 @@ using namespace inet::physicallayer;
 
 class LoRaGWMac: public MacProtocolBase {
 public:
-    //int k = 2;
+
     bool waitingForDC;
     cMessage *dutyCycleTimer;
     cMessage *beaconPeriod;
-//    cMessage *updateISLDistance;
 
     virtual void initialize(int stage) override;
     virtual void finish() override;
-    //virtual InterfaceEntry *createInterfaceEntry();
+
     virtual void configureNetworkInterface() override;
     long GW_forwardedDown;
     long GW_droppedDC;
@@ -59,19 +58,16 @@ public:
 
     void sendPacketBack(Packet *receivedFrame);
     void sendBeacon();
-    //void sendAtNextPingSlot(Packet *pkt);
-    //void distanceCalculation(int devId); //Coord pos
-    void createFakeLoRaMacFrame();
     virtual MacAddress getAddress();
 
 protected:
-    //int satelliteID;
+
     int outGate = -1;
     MacAddress address;
-    //UdpSocket socket;
+
     int lastSentMeasurement;
     int beaconTimer;
-    //int updateISLDistanceInterval;
+
     int pingNumber;
     IRadio *radio = nullptr;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;

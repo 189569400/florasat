@@ -36,7 +36,7 @@
 
 #include <string.h>
 //#include <omnetpp.h>
-#include "ISLChannel.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -73,14 +73,14 @@ void ISLPacketForwarder::initialize(int stage) {
 }
 
 void ISLPacketForwarder::startUDP() {
-    EV << "Wywalamy sie tutaj" << endl;
+    EV << "We are breaking out here" << endl;
     socket.setOutputGate(gate("socketOut"));
     const char *localAddress = par("localAddress");
     socket.bind(
             *localAddress ?
                     L3AddressResolver().resolve(localAddress) : L3Address(),
             localPort);
-    EV << "Dojechalismy za pierwszy resolv" << endl;
+    EV << "we arrived behind the first resolv" << endl;
     // TODO: is this required?
     //setSocketOptions();
 
@@ -90,18 +90,18 @@ void ISLPacketForwarder::startUDP() {
 
     // Create UDP sockets to multiple destination addresses (network servers)
     while ((token = tokenizer.nextToken()) != nullptr) {
-        EV << "Wchodze w petle" << endl;
+        EV << "into the loop" << endl;
         EV << token << endl;
         L3Address result;
         L3AddressResolver().tryResolve(token, result);
-        EV << "Wychodze z petli" << endl;
+        EV << "out of the loop" << endl;
         if (result.isUnspecified())
             EV_ERROR << "cannot resolve destination address: " << token << endl;
         else
             EV << "Got destination address: " << token << endl;
         destAddresses.push_back(result);
     }
-    EV << "Dojechalismy do konca" << endl;
+    EV << "We've made it to the end" << endl;
 }
 
 void ISLPacketForwarder::handleMessage(cMessage *msg) {

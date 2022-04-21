@@ -13,19 +13,14 @@ namespace flora{
 
 using namespace omnetpp;
 
-
 class SatPart : public cSimpleModule
 {
 public:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
     int distance;
-  //protected:
-    // The following redefined virtual function holds the algorithm.
-    //virtual void handleMessage(cMessage *msg);
 };
+
 }
-
-
 
 #endif /* LORA_ISLCHANNEL_H_ */

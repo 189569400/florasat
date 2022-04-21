@@ -25,7 +25,7 @@ import flora.LoRa.LoRaGWNic;
 import flora.LoRaApp.SimpleLoRaApp;
 import flora.LoRa.PacketForwarder;
 import flora.LoRa.ISLPacketForwarder;
-//import flora.LoRa.SatToSatAntenna;
+import flora.satellite.PacketHandler;
 
 import inet.linklayer.contract.IWiredInterface;
 import inet.applications.contract.IApp;
@@ -108,33 +108,35 @@ module LoRaGW like INetworkNode
             parameters:
                 @display("p=71,300");
         }
+        
 
     connections allowunconnected:
+        
+        // direct LoRa packet to and from the Nic and the PF
+        LoRaGWNic.upperLayerIn  <-- packetForwarder.lowerLayerOut;
+        LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
         
         //connection between the ISLPacketForwarder and PacketForwarder
         packetForwarder.loRaPart <--> islPacketForwarder.satPart;
 
 		//internal connection needed for the simulator
-        islPacketForwarder.down1 <--> down;
+        islPacketForwarder.down1  <--> down;
         islPacketForwarder.right1 <--> right;
-        islPacketForwarder.left1 <--> left;
-        islPacketForwarder.up1 <--> up;
-
-        packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
-        LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
-        //LoRaGWNic.right <--> right;
+        islPacketForwarder.left1  <--> left;
+        islPacketForwarder.up1    <--> up;
         
+        // prepare and send UDP packet to network server
         packetForwarder.socketOut --> udp.appIn;
-        packetForwarder.socketIn <-- udp.appOut;
+        packetForwarder.socketIn  <-- udp.appOut;
 
         udp.ipOut --> ipv4.transportIn;
-        udp.ipIn <-- ipv4.transportOut;
+        udp.ipIn  <-- ipv4.transportOut;
         
-        ipv4.ifOut --> md.in++; // IP sends datagrams
-        ipv4.ifIn <-- md.out++; // IP receives datagrams
+        ipv4.ifOut --> md.in++;  // IP sends datagrams
+        ipv4.ifIn  <-- md.out++; // IP receives datagrams
         
         md.out++ --> eth.upperLayerIn;
-        md.in++ <-- eth.upperLayerOut;
+        md.in++  <-- eth.upperLayerOut;
 
 		ethg <--> { @display("m=s"); } <--> eth.phys;
 

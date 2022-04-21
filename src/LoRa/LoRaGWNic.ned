@@ -31,13 +31,4 @@ module LoRaGWNic extends WirelessInterface
         radio.transmitter.headerLength = 0B;
         radio.receiver.typename = "LoRaReceiver";
         mac.typename = "LoRaGWMac";
-    gates:
-        inout left;
-        inout right;
-        inout up;
-        inout down;
-        //input lowerLayerIn;
-        //inout lowerLayerOut;
-     
-    //connections allowunconnected:   
 }

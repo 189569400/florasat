@@ -79,6 +79,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.560304363" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.paths.1817607588" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/usr/local/opt/openssl/lib"/>
+									<listOptionValue builtIn="false" value="/home/diego/Diego/AGORA/omnetprojects/leosatellites"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.796536363" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -90,7 +91,6 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="org.omnetpp.cdt.gnu.config.release.796292328.1139747327" name="LoRaClass.h" rcbsApplicability="disable" resourcePath="src/LoRa/LoRaClass.h" toolsToInvoke=""/>
 					<fileInfo id="org.omnetpp.cdt.gnu.config.release.796292328.749355655" name="loRaNetworkTest.ini" rcbsApplicability="disable" resourcePath="simulations/SimpleLoRaNetwork.ini" toolsToInvoke=""/>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="simulations"/>

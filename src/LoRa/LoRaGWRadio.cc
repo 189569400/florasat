@@ -101,7 +101,7 @@ void LoRaGWRadio::handleUpperPacket(Packet *packet)
 //
     preamble->setChunkLength(b(16));
     packet->insertAtFront(preamble);
-    EV << "Wysylam " << preamble->getPower() << " " << preamble->getSpreadFactor() << endl;
+    EV << "I send " << preamble->getPower() << " " << preamble->getSpreadFactor() << endl;
 
     //if (frame->getPktType()==BEACON){
 

@@ -13,27 +13,11 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-//based on Ieee802154NarrowbandMac
+package flora.satellite;
 
-package flora.LoRa;
+import inet.linklayer.common.WirelessInterface;
 
-import inet.linklayer.csmaca.CsmaCaMac;
-
-module LoRaMac extends CsmaCaMac
+module UHFGWNic extends WirelessInterface 
 {
-    parameters:
-        string classUsed  = default("A");
-        bitrate = 250bps;
-        @class(LoRaMac);
-        
-        // Signals and Statistics
-        @signal[macDPAD];
-        @signal[macDPADOwnTraffic];
-        
-        @statistic[macDPAD](title="macDPAD"; source="macDPAD"; record=mean,max,min,vector);
-        @statistic[macDPADOwnTraffic](title="macDPADOwnTraffic"; source="macDPADOwnTraffic"; record=mean,max,min,vector);
-        
-    gates:
-        input upperMgmtIn;
-        output upperMgmtOut;
+
 }

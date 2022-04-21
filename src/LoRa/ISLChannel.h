@@ -29,8 +29,9 @@ public:
     void lookForDistance();
     int distance;
     //cMessage *timeee;
+
   //protected:
-    // The following redefined virtual function holds the algorithm.
+
     virtual void initialize(int stage) override;
     virtual void setDistance(double distance);
     //virtual void handleSelfMessage(cMessage *msg);
