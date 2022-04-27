@@ -120,7 +120,7 @@ bool ISLAckingMac::dropFrameNotForUs(Packet *packet)
 
 void ISLAckingMac::decapsulate(Packet *packet)
 {
-    /*
+
     const auto& macHeader = packet->popAtFront<AckingMacHeader>();
     auto macAddressInd = packet->addTagIfAbsent<MacAddressInd>();
     macAddressInd->setSrcAddress(macHeader->getSrc());
@@ -129,7 +129,7 @@ void ISLAckingMac::decapsulate(Packet *packet)
     auto payloadProtocol = ProtocolGroup::ethertype.getProtocol(macHeader->getNetworkProtocol());
     packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(payloadProtocol);
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(payloadProtocol);
-    */
+
 }
 
 void ISLAckingMac::handleUpperPacket(Packet *packet)
@@ -161,7 +161,7 @@ void ISLAckingMac::handleLowerPacket(Packet *packet)
     }
 
     // decapsulate and attach control info
-    // decapsulate(packet);
+    //decapsulate(packet);
     EV << "Passing up contained packet '" << packet->getName() << "' to higher layer\n";
     sendUp(packet);
 }

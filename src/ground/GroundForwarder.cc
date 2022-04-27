@@ -45,7 +45,7 @@ void GroundForwarder::startUDP()
     cStringTokenizer tokenizer(destAddrs);
     while ((token = tokenizer.nextToken()) != nullptr) {
         L3Address result;
-        //L3AddressResolver().tryResolve(token, result);
+        L3AddressResolver().tryResolve(token, result);
 
         if (result.isUnspecified())
             EV_ERROR << "cannot resolve destination address: " << token << endl;

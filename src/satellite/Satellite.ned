@@ -16,6 +16,7 @@
 package flora.satellite;
 
 import inet.node.inet.INetworkNode;
+import inet.networklayer.common.InterfaceTable;
 
 import leosatellites.mobility.NoradA;
 import leosatellites.mobility.SatelliteMobility;
@@ -47,6 +48,10 @@ module Satellite like INetworkNode
 
         LoRaGWNic: LoRaGWNic {
             @display("p=61,131");
+        }
+        
+        interfaceTable: InterfaceTable {
+            @display("p=135.36,69.936005");
         }
 
         ISLNic: ISLAckingWirelessInterface {
