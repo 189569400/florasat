@@ -21,7 +21,7 @@ import flora.satellite.Satellite;
 network NewFLoRaSatNetwork
 {
     parameters:
-        int nrOfND = default(1);
+        int nrOfNodes = default(1);
         int nrOfGW = default(1);
         int nrOfGS = default(1);
         int networkSizeX = default(70000);
@@ -39,13 +39,13 @@ network NewFLoRaSatNetwork
         }
 
     submodules:
-        loRaNodes[nrOfND]: LoRaNode {
+        loRaNodes[nrOfNodes]: LoRaNode {
             @display("p=8667.067,10755.518;is=vs");
         }
         loRaGW[nrOfGW]: Satellite {
             @display("p=8667.067,7205.1523;i=satellit_blue");
         }
-        loRaGS[nrOfGS]: GroundStation {
+        groundStation[nrOfGS]: GroundStation {
             parameters:
                 @display("p=9711.292,9015.143;i=device/receiverdish");
         }
@@ -54,9 +54,7 @@ network NewFLoRaSatNetwork
             @display("p=1670.76,6021.6973");
         }
         ISLMedium: UnitDiskRadioMedium {
-            //radioMedium: ApskScalarRadioMedium {
             parameters:
-                //numChannels = 2;
                 @display("p=1670.76,8040.532;i=misc/sun");
         }
 
@@ -81,16 +79,16 @@ network NewFLoRaSatNetwork
             @display("p=1670.76,1183.455");
         }
         
-        // packetHandler: PacketHandler
-        
         
     connections allowunconnected:
 
-		// Network Server, Ground Station, Satellite 15
+		// Network Server in  Ground Station
         networkServer.ethg++ <--> Eth1G <--> nsRouter.ethg++;
         nsRouter.pppg++ <--> Eth1G <--> internetCloud.pppg++;
         internetCloud.pppg++ <--> DatarateChannel2 <--> gwRouter.pppg++;
-        gwRouter.ethg++ <--> DatarateChannel2 <--> loRaGW[15].ethg;
-
+        gwRouter.ethg++ <--> DatarateChannel2 <--> groundStation[0].ethg;
+        
+        // GroundStation[0] - Satellite[15] link
+        groundStation[0].satelliteLink  <--> DatarateChannel2 <--> loRaGW[nrOfGW-1].groundLink;
 }
 

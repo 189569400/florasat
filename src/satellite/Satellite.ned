@@ -28,68 +28,47 @@ import flora.satellite.ISLNic;
 module Satellite like INetworkNode
 {
     parameters:
-        int numEthInterfaces = default(0);
-        int numWlanInterfaces = 3;
-    
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
+        *.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
+        *.energySourceModule = default(exists(energyStorage) ? absPath(".energyStorage") : "");
+        @display("bgb=367,206");
+        @networkNode();
     gates:
-        inout ethg @labels(EtherFrame-conn) @allowUnconnected;
-        input radioIn[numWlanInterfaces] @directIn;
-        
+        inout groundLink;
+
     submodules:
         mobility: SatelliteMobility {
-            @display("p=71,158");
+            @display("p=46,40");
         }
-        
+
         NoradModule: NoradA {
-            @display("p=71,300");
+            @display("p=136,40");
         }
-        
+
         LoRaGWNic: LoRaGWNic {
-            @display("p=202,345");
+            @display("p=61,131");
         }
-        
-        ISLNic : ISLNic {
+
+        ISLNic: ISLAckingWirelessInterface {
+            @display("p=318,131");
         }
-        
+
         packetHandler: PacketHandler {
+            @display("p=186,131");
         }
-        
+
     connections allowunconnected:
-        // direct LoRa packet to and from the Nic and the PacketHandler
-        LoRaGWNic.upperLayerIn  <-- packetHandler.lowerLayerLoRaOut;
+        // LoRa packet to and from the LoRaGWNic and the PacketHandler
+        LoRaGWNic.upperLayerIn <-- packetHandler.lowerLayerLoRaOut;
         LoRaGWNic.upperLayerOut --> packetHandler.lowerLayerLoRaIn;
-        
-        //connection between the ISLPacketForwarder and PacketForwarder
-        packetForwarder.loRaPart <--> islPacketForwarder.satPart;
 
-		//internal connection needed for the simulator
-        islPacketForwarder.down1  <--> down;
-        islPacketForwarder.right1 <--> right;
-        islPacketForwarder.left1  <--> left;
-        islPacketForwarder.up1    <--> up;
-        
-        //internal connection needed for the simulator
-        // packetHandler.islLeft  <--> left;
-        // packetHandler.islRight <--> right;
-        // packetHandler.islDown  <--> down;
-        // packetHandler.islUp    <--> up;
-        
-        // prepare and send UDP packet to network server
-        packetForwarder.socketOut --> udp.appIn;
-        packetForwarder.socketIn  <-- udp.appOut;
+        // packet to and from the ISLNic and the PacketHandler
+        ISLNic.upperLayerIn <-- packetHandler.lowerLayerISLOut;
+        ISLNic.upperLayerOut --> packetHandler.lowerLayerISLIn;
 
-        udp.ipOut --> ipv4.transportIn;
-        udp.ipIn  <-- ipv4.transportOut;
-        
-        ipv4.ifOut --> md.in++;  // IP sends datagrams
-        ipv4.ifIn  <-- md.out++; // IP receives datagrams
-        
-        md.out++ --> eth.upperLayerIn;
-        md.in++  <-- eth.upperLayerOut;
-
-		ethg <--> { @display("m=s"); } <--> eth.phys;
-        
-       
+		// packet to and from the GroundStation and the PacketHandler
+		// uhf radio module to be implemented
+		groundLink  <--> packetHandler.lowerLayerGS;
 }
 
 

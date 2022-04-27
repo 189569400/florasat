@@ -95,13 +95,11 @@ void PacketHandler::handleMessage(cMessage *msg)
         if (groundStationAvailable())
             forwardToGround(pkt);
         else
-        {
             forwardToSatellite(pkt);
-        }
     }
 
     // message from GroundStation
-    if (msg->arrivedOn("lowerLayerGSIn"))
+    if (msg->arrivedOn("lowerLayerGS$i"))
     {
         EV << "Received GroundStation packet" << endl;
         SetupRoute(pkt, DOWNLINK);
@@ -109,13 +107,11 @@ void PacketHandler::handleMessage(cMessage *msg)
         if (loraNodeAvailable())
             forwardToNode(pkt);
         else
-        {
             forwardToSatellite(pkt);
-        }
     }
 
     // message from another satellite
-    else
+    if (msg->arrivedOn("lowerLayerISLIn"))
     {
         pkt->trimFront();
         auto frame = pkt->removeAtFront<LoRaMacFrame>();
@@ -131,8 +127,8 @@ void PacketHandler::handleMessage(cMessage *msg)
         if (macFrameType == UPLINK)
         {
             // why only if is UPLINK?
-            if (frame->getReceiverAddress() == MacAddress::BROADCAST_ADDRESS)
-                processLoraMACPacket(pkt);
+            //if (frame->getReceiverAddress() == MacAddress::BROADCAST_ADDRESS)
+            //    processLoraMACPacket(pkt);
             // this part above
 
             if (groundStationAvailable())
@@ -172,15 +168,16 @@ void PacketHandler::processLoraMACPacket(Packet *pk)
     pk->insertAtFront(frame);
 
     //bool exist = false;
-    EV << frame->getTransmitterAddress() << endl;
+    //EV << frame->getTransmitterAddress() << endl;
     //for (std::vector<nodeEntry>::iterator it = knownNodes.begin() ; it != knownNodes.end(); ++it)
 
     // FIXME : Identify network server message is destined for.
-    L3Address destAddr = destAddresses[0];
-    if (pk->getControlInfo())
-       delete pk->removeControlInfo();
+    //L3Address destAddr = destAddresses[0];
+    //if (pk->getControlInfo())
+    //   delete pk->removeControlInfo();
 
     //FIX THIS SOCKETS ARE NOT SUPPORTED
+
     //socket.sendTo(pk, destAddr, destPort);
 }
 
@@ -236,10 +233,7 @@ void PacketHandler::SetupRoute(Packet *pkt, int macFrameType)
 bool PacketHandler::groundStationAvailable()
 {
     // only sat 15 has ground station connection
-    if (satIndex == 15)
-        return true;
-
-    return false;
+    return satIndex == 15;
 }
 
 bool PacketHandler::loraNodeAvailable()
@@ -249,7 +243,7 @@ bool PacketHandler::loraNodeAvailable()
 
 void PacketHandler::forwardToGround(Packet *pkt)
 {
-    send(pkt, "lowerLayerGSOut");
+    send(pkt, "lowerLayerGS$o");
 }
 
 void PacketHandler::forwardToNode(Packet *pkt)
@@ -260,75 +254,42 @@ void PacketHandler::forwardToNode(Packet *pkt)
 void PacketHandler::forwardToSatellite(Packet *pkt)
 {
     const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
+    int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int macFrameType = frame->getPktType();
 
-    // forward to up or right gates
-    if (macFrameType == UPLINK)
+    cGate *islOut = gate("lowerLayerISLOut");
+
+    // message already hopped in this satellite, forward packet
+    if (sourceSat == satIndex)
+        send(pkt, islOut);
+
+    // if message comes from leftsat or downsat
+    else if (sourceSat == satLeftIndex || sourceSat == satDownIndex)
     {
-        //cGate *satRightGate = getParentModule()->gate("right$o");
-        //cGate *satUpGate = getParentModule()->gate("up$o");
+        // forward packet if it is uplink
+        if (macFrameType == UPLINK)
+            send(pkt, islOut);
 
-        cGate *islRightGate = gate("islRight$o");
-        cGate *islUpGate = gate("islUp$o");
-
-        if (satRightIndex>=0)
-        {
-            cDatarateChannel *rightChannel = check_and_cast<cDatarateChannel*>
-                                             (islRightGate->getTransmissionChannel());
-            if (rightChannel->isBusy())
-                scheduleAt(rightChannel->getTransmissionFinishTime(), pkt);
-            else
-                send(pkt, islRightGate);
-        }
-
-        else if (satUpIndex>=0)
-        {
-            cDatarateChannel *upChannel = check_and_cast<cDatarateChannel*>
-                                          (islUpGate->getTransmissionChannel());
-            if (upChannel->isBusy())
-                scheduleAt(upChannel->getTransmissionFinishTime(), pkt);
-            else
-                send(pkt, islUpGate);
-        }
-
+        // if packet is downlink delete it
         else
-            EV_ERROR << "Satellite 15 cannot reach ground station" << endl;
-
+            delete pkt;
     }
 
-
-    // forward to down or left gates
-    else if (macFrameType == DOWNLINK)
+    // if message comes from rightsat or upsat
+    else if (sourceSat == satRightIndex || sourceSat == satUpIndex)
     {
-        //cGate *satLeftGate = getParentModule()->gate("left$o");
-        //cGate *satDownGate = getParentModule()->gate("down$o");
+        // forward packet if it is downlink
+        if (macFrameType == DOWNLINK)
+            send(pkt, islOut);
 
-        cGate *islLeftGate = gate("islLeft$o");
-        cGate *islDownGate = gate("islDown$o");
-
-        if (satLeftIndex>=0)
-        {
-            cDatarateChannel *leftChannel = check_and_cast<cDatarateChannel*>
-                                            (islLeftGate->getTransmissionChannel());
-            if (leftChannel->isBusy())
-                scheduleAt(leftChannel->getTransmissionFinishTime(), pkt);
-            else
-                send(pkt, islLeftGate);
-        }
-
-        else if (satDownIndex>=0)
-        {
-            cDatarateChannel *downChannel = check_and_cast<cDatarateChannel*>
-                                            (islDownGate->getTransmissionChannel());
-            if (downChannel->isBusy())
-                scheduleAt(downChannel->getTransmissionFinishTime(), pkt);
-            else
-                send(pkt, islDownGate);
-        }
-
+        // if packet is uplink delete it
         else
-            EV_ERROR << "Satellite 0 cannot reach lora node" << endl;
+            delete pkt;
     }
+
+    // in other case the packet was sent by a further satellite
+    else
+        delete pkt;
 
 }
 

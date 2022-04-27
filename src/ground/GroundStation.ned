@@ -26,6 +26,8 @@ import inet.linklayer.loopback.LoopbackInterface;
 import inet.linklayer.contract.IWiredInterface;
 import leosatellites.mobility.GroundStationMobility;
 
+import flora.ground.GroundForwarder;
+
 
 // The GroundStation module realys the communications between the LoRaGW (satellites)
 // and the LoRa Network Server. The communication link GroundStation and satellite
@@ -57,6 +59,7 @@ module GroundStation like INetworkNode //WirelessHost
         
     gates:
         inout ethg @labels(EtherFrame-conn) @allowUnconnected;
+        inout satelliteLink;
 
 	submodules:
 	    
@@ -77,6 +80,9 @@ module GroundStation like INetworkNode //WirelessHost
                 @display("p=71,235;is=s");
         }
         
+        groundForwarder: GroundForwarder {
+        }
+        
         udp: <default(firstAvailableOrEmpty("Udp"))> like IUdp if hasUdp {
             parameters:
                 @display("p=321,185");
@@ -94,5 +100,22 @@ module GroundStation like INetworkNode //WirelessHost
         }
         
     connections allowunconnected:
+        
+        satelliteLink <--> groundForwarder.satLink;
+        
+        // prepare and send UDP packet to network server
+        groundForwarder.socketOut --> udp.appIn;
+        groundForwarder.socketIn <-- udp.appOut;
+
+        udp.ipOut --> ipv4.transportIn;
+        udp.ipIn <-- ipv4.transportOut;
+
+        ipv4.ifOut --> md.in++;  // IP sends datagrams
+        ipv4.ifIn <-- md.out++; // IP receives datagrams
+
+        md.out++ --> eth.upperLayerIn;
+        md.in++ <-- eth.upperLayerOut;
+        
+        ethg <--> { @display("m=s"); } <--> eth.phys;
         
 }

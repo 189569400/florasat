@@ -45,7 +45,7 @@ module ISLAckingMac extends MacProtocolBase like IMacProtocol
         bool useAck = default(false);
         double ackTimeout @unit(s) = default(100ms);
 
-        @class(AckingMac);
+        @class(ISLAckingMac);
         @signal[linkBroken](type=inet::Packet);
         @statistic[linkBroken](title="link break"; source=linkBroken; record=count; interpolationmode=none);
         @statistic[passedUpPk](title="packets passed to higher layer"; source=packetSentToUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);

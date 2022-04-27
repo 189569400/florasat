@@ -19,6 +19,7 @@ import inet.queueing.contract.IPacketQueue;
 import inet.linklayer.contract.IWirelessInterface;
 import inet.networklayer.common.NetworkInterface;
 import inet.physicallayer.wireless.common.contract.packetlevel.IRadio;
+import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
 
 //
 // This module implements a highly abstracted wireless network interface (NIC)
@@ -42,6 +43,9 @@ module ISLAckingWirelessInterface extends NetworkInterface like IWirelessInterfa
         *.interfaceTableModule = default(absPath(this.interfaceTableModule));
         *.energySourceModule = default(absPath(this.energySourceModule));
         **.bitrate = this.bitrate;
+        radio.antenna.mobilityModule = "^.^.^.mobility";
+        radio.transmitter.headerLength = 4B;
+        radio.radioMediumModule = "^.^.^.ISLMedium";
     gates:
         input upperLayerIn;
         output upperLayerOut;

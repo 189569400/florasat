@@ -37,21 +37,16 @@ simple PacketHandler
         string localAddress = default("");
         bool globalGrid = default(false);
 
-    gates:
+    gates:        
         // ISL gates
-        inout islUp @labels(ISLUpGate);
-        inout islDown @labels(ISLDownGate);
-        inout islLeft @labels(ISLLeftGate);
-        inout islRight @labels(ISLRightGate);
+        input lowerLayerISLIn @labels(ISLgates/up);
+        output lowerLayerISLOut @labels(ISLgates/down);
         
         // LoRa gates
         input lowerLayerLoRaIn @labels(LoRaGate/up);
         output lowerLayerLoRaOut @labels(LoRaGate/down);
         
         // GroundStation gates
-        input lowerLayerGSIn @labels(GroundStationGate/up);
-        output lowerLayerGSOut @labels(GroundStationGate/down);
-        
-    
+        inout lowerLayerGS @labels(GroundStationGate);
 }
 

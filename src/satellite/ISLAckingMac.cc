@@ -134,6 +134,11 @@ void ISLAckingMac::decapsulate(Packet *packet)
 
 void ISLAckingMac::handleUpperPacket(Packet *packet)
 {
+    const auto &frame = packet->peekAtFront<LoRaMacFrame>();
+    auto tag = packet->addTagIfAbsent<MacAddressReq>();
+    tag->setDestAddress(frame->getReceiverAddress());
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
+
     EV << "Received " << packet << " for transmission\n";
     txQueue->enqueuePacket(packet);
     if (currentTxFrame || radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_TRANSMITTING)
