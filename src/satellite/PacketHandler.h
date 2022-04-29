@@ -8,7 +8,6 @@
 #ifndef SATELLITE_PACKETHANDLER_H_
 #define SATELLITE_PACKETHANDLER_H_
 
-#include <omnetpp.h>
 #include <vector>
 #include "inet/common/INETDefs.h"
 #include "inet/applications/base/ApplicationBase.h"
@@ -67,6 +66,9 @@ protected:
 
     // checks if there lora sink node link is available at the moment
     bool loraNodeAvailable();
+
+    // insert sat index and simulation time stamp in frame route
+    void insertSatinRoute(Packet *pkt);
 
     // forwards message to the closest ground station
     void forwardToGround(Packet *pkt);

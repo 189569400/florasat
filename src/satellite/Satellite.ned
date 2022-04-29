@@ -22,44 +22,44 @@ import leosatellites.mobility.NoradA;
 import leosatellites.mobility.SatelliteMobility;
 
 import flora.LoRa.LoRaGWNic;
-import flora.LoRaApp.SimpleLoRaApp;
 import flora.satellite.PacketHandler;
-import flora.satellite.ISLNic;
+import flora.satellite.ISLAckingWirelessInterface;
 
 module Satellite like INetworkNode
 {
     parameters:
+        @networkNode();
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
         *.energySourceModule = default(exists(energyStorage) ? absPath(".energyStorage") : "");
-        @display("bgb=367,206");
-        @networkNode();
+        @display("bgb=363,251");
+
     gates:
         inout groundLink;
 
     submodules:
         mobility: SatelliteMobility {
-            @display("p=46,40");
+            @display("p=54,56");
         }
 
         NoradModule: NoradA {
-            @display("p=136,40");
+            @display("p=153,56");
         }
 
         LoRaGWNic: LoRaGWNic {
-            @display("p=61,131");
+            @display("p=54,161");
         }
-        
+
         interfaceTable: InterfaceTable {
-            @display("p=135.36,69.936005");
+            @display("p=270,56");
         }
 
         ISLNic: ISLAckingWirelessInterface {
-            @display("p=318,131");
+            @display("p=301,161");
         }
 
         packetHandler: PacketHandler {
-            @display("p=186,131");
+            @display("p=181,161");
         }
 
     connections allowunconnected:
@@ -71,9 +71,9 @@ module Satellite like INetworkNode
         ISLNic.upperLayerIn <-- packetHandler.lowerLayerISLOut;
         ISLNic.upperLayerOut --> packetHandler.lowerLayerISLIn;
 
-		// packet to and from the GroundStation and the PacketHandler
-		// uhf radio module to be implemented
-		groundLink  <--> packetHandler.lowerLayerGS;
+        // packet to and from the GroundStation and the PacketHandler
+        // uhf radio module to be implemented
+        groundLink <--> packetHandler.lowerLayerGS;
 }
 
 

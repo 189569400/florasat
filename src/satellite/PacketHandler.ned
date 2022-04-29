@@ -15,6 +15,8 @@
 
 package flora.satellite;
 
+import inet.applications.contract.IApp;
+
 //
 // This module will handle packet coming from 3 interfaces:
 // LoRaGWNic for communication with LoRa Nodes on ground

@@ -47,8 +47,6 @@ module GroundStation like INetworkNode //WirelessHost
 
         int numEthInterfaces = default(0);  // minimum number of ethernet interfaces
         int numWlanInterfaces = 1;
-        double retardUp @mutable @unit(s) = default(1s);
-        double retardRight @mutable @unit(s) = default(1s);
 
         bool hasIpv4 = default(true);
         int numUdpApps = default(0);
@@ -56,22 +54,22 @@ module GroundStation like INetworkNode //WirelessHost
         string udpType = default(firstAvailableOrEmpty("UDP"));
         string networkLayerType = default("Ipv4NetworkLayer");
         string routingTableType = default("Ipv4RoutingTable");
-        
+
     gates:
         inout ethg @labels(EtherFrame-conn) @allowUnconnected;
         inout satelliteLink;
 
-	submodules:
-	    
+    submodules:
+
 	    // to be added the UHF submodule for communication with satellites
 	    // the UHF will likely implement a satellite protocol rather than a simeple one
 	    // Cubesat Satellite Protocol CSP is a tentative option but it requires
 	    // integration into the omnet++ environment
-	    
+
         mobility: GroundStationMobility {
             @display("p=71,158");
         }
-        
+
         interfaceTable: InterfaceTable {
             @display("p=71,77");
         }
@@ -79,10 +77,11 @@ module GroundStation like INetworkNode //WirelessHost
             parameters:
                 @display("p=71,235;is=s");
         }
-        
+
         groundForwarder: GroundForwarder {
+            @display("p=200,185");
         }
-        
+
         udp: <default(firstAvailableOrEmpty("Udp"))> like IUdp if hasUdp {
             parameters:
                 @display("p=321,185");
@@ -98,11 +97,11 @@ module GroundStation like INetworkNode //WirelessHost
             parameters:
                 @display("p=403,345,row,60;q=txQueue");
         }
-        
+
     connections allowunconnected:
-        
+
         satelliteLink <--> groundForwarder.satLink;
-        
+
         // prepare and send UDP packet to network server
         groundForwarder.socketOut --> udp.appIn;
         groundForwarder.socketIn <-- udp.appOut;
@@ -115,7 +114,7 @@ module GroundStation like INetworkNode //WirelessHost
 
         md.out++ --> eth.upperLayerIn;
         md.in++ <-- eth.upperLayerOut;
-        
+
         ethg <--> { @display("m=s"); } <--> eth.phys;
-        
+
 }

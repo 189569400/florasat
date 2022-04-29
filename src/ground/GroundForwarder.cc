@@ -69,16 +69,6 @@ void GroundForwarder::handleMessage(cMessage *msg)
 
 void GroundForwarder::processLoraMACPacket(Packet *pk)
 {
-    pk->trimFront();
-    auto frame = pk->removeAtFront<LoRaMacFrame>();
-    auto snirInd = pk->getTag<SnirInd>();
-    auto signalPowerInd = pk->getTag<SignalPowerInd>();
-    W w_rssi = signalPowerInd->getPower();
-    double rssi = w_rssi.get() * 1000;
-    frame->setRSSI(math::mW2dBmW(rssi));
-    frame->setSNIR(snirInd->getMinimumSnir());
-    pk->insertAtFront(frame);
-
     // FIXME : Identify network server message is destined for.
     L3Address destAddr = destAddresses[0];
     if (pk->getControlInfo())
