@@ -252,10 +252,12 @@ void PacketHandler::forwardToGround(Packet *pkt)
 
     processLoraMACPacket(pkt);
 
+    /*
     std::cout << "msg type " << macFrameType << ", num hops: " << numHops << ", local sat " << satIndex << ", previous hops: " << endl ;
     for(int l=0; l<maxHops; l++)
         std::cout << frame->getRoute(l) << " at time " << frame->getTimestamps(l) << endl;
     std::cout << endl;
+    */
 
     send(pkt, "lowerLayerGS$o");
 }
@@ -278,13 +280,11 @@ void PacketHandler::forwardToSatellite(Packet *pkt)
     frame->setTimestamps(numHops, simTime());
     pkt->insertAtFront(frame);
 
-    cGate *islOut = gate("lowerLayerISLOut");
-
     // if message comes from leftsat or downsat and is uplink or
     // if message comes from rightsat or upsat and is downlink
     if (((sourceSat == satLeftIndex || sourceSat == satDownIndex) && macFrameType == UPLINK) ||
             ((sourceSat == satRightIndex || sourceSat == satUpIndex) && macFrameType == DOWNLINK))
-        send(pkt, islOut);
+        send(pkt, gate("lowerLayerISLOut"));
 
     // in other case the packet was sent by a further satellite
     else
