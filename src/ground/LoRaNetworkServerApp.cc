@@ -294,7 +294,6 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         const auto &frameAux = receivedPackets[i].rcvdPacket->peekAtFront<LoRaMacFrame>();
         if(frameAux->getTransmitterAddress() == frame->getTransmitterAddress() && frameAux->getSequenceNumber() == frame->getSequenceNumber())
         {
-            std::cout << "here0" << endl;
             packetNumber = i;
             nodeNumber = frame->getTransmitterAddress().getInt();
             if (numReceivedPerNode.count(nodeNumber-1)>0)
@@ -304,9 +303,9 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
             for(uint j=0;j<receivedPackets[i].possibleGateways.size();j++)
             {
+                //std::cout << "SNIRinGW: " << SNIRinGW << ", possibleGWSNIR: " << std::get<1>(receivedPackets[i].possibleGateways[j]) << endl;
                 if(SNIRinGW < std::get<1>(receivedPackets[i].possibleGateways[j]))
                 {
-                    std::cout << "here1" << endl;
                     RSSIinGW = std::get<2>(receivedPackets[i].possibleGateways[j]);
                     SNIRinGW = std::get<1>(receivedPackets[i].possibleGateways[j]);
                     pickedGateway = std::get<0>(receivedPackets[i].possibleGateways[j]);
@@ -315,8 +314,55 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         }
     }
 
-    std::cout << "here2" << endl;
     emit(LoRa_ServerPacketReceived, true);
+    if(WorkWithAck)
+    {
+        simtime_t endTime= 0;
+        for (size_t i = 0; i < frame->getRouteArraySize(); i++)
+        {
+            if (frame->getTimestamps(i) > 0)
+                endTime = frame->getTimestamps(i);
+        }
+
+        simtime_t nodesattime =  frame->getTimestamps(0) - frame->getOriginTime();
+        simtime_t satgroundtime =  frame->getGroundTime() - endTime;
+        simtime_t sattime = endTime - frame->getTimestamps(0);
+
+        double node2satTime = nodesattime.dbl();
+        double sat2groundTime = satgroundtime.dbl();
+        double islTime = sattime.dbl();
+
+        EV << "node to satellite time: " << node2satTime << endl;
+        EV << "isl time: " << islTime << endl;
+        EV << "satellite to ground time: " << sat2groundTime << endl;
+
+        //ACKNOWLEDGMENT MESSAGE SENDING
+        auto mgmtPacket = makeShared<LoRaAppPacket>();
+        mgmtPacket->setMsgType(ACK);
+        auto frameToSend = makeShared<LoRaMacFrame>();
+        frameToSend->setChunkLength(B(par("headerLength").intValue()));
+
+        //LoRaMacFrame *frameToSend = new LoRaMacFrame("ADRPacket");
+        //frameToSend->encapsulate(mgmtPacket);
+        frameToSend->setReceiverAddress(frame->getTransmitterAddress());
+        //FIXME: What value to set for LoRa TP
+        //frameToSend->setLoRaTP(pkt->getLoRaTP());
+        //frameToSend->setLoRaTP(frame->getLoRaTP());!!!!
+        frameToSend->setLoRaTP(math::dBmW2mW(14));
+        frameToSend->setLoRaCF(frame->getLoRaCF());
+        frameToSend->setLoRaSF(frame->getLoRaSF());
+        frameToSend->setLoRaBW(frame->getLoRaBW());
+        frameToSend->setNumHop(frame->getNumHop());
+
+        auto pktAux = new Packet("HI I AM AN ACK MESSAGE !");
+        mgmtPacket->setChunkLength(B(par("headerLength").intValue()));
+
+        pktAux->insertAtFront(mgmtPacket);
+        pktAux->insertAtFront(frameToSend);
+        //socket.sendTo(pktAux, pickedGateway, destPort);
+
+    }
+
     if (simTime() >= getSimulation()->getWarmupPeriod())
         counterUniqueReceivedPackets++;
     receivedRSSI.collect(frame->getRSSI());

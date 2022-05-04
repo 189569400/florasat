@@ -24,11 +24,7 @@ network NewFLoRaSatNetwork
         int nrOfNodes = default(1);
         int nrOfGW = default(1);
         int nrOfGS = default(1);
-        int networkSizeX = default(70000);
-        int networkSizeY = default(70000);
-        int networkSizeZ = default(70000);
-
-        @display("bgb=27842.156,15554.88;bgi=background_earth,s");
+        @display("bgb=2160,1080;bgi=background_earth,s");
 
     types:
         channel DatarateChannel2 extends ned.DatarateChannel
@@ -40,46 +36,40 @@ network NewFLoRaSatNetwork
 
     submodules:
         loRaNodes[nrOfNodes]: LoRaNode {
-            @display("p=8667.067,10755.518;is=vs");
+            @display("p=695.185,733.055;is=vs");
         }
         loRaGW[nrOfGW]: Satellite {
-            @display("p=8667.067,7205.1523;i=satellit_blue");
+            @display("p=784.45,624.855;i=satellit_blue");
         }
         groundStation[nrOfGS]: GroundStation {
-            parameters:
-                @display("p=9711.292,9015.143;i=device/receiverdish");
+            @display("p=692.48,481.49;i=device/receiverdish");
         }
-
         LoRaMedium: LoRaMedium {
-            @display("p=1670.76,6021.6973");
+            @display("p=124.43,297.55");
         }
         ISLMedium: UnitDiskRadioMedium {
-            parameters:
-                @display("p=1670.76,8040.532;i=misc/sun");
+            @display("p=124.43,481.49;i=misc/sun");
         }
-
         networkServer: StandardHost {
-            @display("p=14228.607,8633.088;is=s");
+            @display("p=1117.165,733.055;is=s");
         }
         configurator: Ipv4NetworkConfigurator {
             parameters:
                 assignDisjunctSubnetAddresses = false;
-                @display("p=1670.76,3724.4026");
+                @display("p=124.43,102.79");
         }
         internetCloud: InternetCloud {
-            @display("p=14228.607,5395.6797;is=s");
+            @display("p=1117.165,462.555;is=s");
         }
         gwRouter: Router {
-            @display("p=14228.607,3756.992;is=s");
+            @display("p=1117.165,343.535;is=s");
         }
         nsRouter: Router {
-            @display("p=14228.607,6914.464;is=s");
+            @display("p=1117.165,586.985;is=s");
         }
         visualizer: IntegratedVisualizer {
-            @display("p=1670.76,1183.455");
-        }
-        
-        
+        	@display("p=124.43,675.0");
+        };
     connections allowunconnected:
 
 		// Network Server in  Ground Station
@@ -87,8 +77,8 @@ network NewFLoRaSatNetwork
         nsRouter.pppg++ <--> Eth1G <--> internetCloud.pppg++;
         internetCloud.pppg++ <--> DatarateChannel2 <--> gwRouter.pppg++;
         gwRouter.ethg++ <--> DatarateChannel2 <--> groundStation[0].ethg;
-        
+
         // GroundStation[0] - Satellite[15] link
-        groundStation[0].satelliteLink  <--> DatarateChannel2 <--> loRaGW[nrOfGW-1].groundLink;
+        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[nrOfGW-1].groundLink;
 }
 

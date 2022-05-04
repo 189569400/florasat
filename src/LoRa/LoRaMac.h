@@ -127,14 +127,6 @@ class LoRaMac : public MacProtocolBase
     /** Timeout after the reception of a Data frame */
     cMessage *droppedPacket = nullptr;
 
-
-    cMessage *pingPeriod = nullptr;
-    cMessage *beaconPeriod = nullptr;
-    cMessage *endBeacon = nullptr;
-    cMessage *beaconGuardPeriod = nullptr;
-    cMessage *beaconGuardEnd = nullptr;
-    cMessage *endPingSlot = nullptr;
-
     /** End of the Delay_1 */
     cMessage *endDelay_1 = nullptr;
 
@@ -149,6 +141,14 @@ class LoRaMac : public MacProtocolBase
 
     /** Radio state change self message. Currently this is optimized away and sent directly */
     cMessage *mediumStateChange = nullptr;
+
+    cMessage *pingPeriod = nullptr;
+    cMessage *endPingSlot = nullptr;
+    cMessage *beaconPeriod = nullptr;
+    cMessage *endBeacon = nullptr;
+    cMessage *beaconGuardPeriod = nullptr;
+    cMessage *beaconGuardEnd = nullptr;
+
     //@}
 
     /** @name Statistics */
@@ -213,23 +213,25 @@ class LoRaMac : public MacProtocolBase
      * @name Utility functions
      */
     //@{
-    virtual void calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame);
-    virtual void schedulePingPeriod();
     virtual void finishCurrentTransmission();
-    virtual void beaconThings();
-    virtual void increaseBeaconTime();
-    virtual int aesEncrypt(unsigned char *message, int message_len, unsigned char *key, unsigned char *cipher);
     virtual Packet *getCurrentTransmission();
-    //virtual Packet *getCurrentReception();
 
     virtual bool isReceiving();
     virtual bool isAck(const Ptr<const LoRaMacFrame> &frame);
-    virtual bool receivedBeacon(const Ptr<const LoRaMacFrame> &frame);
     virtual bool isBroadcast(const Ptr<const LoRaMacFrame> & msg);
     virtual bool isForUs(const Ptr<const LoRaMacFrame> &msg);
 
     void turnOnReceiver(void);
     void turnOffReceiver(void);
+
+    virtual void calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame);
+    virtual void schedulePingPeriod();
+    virtual int aesEncrypt(unsigned char *message, int message_len, unsigned char *key, unsigned char *cipher);
+    virtual bool receivedBeacon(const Ptr<const LoRaMacFrame> &frame);
+    virtual void beaconThings();
+    virtual void increaseBeaconTime();
+    //virtual Packet *getCurrentReception();
+
     //@}
 };
 

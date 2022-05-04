@@ -43,7 +43,6 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
         virtual bool handleOperationStage(LifecycleOperation *operation, IDoneCallback *doneCallback) override;
 
         void handleMessageFromLowerLayer(cMessage *msg);
-        std::pair<double,double> generateUniformCircleCoordinates(double radius, double gatewayX, double gatewayY);
         void sendJoinRequest();
         void sendDownMgmtPacket();
 

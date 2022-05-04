@@ -15,40 +15,40 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "inet/common/ModuleAccess.h"
-#include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/common/UserPriority.h"
-#include "inet/linklayer/common/MacAddressTag_m.h"
-#include "inet/linklayer/csmaca/CsmaCaMac.h"
-#include "LoRaMac.h"
-#include "LoRaTagInfo_m.h"
-#include "inet/common/ProtocolTag_m.h"
-#include "inet/linklayer/common/InterfaceTag_m.h"
 #include <iostream>
 #include <cstring>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
+#include <iostream>
 #include <openssl/evp.h>
 #include <openssl/conf.h>
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
 //#include <cmath.h>
+#include "inet/common/ModuleAccess.h"
+#include "inet/linklayer/common/Ieee802Ctrl.h"
+#include "inet/linklayer/common/UserPriority.h"
+#include "inet/linklayer/common/MacAddressTag_m.h"
+#include "inet/linklayer/csmaca/CsmaCaMac.h"
+#include "inet/common/ProtocolTag_m.h"
+#include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/transportlayer/common/L4PortTag_m.h"
 #include "inet/transportlayer/contract/udp/UdpControlInfo_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/applications/base/ApplicationPacket_m.h"
-
 #include "inet/networklayer/common/L3Tools.h"
 #include "inet/networklayer/ipv4/Ipv4Header_m.h"
+
+#include "LoRaMac.h"
+#include "LoRaTagInfo_m.h"
+
 #include "NetworkServerApp.h"
 
-#include <iostream>
 using namespace std;
-
 
 namespace flora {
 
@@ -135,7 +135,10 @@ void LoRaMac::initialize(int stage)
 
         // set up internal queue
         txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
-        if (!strcmp(usedClass,"B")){
+
+        // schedule beacon when using class B
+        if (!strcmp(usedClass,"B"))
+        {
             scheduleAt(simTime() + 1, beaconPeriod);
             scheduleAt(simTime()+ 1 + beacon_reserved, endBeacon);
             isClassB = true;
@@ -156,12 +159,12 @@ void LoRaMac::initialize(int stage)
         numRetry = 0;
         numSentWithoutRetry = 0;
         numGivenUp = 0;
-        DPAD = 0;
         numCollision = 0;
         numSent = 0;
         numReceived = 0;
         numSentBroadcast = 0;
         numReceivedBroadcast = 0;
+        DPAD = 0;
 
         // initialize watches
         WATCH(fsm);
@@ -177,11 +180,14 @@ void LoRaMac::initialize(int stage)
         WATCH(numSentBroadcast);
         WATCH(numReceivedBroadcast);
     }
-    else if (stage == INITSTAGE_LINK_LAYER)
-        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
 
-    macDPAD = registerSignal("macDPAD");
-    macDPADOwnTraffic = registerSignal("macDPADOwnTraffic");
+    else if (stage == INITSTAGE_LINK_LAYER)
+    {
+        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+        macDPAD = registerSignal("macDPAD");
+        macDPADOwnTraffic = registerSignal("macDPADOwnTraffic");
+    }
+
 }
 
 void LoRaMac::finish()
@@ -269,7 +275,9 @@ void LoRaMac::handleUpperMessage(cMessage *msg)
 //    LoRaMacControlInfo *cInfo = check_and_cast<LoRaMacControlInfo *>(msg->getControlInfo());
     auto pktEncap = encapsulate(pkt);
 
-    const auto &frame = pktEncap->peekAtFront<LoRaMacFrame>();
+    auto frame = pktEncap->removeAtFront<LoRaMacFrame>();
+    frame->setOriginTime(simTime());
+    pktEncap->insertAtFront(frame);
 
     EV << "frame " << pktEncap << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
@@ -1040,7 +1048,6 @@ void LoRaMac::turnOnReceiver()
 
 void LoRaMac::turnOffReceiver()
 {
-    EV<<"i am here !!!!";
     LoRaRadio *loraRadio;
     loraRadio = check_and_cast<LoRaRadio *>(radio);
     loraRadio->setRadioMode(IRadio::RADIO_MODE_SLEEP);

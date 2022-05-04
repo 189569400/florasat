@@ -235,7 +235,6 @@ void PacketHandler::forwardToGround(Packet *pkt)
 {
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
     int sourceSat = frame->getRoute(frame->getNumHop()-1);
-    int macFrameType = frame->getPktType();
     int numHops = frame->getNumHop();
 
     frame->setNumHop(numHops + 1);

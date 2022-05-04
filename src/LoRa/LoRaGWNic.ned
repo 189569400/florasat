@@ -30,5 +30,6 @@ module LoRaGWNic extends WirelessInterface
         radio.transmitter.typename = "LoRaTransmitter";
         radio.transmitter.headerLength = 0B;
         radio.receiver.typename = "LoRaReceiver";
+        radio.radioMediumModule = "^.^.^.LoRaMedium";
         mac.typename = "LoRaGWMac";
 }

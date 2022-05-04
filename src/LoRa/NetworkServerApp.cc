@@ -506,37 +506,37 @@ void NetworkServerApp::processScheduledPacket(cMessage* selfMsg)
           //  do
         //}
         //ACKNOWLEDGMENT MESSAGE SENDING
-                    auto mgmtPacket = makeShared<LoRaAppPacket>();
-                    mgmtPacket->setMsgType(ACK);
-                    auto frameToSend = makeShared<LoRaMacFrame>();
-                    frameToSend->setChunkLength(B(par("headerLength").intValue()));
+        auto mgmtPacket = makeShared<LoRaAppPacket>();
+        mgmtPacket->setMsgType(ACK);
+        auto frameToSend = makeShared<LoRaMacFrame>();
+        frameToSend->setChunkLength(B(par("headerLength").intValue()));
 
-                      //  LoRaMacFrame *frameToSend = new LoRaMacFrame("ADRPacket");
+          //  LoRaMacFrame *frameToSend = new LoRaMacFrame("ADRPacket");
 
-                        //frameToSend->encapsulate(mgmtPacket);
-                    frameToSend->setReceiverAddress(frame->getTransmitterAddress());
-                        //FIXME: What value to set for LoRa TP
-                        //frameToSend->setLoRaTP(pkt->getLoRaTP());
-                        //frameToSend->setLoRaTP(frame->getLoRaTP());!!!!
-                    frameToSend->setLoRaTP(math::dBmW2mW(14));
-                    frameToSend->setLoRaCF(frame->getLoRaCF());
-                    frameToSend->setLoRaSF(frame->getLoRaSF());
-                    frameToSend->setLoRaBW(frame->getLoRaBW());
-                    frameToSend->setNumHop(frame->getNumHop());
-                    frameToSend->setTmpPath6(frame->getTmpPath6());
-                    frameToSend->setTmpPath5(frame->getTmpPath5());
-                    frameToSend->setTmpPath4(frame->getTmpPath4());
-                    frameToSend->setTmpPath3(frame->getTmpPath3());
-                    frameToSend->setTmpPath2(frame->getTmpPath2());
-                    frameToSend->setTmpPath1(frame->getTmpPath1());
+            //frameToSend->encapsulate(mgmtPacket);
+        frameToSend->setReceiverAddress(frame->getTransmitterAddress());
+            //FIXME: What value to set for LoRa TP
+            //frameToSend->setLoRaTP(pkt->getLoRaTP());
+            //frameToSend->setLoRaTP(frame->getLoRaTP());!!!!
+        frameToSend->setLoRaTP(math::dBmW2mW(14));
+        frameToSend->setLoRaCF(frame->getLoRaCF());
+        frameToSend->setLoRaSF(frame->getLoRaSF());
+        frameToSend->setLoRaBW(frame->getLoRaBW());
+        frameToSend->setNumHop(frame->getNumHop());
+        frameToSend->setTmpPath6(frame->getTmpPath6());
+        frameToSend->setTmpPath5(frame->getTmpPath5());
+        frameToSend->setTmpPath4(frame->getTmpPath4());
+        frameToSend->setTmpPath3(frame->getTmpPath3());
+        frameToSend->setTmpPath2(frame->getTmpPath2());
+        frameToSend->setTmpPath1(frame->getTmpPath1());
 
-                    auto pktAux = new Packet("HI I AM AN ACK MESSAGE !");
-                    mgmtPacket->setChunkLength(B(par("headerLength").intValue()));
+        auto pktAux = new Packet("HI I AM AN ACK MESSAGE !");
+        mgmtPacket->setChunkLength(B(par("headerLength").intValue()));
 
-                    pktAux->insertAtFront(mgmtPacket);
-                    pktAux->insertAtFront(frameToSend);
-                    socket.sendTo(pktAux, pickedGateway, destPort);
-                }
+        pktAux->insertAtFront(mgmtPacket);
+        pktAux->insertAtFront(frameToSend);
+        socket.sendTo(pktAux, pickedGateway, destPort);
+    }
     if(evaluateADRinServer)
     {
         evaluateADR(pkt, pickedGateway, SNIRinGW, RSSIinGW);

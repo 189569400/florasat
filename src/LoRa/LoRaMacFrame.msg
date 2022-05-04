@@ -66,8 +66,14 @@ class LoRaMacFrame extends inet::FieldsChunk {
     int satNumber;
     //int SlotLen;
     
-    // route store satellite indexes realying this message
-    // timestamps store the time when this message is relayed 
+    // message creation in node timestamp
+    simtime_t originTime;
+    
+    // ground station message arrival timestamp
+    simtime_t groundTime;
+    
+    // route stores satellite indexes realying this message
+    // timestamps stores the time when this message is relayed 
     int route[];
     simtime_t timestamps[];
     

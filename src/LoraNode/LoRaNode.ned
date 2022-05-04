@@ -24,10 +24,6 @@ import flora.mobility.UniformGroundMobility;
 module LoRaNode
 {
     parameters:
-        string deploymentType = default("");
-        double maxGatewayDistance = default(320.0);
-        double gatewayX = default(320.0);
-        double gatewayY = default(320.0);
         @networkNode();
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         @display("bgb=297,313;i=device/accesspoint,gold,90;is=s");
@@ -47,7 +43,6 @@ module LoRaNode
         }
 
     connections allowunconnected:
-
         SimpleLoRaApp.appOut --> LoRaNic.upperLayerIn;
         LoRaNic.upperLayerOut --> SimpleLoRaApp.appIn;
 }

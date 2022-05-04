@@ -27,25 +27,8 @@ Define_Module(SimpleLoRaApp);
 void SimpleLoRaApp::initialize(int stage)
 {
     cSimpleModule::initialize(stage);
-    if (stage == INITSTAGE_LOCAL)
-    {
-        cModule *loRaNodeModule = getContainingNode(this);
 
-        // Generate node location if circle configuration
-        std::pair<double, double> coordsValues = std::make_pair(-1, -1);
-        if (strcmp(loRaNodeModule->par("deploymentType").stringValue(),
-                "circle") == 0) {
-            coordsValues = generateUniformCircleCoordinates(
-                    loRaNodeModule->par("maxGatewayDistance").doubleValue(),
-                    loRaNodeModule->par("gatewayX").doubleValue(),
-                    loRaNodeModule->par("gatewayY").doubleValue());
-            StationaryMobility *mobility = check_and_cast<StationaryMobility*>(
-                    loRaNodeModule->getSubmodule("mobility"));
-            mobility->par("initialX").setDoubleValue(coordsValues.first);
-            mobility->par("initialY").setDoubleValue(coordsValues.second);
-        }
-    }
-    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    if (stage == INITSTAGE_APPLICATION_LAYER)
     {
         bool isOperational;
         NodeStatus *nodeStatus = dynamic_cast<NodeStatus*>(findContainingNode(
@@ -73,7 +56,7 @@ void SimpleLoRaApp::initialize(int stage)
         timer = simTime() + timeToFirstPacket;
 
         // Schedule first packet ack timeout
-        if (par("usingAck").boolValue() == true)
+        if (par("usingAck").boolValue())
             scheduleAt(simTime() + timeToFirstPacket + ackTimeout, endAckTime);
 
         // Initialize  metrics
@@ -98,20 +81,7 @@ void SimpleLoRaApp::initialize(int stage)
     }
 }
 
-std::pair<double, double> SimpleLoRaApp::generateUniformCircleCoordinates(double radius, double gatewayX, double gatewayY)
-{
-    double randomValueRadius = uniform(0, (radius * radius));
-    double randomTheta = uniform(0, 2 * M_PI);
 
-    // generate coordinates for circle with origin at 0,0
-    double x = sqrt(randomValueRadius) * cos(randomTheta);
-    double y = sqrt(randomValueRadius) * sin(randomTheta);
-    // Change coordinates based on coordinate system used in OMNeT, with origin at top left
-    x = x + gatewayX;
-    y = gatewayY - y;
-    std::pair<double, double> coordValues = std::make_pair(x, y);
-    return coordValues;
-}
 
 void SimpleLoRaApp::finish()
 {
@@ -180,7 +150,7 @@ void SimpleLoRaApp::handleMessage(cMessage *msg)
                 scheduleAt(simTime() + timeToNextPacket, sendMeasurements);
 
                 // Schedule next packet ack timeout
-                if (par("usingAck").boolValue() == true)
+                if (par("usingAck").boolValue())
                 {
                     endAckTime = new cMessage("Ack Timeout");
                     scheduleAt(simTime() + timeToNextPacket, endAckTime);
