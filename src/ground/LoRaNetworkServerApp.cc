@@ -90,6 +90,7 @@ void LoRaNetworkServerApp::handleMessage(cMessage *msg)
 {
     if (msg->arrivedOn("socketIn"))
     {
+        std::cout << "HERE2" << endl;
         auto pkt = check_and_cast<Packet *>(msg);
         const auto &frame  = pkt->peekAtFront<LoRaMacFrame>();
         if (frame == nullptr)
@@ -303,7 +304,7 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
             for(uint j=0;j<receivedPackets[i].possibleGateways.size();j++)
             {
-                //std::cout << "SNIRinGW: " << SNIRinGW << ", possibleGWSNIR: " << std::get<1>(receivedPackets[i].possibleGateways[j]) << endl;
+                std::cout << "SNIRinGW: " << SNIRinGW << ", possibleGWSNIR: " << std::get<1>(receivedPackets[i].possibleGateways[j]) << endl;
                 if(SNIRinGW < std::get<1>(receivedPackets[i].possibleGateways[j]))
                 {
                     RSSIinGW = std::get<2>(receivedPackets[i].possibleGateways[j]);
@@ -335,6 +336,10 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         EV << "node to satellite time: " << node2satTime << endl;
         EV << "isl time: " << islTime << endl;
         EV << "satellite to ground time: " << sat2groundTime << endl;
+
+        std::cout << "node to satellite time: " << node2satTime << endl;
+        std::cout << "isl time: " << islTime << endl;
+        std::cout << "satellite to ground time: " << sat2groundTime << endl;
 
         //ACKNOWLEDGMENT MESSAGE SENDING
         auto mgmtPacket = makeShared<LoRaAppPacket>();

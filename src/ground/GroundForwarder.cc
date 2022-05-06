@@ -59,7 +59,6 @@ void GroundForwarder::startUDP()
 void GroundForwarder::handleMessage(cMessage *msg)
 {
     auto pkt = check_and_cast<Packet*>(msg);
-
     if (msg->arrivedOn("satLink$i"))
         processLoraMACPacket(pkt);
 
@@ -77,7 +76,7 @@ void GroundForwarder::processLoraMACPacket(Packet *pk)
     L3Address destAddr = destAddresses[0];
     if (pk->getControlInfo())
         delete pk->removeControlInfo();
-
+    std::cout << "HERE1" << endl;
     socket.sendTo(pk, destAddr, destPort);
 }
 

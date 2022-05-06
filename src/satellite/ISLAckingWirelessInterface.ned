@@ -21,6 +21,8 @@ import inet.networklayer.common.NetworkInterface;
 import inet.physicallayer.wireless.common.contract.packetlevel.IRadio;
 import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
 
+import inet.linklayer.acking.AckingMac;
+
 //
 // This module implements a highly abstracted wireless network interface (NIC)
 // that uses a trivial MAC protocol. It offers simplicity for scenarios where

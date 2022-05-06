@@ -377,7 +377,6 @@ void NetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         const auto &frameAux = receivedPackets[i].rcvdPacket->peekAtFront<LoRaMacFrame>();
         if(frameAux->getTransmitterAddress() == frame->getTransmitterAddress() && frameAux->getSequenceNumber() == frame->getSequenceNumber())
         {
-            std::cout << "here0" << endl;
             packetNumber = i;
             nodeNumber = frame->getTransmitterAddress().getInt();
             if (numReceivedPerNode.count(nodeNumber-1)>0)
@@ -391,7 +390,6 @@ void NetworkServerApp::processScheduledPacket(cMessage* selfMsg)
             {
                 if(SNIRinGW < std::get<1>(receivedPackets[i].possibleGateways[j]))
                 {
-                    std::cout << "here1" << endl;
                     RSSIinGW = std::get<2>(receivedPackets[i].possibleGateways[j]);
                     SNIRinGW = std::get<1>(receivedPackets[i].possibleGateways[j]);
                     pickedGateway = std::get<0>(receivedPackets[i].possibleGateways[j]);
@@ -399,7 +397,7 @@ void NetworkServerApp::processScheduledPacket(cMessage* selfMsg)
             }
         }
     }
-    std::cout << "here2" << endl;
+
     emit(LoRa_ServerPacketReceived, true);
     if (simTime() >= getSimulation()->getWarmupPeriod())
     {

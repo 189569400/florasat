@@ -34,9 +34,8 @@ class ISLAckingMac : public AckingMac
   protected:
     /** implements MacProtocolBase functions */
     //@{
-    virtual bool dropFrameNotForUs(Packet *frame);
-    virtual void encapsulate(Packet *msg);
-    virtual void decapsulate(Packet *frame);
+    virtual void encapsulate(Packet *msg) override;
+    virtual void startTransmitting() override;
 
     virtual void handleUpperPacket(Packet *packet) override;
     virtual void handleLowerPacket(Packet *packet) override;

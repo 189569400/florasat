@@ -93,14 +93,22 @@ void PacketHandler::handleMessage(cMessage *msg)
     if (msg->arrivedOn("lowerLayerLoRaIn"))
     {
         EV << "Received LoRaMAC frame" << endl;
+
         SetupRoute(pkt, UPLINK);
+
+        processLoraMACPacket(pkt);
+        auto frame = pkt->peekAtFront<LoRaMacFrame>();
+        auto snirInd = pkt->getTag<SnirInd>();
+        auto signalPowerInd = pkt->getTag<SignalPowerInd>();
+        W w_rssi = signalPowerInd->getPower();
+        double rssi = w_rssi.get()*1000;
+        std::cout << "\nRSSI: " << math::mW2dBmW(rssi) <<  "\nSNIR: " << snirInd->getMinimumSnir() << endl;
 
         if (groundStationAvailable())
             forwardToGround(pkt);
 
         else
             send(pkt, islOut);
-            //forwardToSatellite(pkt);
     }
 
     // message from GroundStation
@@ -113,7 +121,6 @@ void PacketHandler::handleMessage(cMessage *msg)
             forwardToNode(pkt);
         else
             send(pkt, islOut);
-            //forwardToSatellite(pkt);
     }
 
     // message from another satellite
@@ -150,7 +157,7 @@ void PacketHandler::processLoraMACPacket(Packet *pk)
     if (simTime() >= getSimulation()->getWarmupPeriod())
         counterOfReceivedPackets++;
 
-    pk->trimFront();
+    //pk->trimFront();
     auto frame = pk->removeAtFront<LoRaMacFrame>();
     auto snirInd = pk->getTag<SnirInd>();
     auto signalPowerInd = pk->getTag<SignalPowerInd>();
@@ -159,6 +166,7 @@ void PacketHandler::processLoraMACPacket(Packet *pk)
     frame->setRSSI(math::mW2dBmW(rssi));
     frame->setSNIR(snirInd->getMinimumSnir());
     pk->insertAtFront(frame);
+    //std::cout << "\nRSSI: " << math::mW2dBmW(rssi) <<  "\nSNIR: " << snirInd->getMinimumSnir() << endl;
 }
 
 void PacketHandler::sendPacket()
@@ -249,14 +257,13 @@ void PacketHandler::forwardToGround(Packet *pkt)
         return;
     }
 
-    processLoraMACPacket(pkt);
-
     /*
-    std::cout << "msg type " << macFrameType << ", num hops: " << numHops << ", local sat " << satIndex << ", previous hops: " << endl ;
+    std::cout << ", num hops: " << numHops << ", local sat " << satIndex << ", previous hops: " << endl ;
     for(int l=0; l<maxHops; l++)
         std::cout << frame->getRoute(l) << " at time " << frame->getTimestamps(l) << endl;
     std::cout << endl;
     */
+
 
     send(pkt, "lowerLayerGS$o");
 }
