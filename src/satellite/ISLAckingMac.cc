@@ -61,8 +61,9 @@ void ISLAckingMac::handleSelfMessage(cMessage *message)
 void ISLAckingMac::startTransmitting()
 {
     // if there's any control info, remove it; then encapsulate the packet
-    MacAddress dest = currentTxFrame->getTag<LoRaMacFrame>()->getReceiverAddress();   // getTag<MacAddressReq>()
+    //MacAddress dest = currentTxFrame->getTag<MacAddressReq>()->getDestAddress();
     Packet *msg = currentTxFrame;
+    MacAddress dest = msg->peekAtFront<LoRaMacFrame>()->getReceiverAddress();
     if (useAck && !dest.isBroadcast() && !dest.isMulticast() && !dest.isUnspecified()) { // unicast
         msg = currentTxFrame->dup();
         scheduleAfter(ackTimeout, ackTimeoutMsg);
@@ -82,11 +83,13 @@ void ISLAckingMac::encapsulate(Packet *packet)
 {
     auto macHeader = makeShared<AckingMacHeader>();
     macHeader->setChunkLength(B(headerLength));
-    auto macAddressReq = packet->getTag<LoRaMacFrame>();  // getTag<MacAddressReq>()
-    macHeader->setSrc(macAddressReq->getTransmitterAddress());
-    macHeader->setDest(macAddressReq->getReceiverAddress());
 
-    MacAddress dest = macAddressReq->getReceiverAddress();
+    MacAddress src = packet->peekAtFront<LoRaMacFrame>()->getTransmitterAddress();
+    MacAddress dest = packet->peekAtFront<LoRaMacFrame>()->getReceiverAddress();
+
+    macHeader->setSrc(src);
+    macHeader->setDest(dest);
+
     if (dest.isBroadcast() || dest.isMulticast() || dest.isUnspecified())
         macHeader->setSrcModuleId(-1);
     else
