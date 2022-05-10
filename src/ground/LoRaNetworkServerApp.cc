@@ -292,6 +292,7 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
     for(uint i=0;i<receivedPackets.size();i++)
     {
+        std::cout << "received packets";
         const auto &frameAux = receivedPackets[i].rcvdPacket->peekAtFront<LoRaMacFrame>();
         if(frameAux->getTransmitterAddress() == frame->getTransmitterAddress() && frameAux->getSequenceNumber() == frame->getSequenceNumber())
         {

@@ -48,9 +48,32 @@ void ISLAckingMac::handleUpperPacket(Packet *packet)
     AckingMac::handleUpperPacket(packet);
 }
 
+/*
 void ISLAckingMac::handleLowerPacket(Packet *packet)
 {
     AckingMac::handleLowerPacket(packet);
+}
+*/
+
+void ISLAckingMac::handleLowerPacket(Packet *packet)
+{
+    //auto macHeader = packet->peekAtFront<AckingMacHeader>();
+    if (packet->hasBitError()) {
+        EV << "Received frame '" << packet->getName() << "' contains bit errors or collision, dropping it\n";
+        PacketDropDetails details;
+        details.setReason(INCORRECTLY_RECEIVED);
+        emit(packetDroppedSignal, packet, &details);
+        delete packet;
+        return;
+    }
+
+    //if (!dropFrameNotForUs(packet))
+    // decapsulate and attach control info
+    //decapsulate(packet);
+    EV << "Passing up contained packet '" << packet->getName() << "' to higher layer\n";
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
+    sendUp(packet);
+
 }
 
 void ISLAckingMac::handleSelfMessage(cMessage *message)
@@ -71,11 +94,12 @@ void ISLAckingMac::startTransmitting()
     else
         currentTxFrame = nullptr;
 
-    encapsulate(msg);
+    //encapsulate(msg);
 
     // send
     EV << "Starting transmission of " << msg << endl;
     radio->setRadioMode(fullDuplex ? IRadio::RADIO_MODE_TRANSCEIVER : IRadio::RADIO_MODE_TRANSMITTER);
+    msg->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
     sendDown(msg);
 }
 
@@ -102,6 +126,18 @@ void ISLAckingMac::encapsulate(Packet *packet)
     macAddressInd->setSrcAddress(macHeader->getSrc());
     macAddressInd->setDestAddress(macHeader->getDest());
     packet->getTagForUpdate<PacketProtocolTag>()->setProtocol(&Protocol::ackingMac);
+}
+
+void ISLAckingMac::decapsulate(Packet *packet)
+{
+    const auto& macHeader = packet->popAtFront<AckingMacHeader>();
+    auto macAddressInd = packet->addTagIfAbsent<MacAddressInd>();
+    macAddressInd->setSrcAddress(macHeader->getSrc());
+    macAddressInd->setDestAddress(macHeader->getDest());
+    packet->addTagIfAbsent<InterfaceInd>()->setInterfaceId(networkInterface->getInterfaceId());
+    auto payloadProtocol = ProtocolGroup::ethertype.getProtocol(macHeader->getNetworkProtocol());
+    packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(payloadProtocol);
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(payloadProtocol);
 }
 
 }

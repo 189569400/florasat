@@ -76,7 +76,7 @@ void GroundForwarder::processLoraMACPacket(Packet *pk)
     L3Address destAddr = destAddresses[0];
     if (pk->getControlInfo())
         delete pk->removeControlInfo();
-    std::cout << "HERE1" << endl;
+
     socket.sendTo(pk, destAddr, destPort);
 }
 

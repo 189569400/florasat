@@ -93,16 +93,8 @@ void PacketHandler::handleMessage(cMessage *msg)
     if (msg->arrivedOn("lowerLayerLoRaIn"))
     {
         EV << "Received LoRaMAC frame" << endl;
-
         SetupRoute(pkt, UPLINK);
-
         processLoraMACPacket(pkt);
-        auto frame = pkt->peekAtFront<LoRaMacFrame>();
-        auto snirInd = pkt->getTag<SnirInd>();
-        auto signalPowerInd = pkt->getTag<SignalPowerInd>();
-        W w_rssi = signalPowerInd->getPower();
-        double rssi = w_rssi.get()*1000;
-        std::cout << "\nRSSI: " << math::mW2dBmW(rssi) <<  "\nSNIR: " << snirInd->getMinimumSnir() << endl;
 
         if (groundStationAvailable())
             forwardToGround(pkt);
@@ -157,7 +149,7 @@ void PacketHandler::processLoraMACPacket(Packet *pk)
     if (simTime() >= getSimulation()->getWarmupPeriod())
         counterOfReceivedPackets++;
 
-    //pk->trimFront();
+    pk->trimFront();
     auto frame = pk->removeAtFront<LoRaMacFrame>();
     auto snirInd = pk->getTag<SnirInd>();
     auto signalPowerInd = pk->getTag<SignalPowerInd>();
