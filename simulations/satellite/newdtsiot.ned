@@ -39,10 +39,10 @@ network NewFLoRaSatNetwork
             @display("p=695.185,733.055;is=vs");
         }
         loRaGW[nrOfGW]: Satellite {
-            @display("p=784.45,624.855;i=satellit_blue");
+            @display("p=695.185,549.115;i=satellit_blue");
         }
         groundStation[nrOfGS]: GroundStation {
-            @display("p=692.48,481.49;i=device/receiverdish");
+            @display("p=692.48,340.83;i=device/receiverdish");
         }
         LoRaMedium: LoRaMedium {
             @display("p=124.43,297.55");
@@ -68,8 +68,8 @@ network NewFLoRaSatNetwork
             @display("p=1117.165,586.985;is=s");
         }
         visualizer: IntegratedVisualizer {
-        	@display("p=124.43,675.0");
-        };
+            @display("p=124.43,675.0");
+        }
     connections allowunconnected:
 
 		// Network Server in  Ground Station
