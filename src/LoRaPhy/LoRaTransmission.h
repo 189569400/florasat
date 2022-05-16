@@ -10,10 +10,13 @@
 
 #include "inet/physicallayer/wireless/common/base/packetlevel/TransmissionBase.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioSignal.h"
+#include "libnorad/ccoord.h"
 
-using namespace inet;
-using namespace inet::physicallayer;
-namespace flora {
+//using namespace inet;
+//using namespace inet::physicallayer;
+//namespace flora {
+namespace inet {
+namespace physicallayer {
 class LoRaTransmission : public TransmissionBase, public virtual INarrowbandSignal, public virtual IScalarSignal
 {
 protected:
@@ -22,8 +25,10 @@ protected:
     const int LoRaSF;
     const Hz LoRaBW;
     const int LoRaCR;
+    cCoordGeo longLatStartPosition;
+    cCoordGeo longLatEndPosition;
 public:
-    LoRaTransmission(const IRadio *transmitter, const Packet *macFrame, const simtime_t startTime, const simtime_t endTime, const simtime_t preambleDuration, const simtime_t headerDuration, const simtime_t dataDuration, const Coord startPosition, const Coord endPosition, const Quaternion startOrientation, const Quaternion endOrientation, W LoRaTP, Hz LoRaCF, int LoRaSF, Hz LoRaBW, int LoRaCR);
+    LoRaTransmission(const IRadio *transmitter, const Packet *macFrame, const simtime_t startTime, const simtime_t endTime, const simtime_t preambleDuration, const simtime_t headerDuration, const simtime_t dataDuration, const Coord startPosition, const Coord endPosition, const Quaternion startOrientation, const Quaternion endOrientation, W LoRaTP, Hz LoRaCF, int LoRaSF, Hz LoRaBW, int LoRaCR, cCoordGeo longLatStartPosition, cCoordGeo longLatEndPosition);
 
     virtual Hz getCenterFrequency() const override { return LoRaCF; }
     virtual Hz getBandwidth() const override { return LoRaBW; }
@@ -36,9 +41,13 @@ public:
     Hz getLoRaBW() const { return LoRaBW; }
     int getLoRaCR() const { return LoRaCR; }
 
+    virtual cCoordGeo getStartLongLatPosition() const { return longLatStartPosition; }
+    virtual cCoordGeo getEndLongLatPosition() const { return longLatEndPosition; }
+
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
 };
 
+} /* namespace physicallayer */
 } /* namespace inet */
 
 #endif /* LORATRANSMISSION_H_ */

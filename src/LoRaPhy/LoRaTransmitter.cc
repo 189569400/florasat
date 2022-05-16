@@ -18,7 +18,9 @@
 #include "LoRaModulation.h"
 #include "LoRaPhyPreamble_m.h"
 #include <algorithm>
-
+#include "mobility/SatelliteMobility.h"
+#include "mobility/GroundStationMobility.h"
+#include "mobility/UniformGroundMobility.h"
 
 namespace flora {
 
@@ -40,11 +42,9 @@ void LoRaTransmitter::initialize(int stage)
         centerFrequency = Hz(par("centerFrequency"));
         bandwidth = Hz(par("bandwidth"));
         LoRaTransmissionCreated = registerSignal("LoRaTransmissionCreated");
-
+        iAmGateway = false;
         if(strcmp(getParentModule()->getClassName(), "flora::LoRaGWRadio") == 0)
-        {
             iAmGateway = true;
-        } else iAmGateway = false;
     }
 }
 
@@ -56,10 +56,10 @@ std::ostream& LoRaTransmitter::printToStream(std::ostream& stream, int level, in
 
 const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitter, const Packet *macFrame, const simtime_t startTime) const
 {
-//    TransmissionBase *controlInfo = dynamic_cast<TransmissionBase *>(macFrame->getControlInfo());
-    //W transmissionPower = controlInfo && !std::isnan(controlInfo->getPower().get()) ? controlInfo->getPower() : power;
+    // TransmissionBase *controlInfo = dynamic_cast<TransmissionBase *>(macFrame->getControlInfo());
+    // W transmissionPower = controlInfo && !std::isnan(controlInfo->getPower().get()) ? controlInfo->getPower() : power;
     const_cast<LoRaTransmitter* >(this)->emit(LoRaTransmissionCreated, true);
-//    const LoRaMacFrame *frame = check_and_cast<const LoRaMacFrame *>(macFrame);
+    // const LoRaMacFrame *frame = check_and_cast<const LoRaMacFrame *>(macFrame);
     EV << macFrame->getDetailStringRepresentation(evFlags) << endl;
     const auto &frame = macFrame->peekAtFront<LoRaPhyPreamble>();
 
@@ -86,10 +86,41 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
     const Quaternion endOrientation = mobility->getCurrentAngularPosition();
     W transmissionPower = computeTransmissionPower(macFrame);
 
-    if(!iAmGateway) {
+    auto longLatStartPosition = cCoordGeo();
+    auto longLatEndPosition = cCoordGeo();
+
+    // transmitter is a satellite
+    if (SatelliteMobility *sgp4Mobility = dynamic_cast<SatelliteMobility *>(mobility))
+    {
+        longLatStartPosition = cCoordGeo(sgp4Mobility->getLatitude(), sgp4Mobility->getLongitude(), sgp4Mobility->getAltitude());
+        longLatEndPosition = cCoordGeo(sgp4Mobility->getLatitude(), sgp4Mobility->getLongitude(), sgp4Mobility->getAltitude());
+    }
+    // transmitter is a node with random uniform disk mobility initialization
+    else if (UniformGroundMobility *diskMobility = dynamic_cast<UniformGroundMobility *>(mobility))
+    {
+        longLatStartPosition = cCoordGeo(diskMobility->getLatitude(), diskMobility->getLongitude(), 0);
+        longLatEndPosition = cCoordGeo(diskMobility->getLatitude(), diskMobility->getLongitude(), 0);
+    }
+    // transmitter is a node or a ground station with a defined position
+    else if (GroundStationMobility *lutMobility = dynamic_cast<GroundStationMobility *>(mobility))
+    {
+        longLatStartPosition = cCoordGeo(lutMobility->getLUTPositionY(), lutMobility->getLUTPositionX(), 0);
+        longLatEndPosition = cCoordGeo(lutMobility->getLUTPositionY(), lutMobility->getLUTPositionX(), 0);
+    }
+    // other, should never reach this point
+    else
+    {
+        longLatStartPosition = cCoordGeo(0, 0, 0);
+        longLatEndPosition = cCoordGeo(0, 0, 0);
+    }
+
+
+    if(!iAmGateway)
+    {
         LoRaRadio *radio = check_and_cast<LoRaRadio *>(getParentModule());
         radio->setCurrentTxPower(transmissionPower.get());
     }
+
     return new LoRaTransmission(transmitter,
             macFrame,
             startTime,
@@ -105,6 +136,10 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
             frame->getCenterFrequency(),
             frame->getSpreadFactor(),
             frame->getBandwidth(),
-            frame->getCodeRendundance());}
+            frame->getCodeRendundance(),
+            longLatStartPosition,
+            longLatEndPosition);
+
+}
 
 }

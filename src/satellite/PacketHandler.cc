@@ -42,6 +42,7 @@ void PacketHandler::initialize(int stage)
             satIndex = noradAModule->getSatelliteNumber();
             int planes = noradAModule->getNumberOfPlanes();
             int satPerPlane = noradAModule->getSatellitesPerPlane();
+            numOfSatellites = planes * satPerPlane;
             maxHops = planes + satPerPlane - 1;
             int satPlane = trunc(satIndex/satPerPlane);
             int minSat = satPerPlane * satPlane;
@@ -212,8 +213,8 @@ void PacketHandler::SetupRoute(Packet *pkt, int macFrameType)
 
 bool PacketHandler::groundStationAvailable()
 {
-    // only sat 15 has ground station connection
-    return satIndex == 15;
+    // only last satellite in the constellation has ground station connection
+    return satIndex == numOfSatellites-1;
 }
 
 bool PacketHandler::loraNodeAvailable()
@@ -237,27 +238,26 @@ void PacketHandler::forwardToGround(Packet *pkt)
     int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int numHops = frame->getNumHop();
 
-    frame->setNumHop(numHops + 1);
-    frame->setRoute(numHops, satIndex);
-    frame->setTimestamps(numHops, simTime());
-    pkt->insertAtFront(frame);
-
-    // discard packets from further satellites
-    if (sourceSat != satLeftIndex && sourceSat != satDownIndex)
+    // if message comes from leftsat or downsat forward to ground
+    if (sourceSat == satLeftIndex || sourceSat == satDownIndex)
     {
-        delete pkt;
-        return;
+        frame->setNumHop(numHops + 1);
+        frame->setRoute(numHops, satIndex);
+        frame->setTimestamps(numHops, simTime());
+        pkt->insertAtFront(frame);
+        send(pkt, "lowerLayerGS$o");
+
+        /*
+        std::cout << ", num hops: " << numHops << ", local sat " << satIndex << ", previous hops: " << endl ;
+        for(int l=0; l<maxHops; l++)
+            std::cout << frame->getRoute(l) << " at time " << frame->getTimestamps(l) << endl;
+        std::cout << endl;
+        */
     }
 
-    /*
-    std::cout << ", num hops: " << numHops << ", local sat " << satIndex << ", previous hops: " << endl ;
-    for(int l=0; l<maxHops; l++)
-        std::cout << frame->getRoute(l) << " at time " << frame->getTimestamps(l) << endl;
-    std::cout << endl;
-    */
-
-
-    send(pkt, "lowerLayerGS$o");
+    // in other case the packet was sent by a further satellite
+    else
+        delete pkt;
 }
 
 void PacketHandler::forwardToNode(Packet *pkt)
@@ -273,21 +273,21 @@ void PacketHandler::forwardToSatellite(Packet *pkt)
     int macFrameType = frame->getPktType();
     int numHops = frame->getNumHop();
 
-    frame->setNumHop(numHops + 1);
-    frame->setRoute(numHops, satIndex);
-    frame->setTimestamps(numHops, simTime());
-    pkt->insertAtFront(frame);
-
     // if message comes from leftsat or downsat and is uplink or
     // if message comes from rightsat or upsat and is downlink
     if (((sourceSat == satLeftIndex || sourceSat == satDownIndex) && macFrameType == UPLINK) ||
             ((sourceSat == satRightIndex || sourceSat == satUpIndex) && macFrameType == DOWNLINK))
+    {
+        frame->setNumHop(numHops + 1);
+        frame->setRoute(numHops, satIndex);
+        frame->setTimestamps(numHops, simTime());
+        pkt->insertAtFront(frame);
         send(pkt, gate("lowerLayerISLOut"));
+    }
 
     // in other case the packet was sent by a further satellite
     else
         delete pkt;
-
 }
 
 }

@@ -11,11 +11,11 @@
 #include "libnorad/globals.h"
 #include <cmath>
 
-using namespace inet;
-
 namespace flora {
 
 Define_Module(UniformGroundMobility);
+
+using namespace inet;
 
 UniformGroundMobility::UniformGroundMobility()
 {
@@ -79,4 +79,4 @@ void UniformGroundMobility::setInitialPosition()
     lastPosition = Coord(lastPosition.x, lastPosition.y, 0);
 }
 
-}
+} // namespace inet

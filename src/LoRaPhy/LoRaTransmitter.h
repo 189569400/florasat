@@ -21,10 +21,12 @@
 #include "LoRaTransmission.h"
 #include "LoRa/LoRaRadio.h"
 #include "LoRa/LoRaMacFrame_m.h"
+#include "libnorad/ccoord.h"
 
 namespace flora {
 
-class LoRaTransmitter : public FlatTransmitterBase {
+class LoRaTransmitter : public FlatTransmitterBase
+{
     public:
         LoRaTransmitter();
         virtual void initialize(int stage) override;
@@ -32,11 +34,8 @@ class LoRaTransmitter : public FlatTransmitterBase {
         virtual const ITransmission *createTransmission(const IRadio *radio, const Packet *packet, const simtime_t startTime) const override;
 
     private:
-
         bool iAmGateway;
-
         simsignal_t LoRaTransmissionCreated;
-
 };
 
 }

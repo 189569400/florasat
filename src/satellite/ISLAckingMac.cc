@@ -27,6 +27,8 @@
 
 namespace flora {
 
+using namespace inet::physicallayer;
+
 Define_Module(ISLAckingMac);
 
 ISLAckingMac::ISLAckingMac()
@@ -57,7 +59,7 @@ void ISLAckingMac::handleLowerPacket(Packet *packet)
 
 void ISLAckingMac::handleLowerPacket(Packet *packet)
 {
-    //auto macHeader = packet->peekAtFront<AckingMacHeader>();
+    //auto macHeader = packet->peekAtFront<AckingMacHeader>();s
     if (packet->hasBitError()) {
         EV << "Received frame '" << packet->getName() << "' contains bit errors or collision, dropping it\n";
         PacketDropDetails details;
@@ -68,8 +70,10 @@ void ISLAckingMac::handleLowerPacket(Packet *packet)
     }
 
     //if (!dropFrameNotForUs(packet))
+
+
     // decapsulate and attach control info
-    //decapsulate(packet);
+    decapsulate(packet);
     EV << "Passing up contained packet '" << packet->getName() << "' to higher layer\n";
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
     sendUp(packet);
@@ -94,12 +98,11 @@ void ISLAckingMac::startTransmitting()
     else
         currentTxFrame = nullptr;
 
-    //encapsulate(msg);
+    encapsulate(msg);
 
     // send
     EV << "Starting transmission of " << msg << endl;
     radio->setRadioMode(fullDuplex ? IRadio::RADIO_MODE_TRANSCEIVER : IRadio::RADIO_MODE_TRANSMITTER);
-    msg->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
     sendDown(msg);
 }
 
@@ -111,6 +114,7 @@ void ISLAckingMac::encapsulate(Packet *packet)
     MacAddress src = packet->peekAtFront<LoRaMacFrame>()->getTransmitterAddress();
     MacAddress dest = packet->peekAtFront<LoRaMacFrame>()->getReceiverAddress();
 
+    EV << "Packet: " << packet << "\nsrc address: " << src << "\ndest address: " << dest << endl;
     macHeader->setSrc(src);
     macHeader->setDest(dest);
 
@@ -119,6 +123,9 @@ void ISLAckingMac::encapsulate(Packet *packet)
     else
         macHeader->setSrcModuleId(getId());
 
+    // set packet protocol to ipv4
+    // TODO check if this ipv4 over ethternet suits the current ISL implementation based on this ISLAckingMac
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::ipv4);
     macHeader->setNetworkProtocol(ProtocolGroup::ethertype.getProtocolNumber(packet->getTag<PacketProtocolTag>()->getProtocol()));
     packet->insertAtFront(macHeader);
 

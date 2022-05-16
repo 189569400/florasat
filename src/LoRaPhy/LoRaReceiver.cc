@@ -126,13 +126,15 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
     const LoRaReception *loRaReception = check_and_cast<const LoRaReception *>(reception);
     simtime_t m_x = (loRaReception->getStartTime() + loRaReception->getEndTime())/2;
     simtime_t d_x = (loRaReception->getEndTime() - loRaReception->getStartTime())/2;
-    EV << "Transmission time is " << loRaReception->getEndTime() - loRaReception->getStartTime() << endl;
+    EV << "Transmission time is " << 2*d_x << "s" << endl;
+
     double P_threshold = 6;
     W signalRSSI_w = loRaReception->getPower();
     double signalRSSI_mw = signalRSSI_w.get()*1000;
     double signalRSSI_dBm = math::mW2dBmW(signalRSSI_mw);
-    EV << signalRSSI_mw << endl;
-    EV << signalRSSI_dBm << endl;
+    EV << "Received signal RSSI is " << signalRSSI_mw << " mw" << endl;
+    EV << "Received signal RSSI is " << signalRSSI_dBm << " dBm" << endl;
+
     int receptionSF = loRaReception->getLoRaSF();
     for (auto interferingReception : *interferingReceptions) {
         bool overlap = false;
@@ -174,8 +176,9 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
         } else
             EV << "[MSDEBUG] Packet is not discarded" << endl;
 
-        /* If last 6 symbols of preamble are received, no collision*/
-        double nPreamble = 8; //from the paper "Do Lora networks..."
+        // If last 6 symbols of preamble are received, no collision
+        // from the paper "Do Lora LPWAN networks scale?"
+        double nPreamble = 8;
         simtime_t Tsym = (pow(2, loRaReception->getLoRaSF()))/(loRaReception->getLoRaBW().get()/1000)/1000;
         simtime_t csBegin = loRaReception->getPreambleStartTime() + Tsym * (nPreamble - 6);
         if(csBegin < loRaInterference->getEndTime())

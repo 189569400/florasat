@@ -40,7 +40,9 @@ protected:
     int satUpIndex = -1;
 
     bool globalGrid;
+    int numOfSatellites = 1;
     int numOfGroundStations = 1;
+
     INorad* noradModule = nullptr;
 
     cMessage *selfMsg = nullptr;

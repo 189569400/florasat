@@ -12,9 +12,10 @@
 
 #include "inet/mobility/static/StationaryMobility.h"
 
-namespace flora{
+namespace flora {
 
 using namespace inet;
+
 //-----------------------------------------------------
 // Class: UniformGroundMobility
 //
@@ -43,6 +44,6 @@ protected:
     double mapx, mapy;                        // size of canvas map
 };
 
-}
+} // namespace inet
 
 #endif /* MOBILITY_UNIFORMGROUNDMOBILITY_H_ */
