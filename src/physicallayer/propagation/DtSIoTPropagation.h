@@ -10,7 +10,13 @@
 
 #include "inet/physicallayer/wireless/common/base/packetlevel/PropagationBase.h"
 
-namespace flora {
+using namespace inet;
+
+using namespace physicallayer;
+
+//namespace flora {
+
+//namespace flora {
 
 //namespace inet {
 
@@ -23,7 +29,7 @@ namespace flora {
  * Written by Aiden Valentine
  * Modified by Diego Maldonado
  */
-class DtSIoTPropagation : public inet::PropagationBase
+class DtSIoTPropagation : public PropagationBase
 {
 protected:
     bool ignoreMovementDuringTransmission;
@@ -45,6 +51,6 @@ public:
 
 //} // namespace inet
 
-} // namespace flora
+//} // namespace flora
 
 #endif /* LORAPHY_PROPAGATION_DTSIOTPROPAGATION_H_ */

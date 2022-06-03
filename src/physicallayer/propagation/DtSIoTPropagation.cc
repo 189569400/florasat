@@ -24,13 +24,11 @@
 
 #include "LoRaPhy/LoRaTransmission.h"
 
-namespace flora {
-
 //namespace inet {
 
-//namespace physicallayer {
+//namespace flora {
 
-using namespace inet;
+//using namespace inet;
 
 Define_Module(DtSIoTPropagation);
 
@@ -169,6 +167,6 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
 
 //} // namespace inet
 
-} // namespace flora
+//} // namespace flora
 
 
