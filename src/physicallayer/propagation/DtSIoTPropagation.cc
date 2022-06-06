@@ -30,6 +30,8 @@
 
 //using namespace inet;
 
+using namespace flora;
+
 Define_Module(DtSIoTPropagation);
 
 /**

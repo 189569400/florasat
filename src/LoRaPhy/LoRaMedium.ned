@@ -16,11 +16,13 @@
 package flora.LoRaPhy;
 
 import inet.physicallayer.wireless.common.medium.RadioMedium;
+import flora.physicallayer.propagation.DtSIoTPropagation;
 
 module LoRaMedium extends RadioMedium
 {
     parameters:
-        propagation.typename = default("ConstantSpeedPropagation");
+        propagation.typename = default("DtSIoTPropagation");
+        // DtSIoTPropagation ConstantSpeedPropagation
         analogModel.typename = default("LoRaAnalogModel");
         //backgroundNoiseType = default("LoRaBackgroundNoise");
 

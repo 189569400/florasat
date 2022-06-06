@@ -14,7 +14,7 @@ using namespace inet;
 
 using namespace physicallayer;
 
-//namespace flora {
+namespace flora {
 
 //namespace flora {
 
@@ -51,6 +51,6 @@ public:
 
 //} // namespace inet
 
-//} // namespace flora
+} // namespace flora
 
 #endif /* LORAPHY_PROPAGATION_DTSIOTPROPAGATION_H_ */
