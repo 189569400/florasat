@@ -119,10 +119,10 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
         if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility*>(mobility))
             distance = receiverSatMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt)*1000;  //OS3 uses KM for all measurements
-        /*else if (const UniformGroundMobility *receiverGroundMobility = dynamic_cast<const UniformGroundMobility*>(mobility))
+        else if (const UniformGroundMobility *receiverGroundMobility = dynamic_cast<const UniformGroundMobility*>(mobility))
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
-        */else if (const GroundStationMobility *receiverGroundMobility = dynamic_cast<const GroundStationMobility*>(mobility))
+        else if (const GroundStationMobility *receiverGroundMobility = dynamic_cast<const GroundStationMobility*>(mobility))
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
     }
