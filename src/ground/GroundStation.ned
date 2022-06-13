@@ -24,7 +24,10 @@ import inet.networklayer.contract.IRoutingTable;
 import inet.networklayer.contract.INetworkLayer;
 import inet.linklayer.loopback.LoopbackInterface;
 import inet.linklayer.contract.IWiredInterface;
+import inet.linklayer.acking.AckingWirelessInterface;
+import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
 import leosatellites.mobility.GroundStationMobility;
+import flora.ground.DummyNic;
 
 import flora.ground.GroundForwarder;
 
@@ -97,6 +100,11 @@ module GroundStation like INetworkNode //WirelessHost
             parameters:
                 @display("p=403,345,row,60;q=txQueue");
         }
+
+        dummyNic: DummyNic {
+            @display("p=200,345");
+        }
+
 
     connections allowunconnected:
 

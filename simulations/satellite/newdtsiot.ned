@@ -50,6 +50,10 @@ network NewFLoRaSatNetwork
         ISLMedium: UnitDiskRadioMedium {
             @display("p=124.43,481.49;i=misc/sun");
         }
+        dummyMedium: UnitDiskRadioMedium {
+            @display("p=121.725,927.815;is=s");
+        }
+
         networkServer: StandardHost {
             @display("p=1117.165,733.055;is=s");
         }
