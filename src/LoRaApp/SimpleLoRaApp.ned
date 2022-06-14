@@ -38,7 +38,7 @@ simple SimpleLoRaApp
         bool InitClassA = default(true);
         bool InitClassB = default(false);
         bool evaluateADRinNode = default(false);
-        int dataSize @unit(B) = default(10B);
+        int payloadSize @unit(B) = default(10B);
         bool usingAck = default(true);
     gates:
         output appOut @labels(LoRaAppPacket/down);

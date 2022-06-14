@@ -45,14 +45,14 @@ void SimpleLoRaApp::initialize(int stage)
 
         // Messages
         endAckTime = new cMessage("acknowledgment Timeout"); //signal to notice about end of ACK time
-        sendMeasurements = new cMessage("sendMeasurements");
+        sendUplink = new cMessage("sendMeasurements");
 
         synchronizer = new cMessage("Ask for device local time"); //signal for future use
         joining = new cMessage("Try to reach GW"); //signal for future use
         joiningAns = new cMessage("Can't reach GW ? .."); //signal for future use
 
         // Schedule first packet
-        scheduleAt(simTime() + timeToFirstPacket, sendMeasurements);
+        scheduleAt(simTime() + timeToFirstPacket, sendUplink);
         timer = simTime() + timeToFirstPacket;
 
         // Schedule first packet ack timeout
@@ -66,7 +66,6 @@ void SimpleLoRaApp::initialize(int stage)
 
         // Initialize parameters
         numberOfPacketsToSend = par("numberOfPacketsToSend");
-        LoRa_AppPacketSent = registerSignal("LoRa_AppPacketSent");
         loRaTP = par("initialLoRaTP").doubleValue();
         loRaCF = units::values::Hz(par("initialLoRaCF").doubleValue());
         loRaSF = par("initialLoRaSF");
@@ -75,12 +74,14 @@ void SimpleLoRaApp::initialize(int stage)
         loRaUseHeader = par("initialUseHeader");
         pingSlot = par("initialPingSlot");
         evaluateADRinNode = par("evaluateADRinNode");
+
+        // Metrics
+        LoRa_AppPacketSent = registerSignal("LoRa_AppPacketSent");
         sfVector.setName("SF Vector");
         tpVector.setName("TP Vector");
         WATCH(receivedAck);
     }
 }
-
 
 
 void SimpleLoRaApp::finish()
@@ -122,9 +123,9 @@ void SimpleLoRaApp::handleMessage(cMessage *msg)
             if (numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend)
             {
                 // Schedule next packet
-                sendMeasurements = new cMessage("sendMeasurements");
+                sendUplink = new cMessage("sendMeasurements");
                 scheduleAt(simTime() + timeToNextPacket - ackTimeout,
-                        sendMeasurements);
+                        sendUplink);
 
                 // Schedule next packet ack timeout
                 endAckTime = new cMessage("Ack Timeout");
@@ -134,20 +135,20 @@ void SimpleLoRaApp::handleMessage(cMessage *msg)
         }
 
         // New packet to send
-        if (msg == sendMeasurements)
+        if (msg == sendUplink)
         {
             delete msg;
 
             // Send new packet
-            sendJoinRequest();
+            sendUplinkPacket();
             sentPackets++;
 
             // More packets to send
             if (numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend)
             {
                 // Schedule next packet
-                sendMeasurements = new cMessage("sendMeasurements");
-                scheduleAt(simTime() + timeToNextPacket, sendMeasurements);
+                sendUplink = new cMessage("sendMeasurements");
+                scheduleAt(simTime() + timeToNextPacket, sendUplink);
 
                 // Schedule next packet ack timeout
                 if (par("usingAck").boolValue())
@@ -160,6 +161,7 @@ void SimpleLoRaApp::handleMessage(cMessage *msg)
         }
     }
 
+    // Otherwise it is a message from outside (lower layer)
     else
     {
         handleMessageFromLowerLayer(msg);
@@ -183,8 +185,8 @@ void SimpleLoRaApp::handleMessageFromLowerLayer(cMessage *msg)
         if (numberOfPacketsToSend == 0 || sentPackets < numberOfPacketsToSend)
         {
             // Schedule next packet
-            sendMeasurements = new cMessage("sendMeasurements");
-            scheduleAt(timer + timeToNextPacket, sendMeasurements);
+            sendUplink = new cMessage("sendMeasurements");
+            scheduleAt(timer + timeToNextPacket, sendUplink);
 
             // Schedule next packet ack timeout
             endAckTime = new cMessage("Ack Timeout");
@@ -222,7 +224,6 @@ void SimpleLoRaApp::handleMessageFromLowerLayer(cMessage *msg)
             EV << "New SF " << loRaSF << endl;
         }
     }
-
 }
 
 bool SimpleLoRaApp::handleOperationStage(LifecycleOperation *operation, IDoneCallback *doneCallback)
@@ -232,13 +233,13 @@ bool SimpleLoRaApp::handleOperationStage(LifecycleOperation *operation, IDoneCal
     return true;
 }
 
-void SimpleLoRaApp::sendJoinRequest()
+void SimpleLoRaApp::sendUplinkPacket()
 {
-    auto pktRequest = new Packet("DataFrame");
-    pktRequest->setKind(DATA);
+    auto uplinkPacket = new Packet("DataFrame");
+    uplinkPacket->setKind(DATA);
 
     auto payload = makeShared<LoRaAppPacket>();
-    payload->setChunkLength(B(par("dataSize").intValue()));
+    payload->setChunkLength(B(par("payloadSize").intValue()));
 
     lastSentMeasurement = rand();
     payload->setSampleMeasurement(lastSentMeasurement);
@@ -252,28 +253,20 @@ void SimpleLoRaApp::sendJoinRequest()
         sendNextPacketWithADRACKReq = false;
     }
 
-    auto loraTag = pktRequest->addTagIfAbsent<LoRaTag>();
+    auto loraTag = uplinkPacket->addTagIfAbsent<LoRaTag>();
     loraTag->setBandwidth(loRaBW);
     loraTag->setCenterFrequency(loRaCF);
     loraTag->setSpreadFactor(loRaSF);
     loraTag->setCodeRendundance(loRaCR);
     loraTag->setPower(mW(math::dBmW2mW(loRaTP)));
 
-    //add LoRa control info
-    /*  LoRaMacControlInfo *cInfo = new LoRaMacControlInfo();
-     cInfo->setLoRaTP(loRaTP);
-     cInfo->setLoRaCF(loRaCF);
-     cInfo->setLoRaSF(loRaSF);
-     cInfo->setLoRaBW(loRaBW);
-     cInfo->setLoRaCR(loRaCR);
-     pktRequest->setControlInfo(cInfo);*/
-
     sfVector.record(loRaSF);
     tpVector.record(loRaTP);
-    pktRequest->insertAtBack(payload);
+
+    uplinkPacket->insertAtBack(payload);
 
     // Send packet
-    send(pktRequest, "appOut");
+    send(uplinkPacket, "appOut");
 
     // Evaluate ADR
     if (evaluateADRinNode && receivedAck == false)

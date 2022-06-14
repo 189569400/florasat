@@ -43,7 +43,7 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
         virtual bool handleOperationStage(LifecycleOperation *operation, IDoneCallback *doneCallback) override;
 
         void handleMessageFromLowerLayer(cMessage *msg);
-        void sendJoinRequest();
+        void sendUplinkPacket();
         void sendDownMgmtPacket();
 
 
@@ -62,7 +62,7 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
         simtime_t timer;
 
         cMessage *configureLoRaParameters;
-        cMessage *sendMeasurements;
+        cMessage *sendUplink;
 
         cMessage *endAckTime;
         cMessage *synchronizer;
