@@ -145,7 +145,6 @@ void LoRaMac::initialize(int stage)
             isClassA = false;
         }
 
-
         // state variables
         fsm.setName("LoRaMac State Machine");
         backoffPeriod = -1;
@@ -223,7 +222,6 @@ void LoRaMac::configureNetworkInterface()
  */
 void LoRaMac::handleSelfMessage(cMessage *msg)
 {
-    EV << "received self message: " << msg << endl;
     if (msg == endBeacon)
     {
         beaconThings();
@@ -272,7 +270,7 @@ void LoRaMac::handleUpperMessage(cMessage *msg)
     auto pkt = check_and_cast<Packet *>(msg);
 
     pkt->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
-//    LoRaMacControlInfo *cInfo = check_and_cast<LoRaMacControlInfo *>(msg->getControlInfo());
+
     auto pktEncap = encapsulate(pkt);
 
     auto frame = pktEncap->removeAtFront<LoRaMacFrame>();
@@ -282,6 +280,7 @@ void LoRaMac::handleUpperMessage(cMessage *msg)
     EV << "frame " << pktEncap << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
     txQueue->enqueuePacket(pktEncap);
+
     if (fsm.getState() != IDLE)
         EV << "deferring upper message transmission in " << fsm.getStateName() << " state\n";
     else {
@@ -313,10 +312,6 @@ void LoRaMac::handleLowerMessage(cMessage *msg)
                 emit(macDPADOwnTraffic, DPAD.dbl());
             }
 
-
-            //auto pkt = check_and_cast<Packet *>(msg);
-            //const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
-            //if ()
             handleWithFsm(msg);
         }
         else {
@@ -724,9 +719,7 @@ Packet *LoRaMac::encapsulate(Packet *msg)
     frame->setReceiverAddress(MacAddress::BROADCAST_ADDRESS);
 
     ++sequenceNumber;
-    //frame->setLoRaUseHeader(cInfo->getLoRaUseHeader());
     frame->setLoRaUseHeader(tag->getUseHeader());
-    //unsigned char* message = (unsigned char*)(frame->getReceiverAddress().getAddressByte(0));
 
     msg->insertAtFront(frame);
 
