@@ -19,6 +19,7 @@
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
+#include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 
 #include "inet/linklayer/acking/AckingMac.h"
 #include "LoRaPhy/LoRaPhyPreamble_m.h"
@@ -70,6 +71,9 @@ void ISLAckingMac::handleLowerPacket(Packet *packet)
     }
 
     //if (!dropFrameNotForUs(packet))
+
+    auto snirInd = packet->getTag<SnirInd>();
+    SNIRDataVector.record(snirInd->getMinimumSnir());
 
 
     // decapsulate and attach control info
