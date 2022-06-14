@@ -40,7 +40,7 @@ module DummyNic extends NetworkInterface like IWirelessInterface
     parameters:
         string interfaceTableModule;
         string energySourceModule = default("");
-        double bitrate @unit(bps);
+        double bitrate @unit(bps) = default(10bps);
         *.interfaceTableModule = default(absPath(this.interfaceTableModule));
         *.energySourceModule = default(absPath(this.energySourceModule));
         **.bitrate = 250kbps;
