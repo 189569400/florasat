@@ -238,7 +238,7 @@ void SimpleLoRaApp::sendJoinRequest()
     pktRequest->setKind(DATA);
 
     auto payload = makeShared<LoRaAppPacket>();
-    payload->setChunkLength(B(par("dataSize").intValue()));
+    payload->setChunkLength(B(par("payloadSize").intValue()));
 
     lastSentMeasurement = rand();
     payload->setSampleMeasurement(lastSentMeasurement);
