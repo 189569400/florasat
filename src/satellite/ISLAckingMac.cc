@@ -51,6 +51,10 @@ void ISLAckingMac::handleUpperPacket(Packet *packet)
     AckingMac::handleUpperPacket(packet);
 }
 
+void ISLAckingMac::finish()
+{
+    //SNIRDataHist.recordAs("SNIR");
+}
 /*
 void ISLAckingMac::handleLowerPacket(Packet *packet)
 {
@@ -72,13 +76,22 @@ void ISLAckingMac::handleLowerPacket(Packet *packet)
 
     //if (!dropFrameNotForUs(packet))
 
-    auto snirInd = packet->getTag<SnirInd>();
+    auto snirInd = packet->findTag<SnirInd>();
     SNIRDataVector.record(snirInd->getMinimumSnir());
+
+    auto signalPowerInd = packet->getTag<SignalPowerInd>();
+    W w_rssi = signalPowerInd->getPower();
+    double rssi = w_rssi.get()*1000;
+    RSSIDataVector.record(math::mW2dBmW(rssi));
+
+    //SNIRDataHist.collect(snirInd->getMinimumSnir());
+
 
 
     // decapsulate and attach control info
     decapsulate(packet);
     EV << "Passing up contained packet '" << packet->getName() << "' to higher layer\n";
+    EV << "packet " << packet << "\n";
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
     sendUp(packet);
 

@@ -34,6 +34,9 @@ protected:
     int satIndex = 0;
     int maxHops = 1;
 
+    int planes = 1;
+    int satPlane = 0;
+
     int satRightIndex = -1;
     int satLeftIndex = -1;
     int satDownIndex = -1;

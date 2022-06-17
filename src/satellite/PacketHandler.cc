@@ -40,11 +40,11 @@ void PacketHandler::initialize(int stage)
         if (NoradA* noradAModule = dynamic_cast<NoradA*>(noradModule))
         {
             satIndex = noradAModule->getSatelliteNumber();
-            int planes = noradAModule->getNumberOfPlanes();
+            planes = noradAModule->getNumberOfPlanes();
             int satPerPlane = noradAModule->getSatellitesPerPlane();
             numOfSatellites = planes * satPerPlane;
             maxHops = planes + satPerPlane - 1;
-            int satPlane = trunc(satIndex/satPerPlane);
+            satPlane = trunc(satIndex/satPerPlane);
             int minSat = satPerPlane * satPlane;
             int maxSat = minSat + satPerPlane - 1;
 
@@ -273,10 +273,26 @@ void PacketHandler::forwardToSatellite(Packet *pkt)
     int macFrameType = frame->getPktType();
     int numHops = frame->getNumHop();
 
+    int forwardPacket=0;
+
+    // only the last plane will forward uplink messages from downsat
+    if (((sourceSat == satLeftIndex || sourceSat == satDownIndex) && macFrameType == UPLINK && satPlane == planes-1))
+        forwardPacket=1;
+
+    else if (sourceSat == satLeftIndex && macFrameType == UPLINK)
+        forwardPacket=1;
+
+    // only the first plane will forward downlink messages from upsat
+    else if (((sourceSat == satRightIndex || sourceSat == satUpIndex) && macFrameType == DOWNLINK && satPlane == 0))
+        forwardPacket=1;
+
+    else if (sourceSat == satRightIndex && macFrameType == DOWNLINK)
+        forwardPacket=1;
+
+
     // if message comes from leftsat or downsat and is uplink or
     // if message comes from rightsat or upsat and is downlink
-    if (((sourceSat == satLeftIndex || sourceSat == satDownIndex) && macFrameType == UPLINK) ||
-            ((sourceSat == satRightIndex || sourceSat == satUpIndex) && macFrameType == DOWNLINK))
+    if (forwardPacket)
     {
         frame->setNumHop(numHops + 1);
         frame->setRoute(numHops, satIndex);

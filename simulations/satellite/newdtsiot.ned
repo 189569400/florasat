@@ -83,6 +83,6 @@ network NewFLoRaSatNetwork
         gwRouter.ethg++ <--> DatarateChannel2 <--> groundStation[0].ethg;
 
         // GroundStation[0] - Satellite[15] link
-        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[nrOfGW-1].groundLink;
+        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[15].groundLink;
 }
 

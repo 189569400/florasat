@@ -46,8 +46,11 @@ class ISLAckingMac : public AckingMac
   public:
     ISLAckingMac();
     virtual ~ISLAckingMac();
+    void finish() override;
 
     cOutVector SNIRDataVector;
+    cHistogram SNIRDataHist;
+    cOutVector RSSIDataVector;
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
