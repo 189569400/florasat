@@ -191,6 +191,12 @@ void PacketHandler::receiveSignal(cComponent *source, simsignal_t signalID, intv
 void PacketHandler::finish()
 {
     recordScalar("LoRa_GW_DER", double(counterOfReceivedPackets)/counterOfSentPacketsFromNodes);
+    recordScalar("SatToGroundPkts", sentToGround);
+    recordScalar("rcvdFromLoRa", counterOfReceivedPackets);
+    recordScalar("rcvdFromLeftSat", rcvdFromLeftSat);
+    recordScalar("rcvdFromDownSat", rcvdFromDownSat);
+    recordScalar("rcvdFromRightSat", rcvdFromRightSat);
+    recordScalar("rcvdFromUpSat", rcvdFromUpSat);
 }
 
 
@@ -238,7 +244,7 @@ void PacketHandler::forwardToGround(Packet *pkt)
     int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int numHops = frame->getNumHop();
 
-    // if message comes from leftsat or downsat forward to ground
+    // if message comes from leftsat or downsat or lora forward to ground
     if (sourceSat == satLeftIndex || sourceSat == satDownIndex)
     {
         frame->setNumHop(numHops + 1);
@@ -246,13 +252,21 @@ void PacketHandler::forwardToGround(Packet *pkt)
         frame->setTimestamps(numHops, simTime());
         pkt->insertAtFront(frame);
         send(pkt, "lowerLayerGS$o");
+        sentToGround++;
 
-        /*
-        std::cout << ", num hops: " << numHops << ", local sat " << satIndex << ", previous hops: " << endl ;
-        for(int l=0; l<maxHops; l++)
-            std::cout << frame->getRoute(l) << " at time " << frame->getTimestamps(l) << endl;
-        std::cout << endl;
-        */
+        EV << "Forwarding packet to ground station from satellite" << satIndex << "\nPrevious satellite hops:\n";
+        for(int h=0; h<numHops; h++)
+            EV << "In satellite " << frame->getRoute(h) << " at time " << frame->getTimestamps(h);
+    }
+    // or if it comes from lora forward to ground
+    else if (pkt->arrivedOn("lowerLayerLoRaIn"))
+    {
+        pkt->insertAtFront(frame);
+        send(pkt, "lowerLayerGS$o");
+        sentToGround++;
+
+        EV << "Forwarding packet to ground station from satellite" << satIndex;
+        EV << "\nNo previous satellite hops, Packet reached local satellite at time " << frame->getTimestamps(0);
     }
 
     // in other case the packet was sent by a further satellite
@@ -299,6 +313,15 @@ void PacketHandler::forwardToSatellite(Packet *pkt)
         frame->setTimestamps(numHops, simTime());
         pkt->insertAtFront(frame);
         send(pkt, gate("lowerLayerISLOut"));
+
+        if (sourceSat == satLeftIndex)
+            rcvdFromLeftSat++;
+        else if (sourceSat == satDownIndex)
+            rcvdFromDownSat++;
+        else if (sourceSat == satRightIndex)
+            rcvdFromRightSat++;
+        else if (sourceSat == satUpIndex)
+            rcvdFromUpSat++;
     }
 
     // in other case the packet was sent by a further satellite

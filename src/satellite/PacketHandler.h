@@ -88,6 +88,12 @@ public:
     simsignal_t LoRa_GWPacketReceived;
     int counterOfSentPacketsFromNodes = 0;
     int counterOfReceivedPackets = 0;
+    int sentToGround = 0;
+
+    int rcvdFromLeftSat = 0;
+    int rcvdFromDownSat = 0;
+    int rcvdFromRightSat = 0;
+    int rcvdFromUpSat = 0;
 };
 
 }
