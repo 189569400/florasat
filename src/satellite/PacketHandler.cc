@@ -254,9 +254,10 @@ void PacketHandler::forwardToGround(Packet *pkt)
         send(pkt, "lowerLayerGS$o");
         sentToGround++;
 
-        EV << "Forwarding packet to ground station from satellite" << satIndex << "\nPrevious satellite hops:\n";
+        EV << "Forwarding packet to ground station from satellite " << satIndex << ". Previous satellite hops:" << endl;
         for(int h=0; h<numHops; h++)
-            EV << "In satellite " << frame->getRoute(h) << " at time " << frame->getTimestamps(h);
+            EV << "In satellite " << frame->getRoute(h) << " at time " << frame->getTimestamps(h) << endl;
+
     }
     // or if it comes from lora forward to ground
     else if (pkt->arrivedOn("lowerLayerLoRaIn"))
@@ -265,8 +266,8 @@ void PacketHandler::forwardToGround(Packet *pkt)
         send(pkt, "lowerLayerGS$o");
         sentToGround++;
 
-        EV << "Forwarding packet to ground station from satellite" << satIndex;
-        EV << "\nNo previous satellite hops, Packet reached local satellite at time " << frame->getTimestamps(0);
+        EV << "Forwarding packet to ground station from satellite " << satIndex << endl;
+        EV << "No previous satellite hops, Packet reached local satellite at time " << frame->getTimestamps(0) << endl;
     }
 
     // in other case the packet was sent by a further satellite

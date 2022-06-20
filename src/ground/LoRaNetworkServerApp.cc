@@ -90,7 +90,6 @@ void LoRaNetworkServerApp::handleMessage(cMessage *msg)
 {
     if (msg->arrivedOn("socketIn"))
     {
-        std::cout << "HERE2" << endl;
         auto pkt = check_and_cast<Packet *>(msg);
         const auto &frame  = pkt->peekAtFront<LoRaMacFrame>();
         if (frame == nullptr)
@@ -292,7 +291,7 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
     for(uint i=0;i<receivedPackets.size();i++)
     {
-        std::cout << "received packets";
+        std::cout << "received packets" << endl;
         const auto &frameAux = receivedPackets[i].rcvdPacket->peekAtFront<LoRaMacFrame>();
         if(frameAux->getTransmitterAddress() == frame->getTransmitterAddress() && frameAux->getSequenceNumber() == frame->getSequenceNumber())
         {
@@ -320,6 +319,7 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
     if(WorkWithAck)
     {
         simtime_t endTime= 0;
+        int numHops = frame->getNumHop();
         for (size_t i = 0; i < frame->getRouteArraySize(); i++)
         {
             if (frame->getTimestamps(i) > 0)
@@ -334,13 +334,15 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         double sat2groundTime = satgroundtime.dbl();
         double islTime = sattime.dbl();
 
-        EV << "node to satellite time: " << node2satTime << endl;
-        EV << "isl time: " << islTime << endl;
-        EV << "satellite to ground time: " << sat2groundTime << endl;
+        EV << "First hop in satellite " << frame->getRoute(0) << " at time " << frame->getTimestamps(0) << endl;
+        EV << "Last hop in satellite " << frame->getRoute(numHops-1) << " at time " << frame->getTimestamps(numHops-1) << endl;
 
-        std::cout << "node to satellite time: " << node2satTime << endl;
-        std::cout << "isl time: " << islTime << endl;
-        std::cout << "satellite to ground time: " << sat2groundTime << endl;
+        EV << "Origin packet time at lora node :" << frame->getOriginTime() << endl;
+        EV << "packet arrival time at station: " << frame->getGroundTime() << endl;
+
+        EV << "node to satellite time: " << nodesattime.dbl() << endl;
+        EV << "isl time: " << satgroundtime.dbl() << endl;
+        EV << "satellite to ground time: " << sattime.dbl() << endl;
 
         //ACKNOWLEDGMENT MESSAGE SENDING
         auto mgmtPacket = makeShared<LoRaAppPacket>();
