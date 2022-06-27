@@ -10,6 +10,7 @@
 
 #include <vector>
 #include "inet/common/INETDefs.h"
+#include "inet/common/packet/printer/PacketPrinter.h"
 #include "inet/applications/base/ApplicationBase.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/RadioControlInfo_m.h"
 

@@ -84,15 +84,12 @@ void ISLAckingMac::handleLowerPacket(Packet *packet)
     double rssi = w_rssi.get()*1000;
     RSSIDataVector.record(math::mW2dBmW(rssi));
 
-    //SNIRDataHist.collect(snirInd->getMinimumSnir());
-
-
 
     // decapsulate and attach control info
     decapsulate(packet);
     EV << "Passing up contained packet '" << packet->getName() << "' to higher layer\n";
     EV << "packet " << packet << "\n";
-    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
+    //packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
     sendUp(packet);
 
 }

@@ -13,6 +13,8 @@
 #include "inet/applications/base/ApplicationPacket_m.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 
+#include "inet/common/packet/printer/PacketPrinter.h"
+
 #include "mobility/NoradA.h"
 #include "mobility/INorad.h"
 
@@ -240,6 +242,10 @@ void PacketHandler::insertSatinRoute(Packet *pkt)
 
 void PacketHandler::forwardToGround(Packet *pkt)
 {
+
+    //PacketPrinter printer;
+    //printer.printPacket(std::cout, pkt);
+
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
     int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int numHops = frame->getNumHop();
