@@ -1,12 +1,11 @@
 /*
- * PacketHandler.cc
+ * PacketHandlerWired.cc
  *
- *  Created on: Mar 30, 2022
+ *  Created on: Jun 30, 2022
  *      Author: diego
  */
 
-
-#include "PacketHandler.h"
+#include "PacketHandlerWired.h"
 #include <cmath>
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/common/ModuleAccess.h"
@@ -23,11 +22,12 @@
 #include "../LoRaPhy/LoRaRadioControlInfo_m.h"
 #include "../LoRaPhy/LoRaPhyPreamble_m.h"
 
-namespace flora {
 
-Define_Module(PacketHandler);
+namespace flora{
 
-void PacketHandler::initialize(int stage)
+Define_Module(PacketHandlerWired);
+
+void PacketHandlerWired::initialize(int stage)
 {
     if (stage == 0)
     {
@@ -88,11 +88,10 @@ void PacketHandler::initialize(int stage)
     }
 }
 
-void PacketHandler::handleMessage(cMessage *msg)
+void PacketHandlerWired::handleMessage(cMessage *msg)
 {
     EV << msg->getArrivalGate() << endl;
     auto pkt = check_and_cast<Packet*>(msg);
-    cGate *islOut = gate("lowerLayerISLOut");
 
     // message from LoRa Node
     if (msg->arrivedOn("lowerLayerLoRaIn"))
@@ -105,14 +104,7 @@ void PacketHandler::handleMessage(cMessage *msg)
             forwardToGround(pkt);
 
         else
-        {
-            // add MacAddressReq to lora packet
-            //auto macHeader = makeShared<MacAddressReq>();
-            //macHeader->setSrcAddress(pkt->peekAtFront<LoRaMacFrame>()->getTransmitterAddress());
-            //macHeader->setDestAddress(pkt->peekAtFront<LoRaMacFrame>()->getReceiverAddress());
-            //pkt->insertAtFront(macHeader);
-            send(pkt, islOut);
-        }
+            forwardToSatellite(pkt);
     }
 
     // message from GroundStation
@@ -124,11 +116,12 @@ void PacketHandler::handleMessage(cMessage *msg)
         if (loraNodeAvailable())
             forwardToNode(pkt);
         else
-            send(pkt, islOut);
+            forwardToSatellite(pkt);
     }
 
     // message from another satellite
-    if (msg->arrivedOn("lowerLayerISLIn"))
+    if (msg->arrivedOn("up$i") || msg->arrivedOn("left$i") ||
+            msg->arrivedOn("down$i") || msg->arrivedOn("right$i"))
     {
         auto frame = pkt->peekAtFront<LoRaMacFrame>();
         int macFrameType = frame->getPktType();
@@ -154,7 +147,7 @@ void PacketHandler::handleMessage(cMessage *msg)
     }
 }
 
-void PacketHandler::processLoraMACPacket(Packet *pk)
+void PacketHandlerWired::processLoraMACPacket(Packet *pk)
 {
     // FIXME: Change based on new implementation of MAC frame.
     emit(LoRa_GWPacketReceived, 42);
@@ -172,7 +165,7 @@ void PacketHandler::processLoraMACPacket(Packet *pk)
     pk->insertAtFront(frame);
 }
 
-void PacketHandler::sendPacket()
+void PacketHandlerWired::sendPacket()
 {
 //    LoRaAppPacket *mgmtCommand = new LoRaAppPacket("mgmtCommand");
 //    mgmtCommand->setMsgType(TXCONFIG);
@@ -192,13 +185,13 @@ void PacketHandler::sendPacket()
 }
 
 
-void PacketHandler::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
+void PacketHandlerWired::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
     if (simTime() >= getSimulation()->getWarmupPeriod())
         counterOfSentPacketsFromNodes++;
 }
 
-void PacketHandler::finish()
+void PacketHandlerWired::finish()
 {
     recordScalar("LoRa_GW_DER", double(counterOfReceivedPackets)/counterOfSentPacketsFromNodes);
     recordScalar("SatToGroundPkts", sentToGround);
@@ -210,7 +203,7 @@ void PacketHandler::finish()
 }
 
 
-void PacketHandler::SetupRoute(Packet *pkt, int macFrameType)
+void PacketHandlerWired::SetupRoute(Packet *pkt, int macFrameType)
 {
     pkt->trimFront();
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
@@ -227,18 +220,18 @@ void PacketHandler::SetupRoute(Packet *pkt, int macFrameType)
 }
 
 
-bool PacketHandler::groundStationAvailable()
+bool PacketHandlerWired::groundStationAvailable()
 {
     // only last satellite in the constellation has ground station connection
     return satIndex == numOfSatellites-1;
 }
 
-bool PacketHandler::loraNodeAvailable()
+bool PacketHandlerWired::loraNodeAvailable()
 {
     return true;
 }
 
-void PacketHandler::insertSatinRoute(Packet *pkt)
+void PacketHandlerWired::insertSatinRoute(Packet *pkt)
 {
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
     int numHops = frame->getNumHop();
@@ -248,7 +241,7 @@ void PacketHandler::insertSatinRoute(Packet *pkt)
     pkt->insertAtFront(frame);
 }
 
-void PacketHandler::forwardToGround(Packet *pkt)
+void PacketHandlerWired::forwardToGround(Packet *pkt)
 {
 
     //PacketPrinter printer;
@@ -289,60 +282,50 @@ void PacketHandler::forwardToGround(Packet *pkt)
         delete pkt;
 }
 
-void PacketHandler::forwardToNode(Packet *pkt)
+void PacketHandlerWired::forwardToNode(Packet *pkt)
 {
     insertSatinRoute(pkt);
     send(pkt, "lowerLayerLoRaOut");
 }
 
-void PacketHandler::forwardToSatellite(Packet *pkt)
+void PacketHandlerWired::forwardToSatellite(Packet *pkt)
 {
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
     int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int macFrameType = frame->getPktType();
     int numHops = frame->getNumHop();
 
-    int forwardPacket=0;
-
-    // only the last plane will forward uplink messages from downsat
-    if (((sourceSat == satLeftIndex || sourceSat == satDownIndex) && macFrameType == UPLINK && satPlane == planes-1))
-        forwardPacket=1;
-
-    else if (sourceSat == satLeftIndex && macFrameType == UPLINK)
-        forwardPacket=1;
-
-    // only the first plane will forward downlink messages from upsat
-    else if (((sourceSat == satRightIndex || sourceSat == satUpIndex) && macFrameType == DOWNLINK && satPlane == 0))
-        forwardPacket=1;
-
-    else if (sourceSat == satRightIndex && macFrameType == DOWNLINK)
-        forwardPacket=1;
+    frame->setNumHop(numHops + 1);
+    frame->setRoute(numHops, satIndex);
+    frame->setTimestamps(numHops, simTime());
+    pkt->insertAtFront(frame);
 
 
-    // if message comes from leftsat or downsat and is uplink or
-    // if message comes from rightsat or upsat and is downlink
-    if (forwardPacket)
+    // forward all uplink packets to the right then up
+    if (macFrameType == UPLINK)
     {
-        frame->setNumHop(numHops + 1);
-        frame->setRoute(numHops, satIndex);
-        frame->setTimestamps(numHops, simTime());
-        pkt->insertAtFront(frame);
-        send(pkt, gate("lowerLayerISLOut"));
-
-        if (sourceSat == satLeftIndex)
-            rcvdFromLeftSat++;
-        else if (sourceSat == satDownIndex)
-            rcvdFromDownSat++;
-        else if (sourceSat == satRightIndex)
-            rcvdFromRightSat++;
-        else if (sourceSat == satUpIndex)
-            rcvdFromUpSat++;
+        if (satPlane == planes-1)
+            send(pkt->dup(), "up$o");
+        else
+            send(pkt->dup(), "right$o");
     }
 
-    // in other case the packet was sent by a further satellite
-    else
-        delete pkt;
+    else if (macFrameType == DOWNLINK)
+    {
+        if (satPlane == 0)
+            send(pkt->dup(), "down$o");
+        else
+            send(pkt->dup(), "left$o");
+    }
+
+    if (sourceSat == satLeftIndex)
+        rcvdFromLeftSat++;
+    else if (sourceSat == satDownIndex)
+        rcvdFromDownSat++;
+    else if (sourceSat == satRightIndex)
+        rcvdFromRightSat++;
+    else if (sourceSat == satUpIndex)
+        rcvdFromUpSat++;
 }
 
 }
-

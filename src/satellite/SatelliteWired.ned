@@ -23,10 +23,9 @@ import leosatellites.mobility.NoradA;
 import leosatellites.mobility.SatelliteMobility;
 
 import flora.LoRa.LoRaGWNic;
-import flora.satellite.PacketHandler;
-import flora.satellite.ISLAckingWirelessInterface;
+import flora.satellite.PacketHandlerWired;
 
-module Satellite like INetworkNode
+module SatelliteWired like INetworkNode
 {
     parameters:
         @networkNode();
@@ -37,6 +36,10 @@ module Satellite like INetworkNode
 
     gates:
         inout groundLink;
+        inout left;
+        inout right;
+        inout up;
+        inout down;
 
     submodules:
         mobility: SatelliteMobility {
@@ -55,28 +58,23 @@ module Satellite like INetworkNode
             @display("p=270,56");
         }
 
-        ISLNic: ISLAckingWirelessInterface {
-            @display("p=301,161");
-        }
-
-        packetHandler: PacketHandler {
+        packetHandler: PacketHandlerWired {
             @display("p=181,161");
         }
 
     connections allowunconnected:
+        
+        //internal connection needed for the simulator
+        packetHandler.down  <--> down;
+        packetHandler.right  <--> right;
+        packetHandler.left  <--> left;
+        packetHandler.up  <--> up;
+        
         // LoRa packet to and from the LoRaGWNic and the PacketHandler
         LoRaGWNic.upperLayerIn <-- packetHandler.lowerLayerLoRaOut;
         LoRaGWNic.upperLayerOut --> packetHandler.lowerLayerLoRaIn;
-
-        // packet to and from the ISLNic and the PacketHandler
-        ISLNic.upperLayerIn <-- packetHandler.lowerLayerISLOut;
-        ISLNic.upperLayerOut --> packetHandler.lowerLayerISLIn;
 
         // packet to and from the GroundStation and the PacketHandler
         // uhf radio module to be implemented
         groundLink <--> packetHandler.lowerLayerGS;
 }
-
-
-
-

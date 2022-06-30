@@ -1,4 +1,4 @@
-package flora.simulations.satellite;
+package flora.simulations.satelliteradio;
 
 import inet.applications.udpapp.UdpBasicApp;
 import inet.node.inet.Router;
@@ -18,7 +18,7 @@ import flora.LoRa.ISLChannel;
 import flora.satellite.Satellite;
 
 @license(LGPL);
-network NewFLoRaSatNetwork
+network FLoRaSatNetworkRadio
 {
     parameters:
         int nrOfNodes = default(1);
