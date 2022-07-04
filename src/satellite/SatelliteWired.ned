@@ -65,10 +65,10 @@ module SatelliteWired like INetworkNode
     connections allowunconnected:
         
         //internal connection needed for the simulator
-        packetHandler.down  <--> down;
-        packetHandler.right  <--> right;
-        packetHandler.left  <--> left;
-        packetHandler.up  <--> up;
+        packetHandler.down1  <--> down;
+        packetHandler.right1  <--> right;
+        packetHandler.left1  <--> left;
+        packetHandler.up1  <--> up;
         
         // LoRa packet to and from the LoRaGWNic and the PacketHandler
         LoRaGWNic.upperLayerIn <-- packetHandler.lowerLayerLoRaOut;

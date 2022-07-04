@@ -334,9 +334,12 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         double sat2groundTime = satgroundtime.dbl();
         double islTime = sattime.dbl();
 
-        EV << "First hop in satellite " << frame->getRoute(0) << " at time " << frame->getTimestamps(0) << endl;
-        EV << "Last hop in satellite " << frame->getRoute(numHops-1) << " at time " << frame->getTimestamps(numHops-1) << endl;
 
+        EV << "First hop in satellite " << frame->getRoute(0) << " at time " << frame->getTimestamps(0) << endl;
+        if(numHops)
+            EV << "Last hop in satellite " << frame->getRoute(numHops-1) << " at time " << frame->getTimestamps(numHops-1) << endl;
+        else
+            EV << "Last hop in satellite " << frame->getRoute(0) << " at time " << frame->getTimestamps(0) << endl;
         EV << "Origin packet time at lora node :" << frame->getOriginTime() << endl;
         EV << "packet arrival time at station: " << frame->getGroundTime() << endl;
 

@@ -120,8 +120,8 @@ void PacketHandlerWired::handleMessage(cMessage *msg)
     }
 
     // message from another satellite
-    if (msg->arrivedOn("up$i") || msg->arrivedOn("left$i") ||
-            msg->arrivedOn("down$i") || msg->arrivedOn("right$i"))
+    if (msg->arrivedOn("up1$i") || msg->arrivedOn("left1$i") ||
+            msg->arrivedOn("down1$i") || msg->arrivedOn("right1$i"))
     {
         auto frame = pkt->peekAtFront<LoRaMacFrame>();
         int macFrameType = frame->getPktType();
@@ -207,15 +207,9 @@ void PacketHandlerWired::SetupRoute(Packet *pkt, int macFrameType)
 {
     pkt->trimFront();
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
-    int numHops = frame->getNumHop();  // 0 at this stage
-
     frame->setPktType(macFrameType);
-    frame->setNumHop(numHops + 1);
     frame->setRouteArraySize(maxHops);
     frame->setTimestampsArraySize(maxHops);
-    frame->setRoute(numHops, satIndex);
-    frame->setTimestamps(numHops, simTime());
-
     pkt->insertAtFront(frame);
 }
 
@@ -248,12 +242,20 @@ void PacketHandlerWired::forwardToGround(Packet *pkt)
     //printer.printPacket(std::cout, pkt);
 
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
-    int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int numHops = frame->getNumHop();
+    int sourceSat;
+    if (numHops)
+        sourceSat = frame->getRoute(numHops-1);
+    else
+        sourceSat = satIndex;
 
     // if message comes from leftsat or downsat or lora forward to ground
     if (sourceSat == satLeftIndex || sourceSat == satDownIndex)
     {
+        EV << "Forwarding packet to ground station from satellite " << satIndex << ". Previous satellite hops:" << endl;
+        for(int h=0; h<numHops; h++)
+            EV << "In satellite " << frame->getRoute(h) << " at time " << frame->getTimestamps(h) << endl;
+
         frame->setNumHop(numHops + 1);
         frame->setRoute(numHops, satIndex);
         frame->setTimestamps(numHops, simTime());
@@ -261,9 +263,6 @@ void PacketHandlerWired::forwardToGround(Packet *pkt)
         send(pkt, "lowerLayerGS$o");
         sentToGround++;
 
-        EV << "Forwarding packet to ground station from satellite " << satIndex << ". Previous satellite hops:" << endl;
-        for(int h=0; h<numHops; h++)
-            EV << "In satellite " << frame->getRoute(h) << " at time " << frame->getTimestamps(h) << endl;
 
     }
     // or if it comes from lora forward to ground
@@ -291,9 +290,14 @@ void PacketHandlerWired::forwardToNode(Packet *pkt)
 void PacketHandlerWired::forwardToSatellite(Packet *pkt)
 {
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
-    int sourceSat = frame->getRoute(frame->getNumHop()-1);
     int macFrameType = frame->getPktType();
     int numHops = frame->getNumHop();
+
+    int sourceSat;
+    if (numHops)
+        sourceSat = frame->getRoute(numHops-1);
+    else
+        sourceSat = satIndex;
 
     frame->setNumHop(numHops + 1);
     frame->setRoute(numHops, satIndex);
@@ -305,17 +309,42 @@ void PacketHandlerWired::forwardToSatellite(Packet *pkt)
     if (macFrameType == UPLINK)
     {
         if (satPlane == planes-1)
-            send(pkt->dup(), "up$o");
+        {
+            cGate *upGate = gate("up1$o");
+            if (upGate->getTransmissionChannel()->isBusy())
+                scheduleAt(upGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+            else
+                send(pkt->dup(), upGate);
+        }
+
         else
-            send(pkt->dup(), "right$o");
+        {
+            cGate *rightGate = gate("right1$o");
+            if (rightGate->getTransmissionChannel()->isBusy())
+                scheduleAt(rightGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+            else
+                send(pkt->dup(), rightGate);
+        }
     }
 
     else if (macFrameType == DOWNLINK)
     {
         if (satPlane == 0)
-            send(pkt->dup(), "down$o");
+        {
+            cGate *downGate = gate("down1$o");
+            if (downGate->getTransmissionChannel()->isBusy())
+                scheduleAt(downGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+            else
+                send(pkt->dup(), downGate);
+        }
         else
-            send(pkt->dup(), "left$o");
+        {
+            cGate *leftGate = gate("left1$o");
+            if (leftGate->getTransmissionChannel()->isBusy())
+                scheduleAt(leftGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+            else
+                send(pkt->dup(), leftGate);
+        }
     }
 
     if (sourceSat == satLeftIndex)

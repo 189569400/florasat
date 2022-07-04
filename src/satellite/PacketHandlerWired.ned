@@ -40,10 +40,10 @@ simple PacketHandlerWired
 
     gates:        
         // ISL gates
-        inout left;
-        inout right;
-        inout up;
-        inout down;
+        inout left1;
+        inout right1;
+        inout up1;
+        inout down1;
         
         // LoRa gates
         input lowerLayerLoRaIn @labels(LoRaGate/up);
