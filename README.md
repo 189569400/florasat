@@ -11,41 +11,48 @@ Please consider the the simulator is under active development, and it should **n
 
 ## Installation
 
-- The simulator uses OpenSSL headers and libraries. Install with `sudo apt-get install libssl-dev` in Ubuntu
-
-- Install [Omnetpp6.0Pre14](https://omnetpp.org/download/preview) (but should work on later Pre releases)
+- Install [OMNeT++6.0](https://omnetpp.org/)
 
 - Install [INETv4.3](https://inet.omnetpp.org/Installation.html)
 
-- Add INETv4.3 to the environment by executing setinet.sh passing the absolute path to the INET root directory. Example: `sh setinet.sh /home/diego/Diego/AGORA/omnetprojects/inet4.3`
+- Install OpenSSL, in Ubuntu use `sudo apt-get install libssl-dev`
 
-- Copy FLoRaSat resources to the Omnetpp6 reosources. Execute `sh setup.sh`
+- Add INETv4.3 to the environment by executing setinet.sh passing the absolute path to the INET root directory, eg. `sh setinet.sh $HOME/omnetprojects/inet4.3`
 
-- Clone `https://github.com/diegomm6/os3` repo and checkout to `framework` branch
+- Clone `https://github.com/diegomm6/os3` repo where INET is located and checkout to `framework` branch
 
-- Go to os3 project Properties, under OMNET++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the curl library (eg. `/usr/local/Cellar/curl/7.77.0/include/curl`). Also in os3 Properties, under Project References select inet4.3
+- Edit the Makefile in the os3 repo root directory, in line 13 add the correct path for the curl library (eg. `/usr/include/x86_64-linux-gnu/curl`)
 
-- Edit the Makefile in the os3 repo root directory, in line 13 add the correct path for the curl library
-
-- Clone `https://github.com/diegomm6/leosatellites` repo and checkout to `framework` branch
-
-- Go to leosatellites project Properties, under OMNET++/Makemake select Build makemake options for src folder
-
-- Go to leosatellites project Properties, under OMNET++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the os3 library (eg. `/home/diego/Diego/AGORA/omnetprojects/os3/src`). Also in leosatellites Properties, under Project References select inet4.3 and os3
+- Clone `https://github.com/diegomm6/leosatellites` repo where INET is located and checkout to `framework` branch
 
 - Edit the Makefile in the leosatellites repo root directory, in line 13 add the correct path to the curl library and the path to the os3 src directory
 
+- Clone `https://gitlab.inria.fr/jfraire/florasat.git` repo where INET is located and checkout to `framework` branch
+
+- Launch OMNeT++ IDE from the terminal with `omnetpp`. Add inet4.3, os3, leosatellites and florasat projects to the workspace
+
+- Go to os3 project Properties, under OMNeT++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the curl library (eg. `/usr/include/x86_64-linux-gnu/curl`). Also in os3 Properties, under Project References select inet4.3
+
+- Go to leosatellites project Properties, under OMNeT++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the os3 library (eg. `$HOME/omnetprojects/os3/src`). Also in leosatellites Properties, under Project References select inet4.3 and os3
+
 - Go to florasat project Properties, under OMNET++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the os3 and leosatellites libraries. Also in florasat Properties, under Project References select inet4.3, os3 and leosatellite
 
-- Finally, in omnet++ Build Project in order: os3, leosatellites, florasat
+- Finally, Build Project in order: os3, leosatellites, florasat
 
 
-**IMPORTANT** FLoRaSat will not with Omnetpp5 due to source code path inconsistency with version Omnetpp6
+**IMPORTANT** FLoRaSat will not with OMNeT++5 due to source code path inconsistency with version OMNeT++6
 
 
 ## Run simulations
 
-- The scenario is executed using the `omnetpp.ini` located in the `/simulations` directory
+Multiple scenarios are under development on the framework branch:
+
+- In `/simulations/classic` there is no support for ground station. This scenario is the classic implementation of florasat found in the master branch with the addition of orbital propagation
+
+- In `/simulations/satelliteradio` the satellites/gateways use radio modules for inter satellite communication. This functionality does not work yet but it is open for development
+
+- In `/simulations/satellitewired` the satellites/gateways use direct links for inter satellite communication
+
 
 
 
