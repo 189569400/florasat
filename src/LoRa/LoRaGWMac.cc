@@ -126,7 +126,7 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
 
 void LoRaGWMac::handleUpperMessage(cMessage *msg)
 {
-    if(waitingForDC == false)
+    if(!waitingForDC)
     {
         auto pkt = check_and_cast<Packet *>(msg);
         const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
@@ -137,7 +137,7 @@ void LoRaGWMac::handleUpperMessage(cMessage *msg)
 
         tag->setDestAddress(frame->getReceiverAddress());
 
-
+        // TODO check where these values come from
         waitingForDC = true;
         double delta;
         if(frame->getLoRaSF() == 7) delta = 0.61696;
@@ -199,13 +199,17 @@ void LoRaGWMac::sendBeacon()
     auto beacon = new Packet("Beacon");
     auto frame = makeShared<LoRaMacFrame>();
     frame->setPktType(BEACON);
-
-    //auto frame = makeShared<LoRaBeacon>();
     frame->setChunkLength(B(par("headerLength").intValue()));
-    //const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
     auto tag = beacon->addTagIfAbsent<MacAddressReq>();
     tag->setDestAddress(MacAddress::BROADCAST_ADDRESS);
     beacon->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
+
+    // TODO set transmission parameters as sim parameters
+    // set beacon spreading factor SF to 12
+    // set beacon bandwidth BW to 125 KHz
+    // set beacon center freq CF to 868 MHz
+    // set beacon TX power TP to 50(?)
+
     int loRaSF = 12;
     frame->setLoRaSF(loRaSF);
     units::values::Hz loRaBW = inet::units::values::Hz(125000);

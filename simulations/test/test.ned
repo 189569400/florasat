@@ -15,7 +15,7 @@ import flora.LoraNode.LoRaGW;
 import flora.ground.GroundStation;
 import flora.LoRa.ISLChannel;
 
-import flora.satellite.Satellite;
+import flora.satellite.SatelliteWired;
 
 @license(LGPL);
 network TestNetwork
@@ -33,23 +33,32 @@ network TestNetwork
             delay = 0.002s;
             @display("ls=black,1");
         }
+        
+        channel DatarateChannel1 extends ned.DatarateChannel
+        {
+            datarate = 20kbps;
+            delay = 0s;
+            @display("ls=red,2");
+        }
 
     submodules:
         loRaNodes[nrOfNodes]: LoRaNode {
             @display("p=695.185,733.055;is=vs");
         }
-        loRaGW[nrOfGW]: Satellite {
-            @display("p=784.45,624.855;i=satellit_blue");
+        loRaGW[nrOfGW]: SatelliteWired {
+            @display("p=695.185,549.115;i=satellit_blue");
         }
         groundStation[nrOfGS]: GroundStation {
-            @display("p=692.48,481.49;i=device/receiverdish");
+            @display("p=692.48,340.83;i=device/receiverdish");
         }
         LoRaMedium: LoRaMedium {
             @display("p=124.43,297.55");
         }
-        ISLMedium: UnitDiskRadioMedium {
-            @display("p=124.43,481.49;i=misc/sun");
+
+        dummyMedium: UnitDiskRadioMedium {
+            @display("p=121.725,927.815;is=s");
         }
+
         networkServer: StandardHost {
             @display("p=1117.165,733.055;is=s");
         }
@@ -68,8 +77,8 @@ network TestNetwork
             @display("p=1117.165,586.985;is=s");
         }
         visualizer: IntegratedVisualizer {
-        	@display("p=124.43,675.0");
-        };
+            @display("p=124.43,675.0");
+        }
     connections allowunconnected:
 
 		// Network Server in  Ground Station
@@ -77,8 +86,6 @@ network TestNetwork
         nsRouter.pppg++ <--> Eth1G <--> internetCloud.pppg++;
         internetCloud.pppg++ <--> DatarateChannel2 <--> gwRouter.pppg++;
         gwRouter.ethg++ <--> DatarateChannel2 <--> groundStation[0].ethg;
+        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[0].groundLink;
 
-        // GroundStation[0] - Satellite[15] link
-        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[nrOfGW-1].groundLink;
 }
-

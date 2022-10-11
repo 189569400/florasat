@@ -62,7 +62,7 @@ LoRaMac::~LoRaMac()
     cancelAndDelete(pingPeriod);
     cancelAndDelete(beaconPeriod);
     cancelAndDelete(endBeacon);
-    cancelAndDelete(beaconGuardPeriod);
+    cancelAndDelete(beaconGuardStart);
     cancelAndDelete(beaconGuardEnd);
     cancelAndDelete(endPingSlot);
     cancelAndDelete(endDelay_1);
@@ -87,20 +87,28 @@ void LoRaMac::initialize(int stage)
         ackTimeout = par("ackTimeout");
         retryLimit = par("retryLimit");
 
+        // RX1 RX2 receive windows parameters
+        waitDelay1Time = par("waitDelay1Time");
+        listening1Time = par("listening1Time");
+        waitDelay2Time = par("waitDelay2Time");
+        listening2Time = par("listening2Time");
 
-        timeToNextSlot = 5;
-        pingOffset = 5;
-        beacon_period = 128;
-        beacon_reserved = 2.120;
-        slotLen = 0.03;
-        waitDelay1Time = 1;
-        listening1Time = 1;
-        waitDelay2Time = 1;
-        listening2Time = 1;
-        beaconGuard = 3;
+        // beacon parameters
+        beaconPeriodTime = par("beaconPeriodTime");
+        beaconReservedTime = par("beaconReservedTime");
+        beaconGuardTime = par("beaconGuardTime");
+
+        // class B parameters
+        slotLenTime = par("slotLenTime");
+        timeToNextSlot = par("timeToNextSlot");
+        pingOffset = par("pingOffset");
+
+        // class S parameters
+        maxToA = par("headerLength");
+        clockThreshold = par("headerLength");
+
 
         const char *addressString = par("address");
-        const char *usedClass = par("classUsed");
         if (!strcmp(addressString, "auto")) {
             // assign automatic address
             address = MacAddress::generateAutoAddress();
@@ -118,31 +126,43 @@ void LoRaMac::initialize(int stage)
         radio = check_and_cast<IRadio *>(radioModule);
 
         // initialize self messages
+        mediumStateChange = new cMessage("MediumStateChange");
         endTransmission = new cMessage("Transmission");
         endReception = new cMessage("Reception");
         droppedPacket = new cMessage("Dropped Packet");
-        pingPeriod = new cMessage("Ping_Period");
-        endBeacon = new cMessage("Beacon_Close");
-        beaconGuardPeriod = new cMessage("Beacon_Guard_Period");
-        beaconGuardEnd = new cMessage("Beacon_Guard_Close");
-        beaconPeriod = new cMessage("Beacon_Period");
-        endPingSlot = new cMessage("Ping_Slot_Close");
+
         endDelay_1 = new cMessage("Delay_1");
         endListening_1 = new cMessage("Listening_1");
         endDelay_2 = new cMessage("Delay_2");
         endListening_2 = new cMessage("Listening_2");
-        mediumStateChange = new cMessage("MediumStateChange");
+
+        beaconGuardStart = new cMessage("Beacon_Guard_Start");
+        beaconGuardEnd = new cMessage("Beacon_Guard_End");
+        beaconPeriod = new cMessage("Beacon_Period");
+        endBeacon = new cMessage("Beacon_Close");
+
+        pingPeriod = new cMessage("Ping_Period");
+        endPingSlot = new cMessage("Ping_Slot_Close");
+
+        TXSlot = new cMessage("Trasmission_Slot");
+
 
         // set up internal queue
         txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
 
-        // schedule beacon when using class B
-        if (!strcmp(usedClass,"B"))
+        // schedule beacon when using class B or S
+        const char *usedClass = par("classUsed");
+        if (strcmp(usedClass,"A"))
         {
             scheduleAt(simTime() + 1, beaconPeriod);
-            scheduleAt(simTime()+ 1 + beacon_reserved, endBeacon);
-            isClassB = true;
+            scheduleAt(simTime() + 1 + beaconReservedTime, endBeacon);
             isClassA = false;
+
+            if (!strcmp(usedClass,"B"))
+                isClassB = true;
+
+            if (!strcmp(usedClass,"S"))
+                isClassS = true;
         }
 
         // state variables
@@ -232,14 +252,13 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
         }
         //increaseBeaconTime();
     }
-    if (msg == beaconGuardPeriod)
-    {
-        beaconGuardTime = true;
-    }
+
+    if (msg == beaconGuardStart)
+        beaconGuard = true;
+
     if (msg == beaconGuardEnd)
-    {
-        beaconGuardTime = false;
-    }
+        beaconGuard = false;
+
 /*    if (msg == beaconPeriod)
     {
         //cancelEvent(pingPeriod);
@@ -254,19 +273,22 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
         //timeToNextSlot = timeToNextSlot+slotLen + 2;
         cancelEvent(pingPeriod);
         cancelEvent(endPingSlot);
-        scheduleAt(simTime() + (pingOffset*slotLen) + timeToNextSlot - slotLen, pingPeriod);
-        EV<<"scheduling Next Ping Slot at "<<simTime()+(pingOffset*slotLen)+timeToNextSlot-slotLen<<endl;
-        scheduleAt(simTime() + (pingOffset*slotLen) + timeToNextSlot, endPingSlot);
+        scheduleAt(simTime() + (pingOffset*slotLenTime) + timeToNextSlot - slotLenTime, pingPeriod);
+        EV<<"scheduling Next Ping Slot at "<<simTime()+(pingOffset*slotLenTime)+timeToNextSlot-slotLenTime<<endl;
+        scheduleAt(simTime() + (pingOffset*slotLenTime) + timeToNextSlot, endPingSlot);
     }
+
     handleWithFsm(msg);
 }
 
 void LoRaMac::handleUpperMessage(cMessage *msg)
 {
-    if(fsm.getState() != IDLE) {
+    if(fsm.getState() != IDLE)
+    {
             error(fsm.getStateName());
             error("Wrong, it should not happen");
     }
+
     auto pkt = check_and_cast<Packet *>(msg);
 
     pkt->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
@@ -283,7 +305,8 @@ void LoRaMac::handleUpperMessage(cMessage *msg)
 
     if (fsm.getState() != IDLE)
         EV << "deferring upper message transmission in " << fsm.getStateName() << " state\n";
-    else {
+    else
+    {
         popTxQueue();
         handleWithFsm(currentTxFrame);
     }
@@ -297,7 +320,7 @@ void LoRaMac::handleLowerMessage(cMessage *msg)
         const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
         if (frame->getPktType()== BEACON){
             int ping = pow(2,12)/frame->getPingNb();
-            timeToNextSlot = ping*slotLen;
+            timeToNextSlot = ping*slotLenTime;
             EV << timeToNextSlot<<endl;
             EV<< "YAAAAAAY !!!!!!"<<endl;
             handleWithFsm(msg);
@@ -349,10 +372,6 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       msg == endTransmission,
                                       WAIT_DELAY_1,
                                       finishCurrentTransmission();
-                                      //EV<<frame->getReceiverAddress().getAddressByte(1)<<endl;
-                                      //EV<<frame->getReceiverAddress().getAddressByte(1)<<endl;
-                                      //EV<<frame->getReceiverAddress().getAddressByte(1)<<endl;
-                                      //EV<<frame->getReceiverAddress().getAddressByte(1)<<endl;
                     numSent++;
                 );
             }
@@ -479,7 +498,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                           TRANSMIT,
                     );
                     FSMA_Event_Transition(Idle-ListeningOnPingSlot,
-                                          msg == pingPeriod && beaconGuardTime==false,
+                                          msg == pingPeriod && !beaconGuard,
                                           PING_SLOT,
                     );
                 }
@@ -753,9 +772,9 @@ void LoRaMac::sendDataFrame(Packet *frameToSend)
     //LoRaMacControlInfo *ctrl = new LoRaMacControlInfo();
     //ctrl->setSrc(frameCopy->getTransmitterAddress());
     //ctrl->setDest(frameCopy->getReceiverAddress());
-//    frameCopy->setControlInfo(ctrl);
-    auto macHeader = frameCopy->peekAtFront<LoRaMacFrame>();
+    //frameCopy->setControlInfo(ctrl);
 
+    auto macHeader = frameCopy->peekAtFront<LoRaMacFrame>();
     auto macAddressInd = frameCopy->addTagIfAbsent<MacAddressInd>();
     macAddressInd->setSrcAddress(macHeader->getTransmitterAddress());
     macAddressInd->setDestAddress(macHeader->getReceiverAddress());
@@ -777,7 +796,7 @@ void LoRaMac::sendAckFrame()
     macHeader->setChunkLength(B(ackLength));
     auto frame = new Packet("CsmaAck");
     frame->insertAtFront(macHeader);
-//    frame->addTag<PacketProtocolTag>()->setProtocol(&Protocol::lora);
+    //frame->addTag<PacketProtocolTag>()->setProtocol(&Protocol::lora);
     radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
 
     auto macAddressInd = frame->addTagIfAbsent<MacAddressInd>();
@@ -793,7 +812,7 @@ void LoRaMac::sendAckFrame()
 void LoRaMac::increaseBeaconTime()
 {
     //beaconThings();
-    beacon_reserved = beacon_reserved + 1;
+    beaconReservedTime = beaconReservedTime + 1;
 }
 /*void LoRaMac::getTimervalue(const Ptr<const LoRaMacFrame> &frame)
 {
@@ -815,8 +834,8 @@ void LoRaMac::schedulePingPeriod()
     cancelEvent(endPingSlot);
     //endPingSlot = new cMessage("Ping_Slot_Open");
     //pingPeriod = new cMessage("Ping_Period");
-    scheduleAt(simTime() + (pingOffset*slotLen), pingPeriod);
-    scheduleAt(simTime() + (pingOffset*slotLen) + slotLen, endPingSlot);
+    scheduleAt(simTime() + (pingOffset*slotLenTime), pingPeriod);
+    scheduleAt(simTime() + (pingOffset*slotLenTime) + slotLenTime, endPingSlot);
 }
 //calculate the pingSlotPeriod using Aes128 encryption for randomization
 void LoRaMac::calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame)
@@ -829,7 +848,7 @@ void LoRaMac::calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame)
         //unsigned char key[16];
         //aesEncrypt(message,key,rando);
     iGotBeacon = true;
-        beacon_reserved = 2.120;
+        beaconReservedTime = 2.120;
         //timeToNextSlot = frame->getPingPeriod();
 
         unsigned char cipher[7];
@@ -965,19 +984,19 @@ void LoRaMac::beaconThings()
     //EV<<"COME ON BEACON !!!!!!!!"<<endl;
     cancelEvent(beaconPeriod);
     cancelEvent(endBeacon);
-    cancelEvent(beaconGuardPeriod);
+    cancelEvent(beaconGuardStart);
     cancelEvent(beaconGuardEnd);
     //cancelEvent(pingPeriod);
     //cancelEvent(endPingSlot);
     endBeacon = new cMessage("Beacon_Close");
     beaconPeriod = new cMessage("Beacon_Period");
-    beaconGuardPeriod = new cMessage("Guard_Beacon");
+    beaconGuardStart = new cMessage("Guard_Beacon");
     beaconGuardEnd = new cMessage("Beacon_Guard_Close");
-    //beacon_period = beacon_period + 128;
-    scheduleAt(simTime() + beacon_period - beacon_reserved, beaconPeriod);
-    scheduleAt(simTime() + beacon_period, endBeacon);
-    scheduleAt(simTime() + beacon_period - beacon_reserved - beaconGuard, beaconGuardPeriod);
-    scheduleAt(simTime() + beacon_period - beacon_reserved, beaconGuardEnd);
+    //beacon_period = beaconPeriodTime + 128;
+    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconPeriod);
+    scheduleAt(simTime() + beaconPeriodTime, endBeacon);
+    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime - beaconGuardTime, beaconGuardStart);
+    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconGuardEnd);
     //timeToNextSlot = rand() % (simTime()+128) + simTime();
     //scheduleAt(simTime() + timeToNextSlot, pingPeriod);
     //scheduleAt(simTime() + timeToNextSlot + slotLen, endPingSlot);
@@ -1018,10 +1037,12 @@ bool LoRaMac::isAck(const Ptr<const LoRaMacFrame> &frame)
 {
     return false;//dynamic_cast<LoRaMacFrame *>(frame);
 }
+
 bool LoRaMac::receivedBeacon(const Ptr<const LoRaMacFrame> &frame)
 {
     return frame->getPktType() == BEACON;
 }
+
 bool LoRaMac::isBroadcast(const Ptr<const LoRaMacFrame> &frame)
 {
     return frame->getReceiverAddress().isBroadcast();

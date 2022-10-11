@@ -146,14 +146,10 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
         simtime_t m_y = (loRaInterference->getStartTime() + loRaInterference->getEndTime())/2;
         simtime_t d_y = (loRaInterference->getEndTime() - loRaInterference->getStartTime())/2;
         if(omnetpp::fabs(m_x - m_y) < d_x + d_y)
-        {
             overlap = true;
-        }
 
         if(loRaReception->getLoRaCF() == loRaInterference->getLoRaCF())
-        {
             frequencyCollision = true;
-        }
 
         W interferenceRSSI_w = loRaInterference->getPower();
         double interferenceRSSI_mw = interferenceRSSI_w.get()*1000;
@@ -162,19 +158,17 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
 
         /* If difference in power between two signals is greater than threshold, no collision*/
         if(signalRSSI_dBm - interferenceRSSI_dBm >= nonOrthDelta[receptionSF-7][interferenceSF-7])
-        {
             captureEffect = true;
-        }
+
 
         EV << "[MSDEBUG] Received packet at SF: " << receptionSF << " with power " << signalRSSI_dBm << endl;
         EV << "[MSDEBUG] Received interference at SF: " << interferenceSF << " with power " << interferenceRSSI_dBm << endl;
         EV << "[MSDEBUG] Acceptable diff is equal " << nonOrthDelta[receptionSF-7][interferenceSF-7] << endl;
         EV << "[MSDEBUG] Diff is equal " << signalRSSI_dBm - interferenceRSSI_dBm << endl;
-        if (captureEffect == false)
-        {
-            EV << "[MSDEBUG] Packet is discarded" << endl;
-        } else
+        if (captureEffect)
             EV << "[MSDEBUG] Packet is not discarded" << endl;
+        else
+            EV << "[MSDEBUG] Packet is discarded" << endl;
 
         // If last 6 symbols of preamble are received, no collision
         // from the paper "Do Lora LPWAN networks scale?"
@@ -182,22 +176,23 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
         simtime_t Tsym = (pow(2, loRaReception->getLoRaSF()))/(loRaReception->getLoRaBW().get()/1000)/1000;
         simtime_t csBegin = loRaReception->getPreambleStartTime() + Tsym * (nPreamble - 6);
         if(csBegin < loRaInterference->getEndTime())
-        {
             timingCollision = true;
-        }
 
         if (overlap && frequencyCollision)
         {
-            if(alohaChannelModel == true)
+            if(alohaChannelModel)
             {
-                if(iAmGateway && (part == IRadioSignal::SIGNAL_PART_DATA || part == IRadioSignal::SIGNAL_PART_WHOLE)) const_cast<LoRaReceiver* >(this)->emit(LoRaReceptionCollision, true);
+                if(iAmGateway && (part == IRadioSignal::SIGNAL_PART_DATA || part == IRadioSignal::SIGNAL_PART_WHOLE))
+                    const_cast<LoRaReceiver* >(this)->emit(LoRaReceptionCollision, true);
                 return true;
             }
-            if(alohaChannelModel == false)
+
+            else
             {
-                if(captureEffect == false && timingCollision)
+                if(!captureEffect && timingCollision)
                 {
-                    if(iAmGateway && (part == IRadioSignal::SIGNAL_PART_DATA || part == IRadioSignal::SIGNAL_PART_WHOLE)) const_cast<LoRaReceiver* >(this)->emit(LoRaReceptionCollision, true);
+                    if(iAmGateway && (part == IRadioSignal::SIGNAL_PART_DATA || part == IRadioSignal::SIGNAL_PART_WHOLE))
+                        const_cast<LoRaReceiver* >(this)->emit(LoRaReceptionCollision, true);
                     return true;
                 }
             }

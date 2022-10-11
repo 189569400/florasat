@@ -35,46 +35,45 @@ class LoRaMac : public MacProtocolBase
     omnetpp::SimTime bdw;
     omnetpp::SimTime DPAD;
     bool useAck = true;
-    bool isClassA = true;
-    bool isClassB = false;
-    bool iGotBeacon = false;
-    bool beaconGuardTime = false;
     double bitrate = NaN;
     int headerLength = -1;
     int ackLength = -1;
+
     simtime_t ackTimeout = -1;
     simtime_t slotTime = -1;
     simtime_t sifsTime = -1;
     simtime_t difsTime = -1;
-    simtime_t timeToNextSlot = -1;
-    simtime_t beaconGuard = -1;
-    simtime_t beacon_reserved = -1;
-    simtime_t beacon_period = -1;
-    simtime_t slotLen = -1;
     simtime_t waitDelay1Time = -1;
     simtime_t listening1Time = -1;
     simtime_t waitDelay2Time = -1;
     simtime_t listening2Time = -1;
-    int pingOffset = -1;
+
     int maxQueueSize = -1;
     int retryLimit = -1;
     int cwMin = -1;
     int cwMax = -1;
     int cwMulticast = -1;
     int sequenceNumber = 0;
+
+    bool isClassA = true;
+    bool isClassB = false;
+    bool isClassS = false;
+    bool iGotBeacon = false;
+    bool beaconGuard = false;
+
+    simtime_t beaconGuardTime = -1;
+    simtime_t beaconReservedTime = -1;
+    simtime_t beaconPeriodTime = -1;
+
+    simtime_t timeToNextSlot = -1;
+    simtime_t slotLenTime = -1;
+    int pingOffset = -1;
+
+    simtime_t maxToA = -1;
+    simtime_t clockThreshold = -1;
+
     //@}
 
-    /** End of the Short Inter-Frame Time period */
-    cMessage *endSifs = nullptr;
-
-    /** End of the Data Inter-Frame Time period */
-    cMessage *endDifs = nullptr;
-
-    /** End of the backoff period */
-    cMessage *endBackoff = nullptr;
-
-    /** End of the ack timeout */
-    cMessage *endAckTimeout = nullptr;
 
     /**
      * @name CsmaCaMac state variables
@@ -118,6 +117,18 @@ class LoRaMac : public MacProtocolBase
 
     /** @name Timer messages */
     //@{
+    /** End of the Short Inter-Frame Time period */
+    cMessage *endSifs = nullptr;
+
+    /** End of the Data Inter-Frame Time period */
+    cMessage *endDifs = nullptr;
+
+    /** End of the backoff period */
+    cMessage *endBackoff = nullptr;
+
+    /** End of the ack timeout */
+    cMessage *endAckTimeout = nullptr;
+
     /** Timeout after the transmission of a Data frame */
     cMessage *endTransmission = nullptr;
 
@@ -142,13 +153,26 @@ class LoRaMac : public MacProtocolBase
     /** Radio state change self message. Currently this is optimized away and sent directly */
     cMessage *mediumStateChange = nullptr;
 
+    /** End of the ping slot period. Start new downlink listening slot */
     cMessage *pingPeriod = nullptr;
+
+    /** End of downlink listening slot */
     cMessage *endPingSlot = nullptr;
+
+    /** End of the beacon period. Start new beacon listening slot */
     cMessage *beaconPeriod = nullptr;
+
+    /** End of the beacon listening slot */
     cMessage *endBeacon = nullptr;
-    cMessage *beaconGuardPeriod = nullptr;
+
+    /** Start of the beacon guard period */
+    cMessage *beaconGuardStart = nullptr;
+
+    /** End of the beacon guard period */
     cMessage *beaconGuardEnd = nullptr;
 
+    /** Start of transmission slot */
+    cMessage *TXSlot= nullptr;
     //@}
 
     /** @name Statistics */

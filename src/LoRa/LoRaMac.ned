@@ -23,6 +23,27 @@ module LoRaMac extends CsmaCaMac
 {
     parameters:
         string classUsed  = default("A");
+        
+        // RX1 RX2 receive windows parameters
+        int waitDelay1Time = default(1);
+        int listening1Time = default(1);
+        int waitDelay2Time = default(1);
+        int listening2Time = default(1);
+        
+        // beacon parameters
+        int beaconPeriodTime = default(128);
+        double beaconReservedTime = default(2.120);
+        int beaconGuardTime = default(3);
+        
+        // class B parameters
+        double slotLenTime = default(0.03);
+        int timeToNextSlot = default(5);
+        int pingOffset = default(5);
+        
+        // class S parameters
+        int maxToA = default(1);
+        int clockThreshold = default(1);
+        
         bitrate = 250bps;
         @class(LoRaMac);
         

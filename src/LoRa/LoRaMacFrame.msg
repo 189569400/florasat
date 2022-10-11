@@ -40,7 +40,7 @@ class LoRaMacFrame extends inet::FieldsChunk {
     inet::MacAddress receiverAddress;
 
     int pktType @enum(MacFrameType);
-    //pktType = 1;
+
     int sequenceNumber;
     double LoRaTP;
     inet::Hz LoRaCF;
@@ -50,6 +50,7 @@ class LoRaMacFrame extends inet::FieldsChunk {
     bool LoRaUseHeader;
     double RSSI;
     double SNIR;
+    
     int BeaconTimer = 128;
     int PingNb = 4;
     int PingPeriod = 32;
