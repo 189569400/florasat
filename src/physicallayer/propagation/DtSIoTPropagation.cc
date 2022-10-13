@@ -129,7 +129,7 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
     else
         EV_ERROR << "\nOTHER TRANSMITTER DETECTED";
 
-    EV << "\nDISTANCE: " << distance/1000 << " km";
+    EV << "\nDISTANCE: " << distance/1000 << " km" << endl;
 
     const Coord startArrivalPosition = ignoreMovementDuringPropagation ? mobility->getCurrentPosition() :
             computeArrivalPosition(startTime, startPosition, mobility);

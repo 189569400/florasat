@@ -71,6 +71,7 @@ class LoRaMac : public MacProtocolBase
 
     simtime_t maxToA = -1;
     simtime_t clockThreshold = -1;
+    simtime_t slotLenght = 2*clockThreshold + maxToA;
 
     //@}
 
@@ -163,7 +164,7 @@ class LoRaMac : public MacProtocolBase
     cMessage *beaconPeriod = nullptr;
 
     /** End of the beacon listening slot */
-    cMessage *endBeacon = nullptr;
+    cMessage *endBeaconReception = nullptr;
 
     /** Start of the beacon guard period */
     cMessage *beaconGuardStart = nullptr;
@@ -172,7 +173,7 @@ class LoRaMac : public MacProtocolBase
     cMessage *beaconGuardEnd = nullptr;
 
     /** Start of transmission slot */
-    cMessage *TXSlot= nullptr;
+    cMessage *TXslot= nullptr;
     //@}
 
     /** @name Statistics */
@@ -251,8 +252,14 @@ class LoRaMac : public MacProtocolBase
     virtual void calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame);
     virtual void schedulePingPeriod();
     virtual int aesEncrypt(unsigned char *message, int message_len, unsigned char *key, unsigned char *cipher);
-    virtual bool receivedBeacon(const Ptr<const LoRaMacFrame> &frame);
-    virtual void beaconThings();
+
+    virtual bool isBeacon(const Ptr<const LoRaMacFrame> &frame);
+    virtual bool isDownlink(const Ptr<const LoRaMacFrame> &frame);
+
+    virtual bool timeToTrasmit();
+    virtual void scheduleULslots();
+
+    virtual void beaconScheduling();
     virtual void increaseBeaconTime();
     //virtual Packet *getCurrentReception();
 

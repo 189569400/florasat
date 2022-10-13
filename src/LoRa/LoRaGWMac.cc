@@ -150,17 +150,9 @@ void LoRaGWMac::handleUpperMessage(cMessage *msg)
         GW_forwardedDown++;
         pkt->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
 
-        //if(!strcmp(usedClass,"B"))
-        //{
-          //  sendAtNextPingSlot(pkt);
-            //scheduleAt(beaconTimer)
-        //}
-        //else{
-
         sendDown(pkt);
-
-        //}
     }
+
     else
     {
         GW_droppedDC++;

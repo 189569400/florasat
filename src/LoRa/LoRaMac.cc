@@ -61,7 +61,7 @@ LoRaMac::~LoRaMac()
     cancelAndDelete(droppedPacket);
     cancelAndDelete(pingPeriod);
     cancelAndDelete(beaconPeriod);
-    cancelAndDelete(endBeacon);
+    cancelAndDelete(endBeaconReception);
     cancelAndDelete(beaconGuardStart);
     cancelAndDelete(beaconGuardEnd);
     cancelAndDelete(endPingSlot);
@@ -139,12 +139,12 @@ void LoRaMac::initialize(int stage)
         beaconGuardStart = new cMessage("Beacon_Guard_Start");
         beaconGuardEnd = new cMessage("Beacon_Guard_End");
         beaconPeriod = new cMessage("Beacon_Period");
-        endBeacon = new cMessage("Beacon_Close");
+        endBeaconReception = new cMessage("Beacon_Close");
 
         pingPeriod = new cMessage("Ping_Period");
         endPingSlot = new cMessage("Ping_Slot_Close");
 
-        TXSlot = new cMessage("Trasmission_Slot");
+        TXslot = new cMessage("Trasmission_Slot");
 
 
         // set up internal queue
@@ -155,7 +155,7 @@ void LoRaMac::initialize(int stage)
         if (strcmp(usedClass,"A"))
         {
             scheduleAt(simTime() + 1, beaconPeriod);
-            scheduleAt(simTime() + 1 + beaconReservedTime, endBeacon);
+            scheduleAt(simTime() + 1 + beaconReservedTime, endBeaconReception);
             isClassA = false;
 
             if (!strcmp(usedClass,"B"))
@@ -242,15 +242,17 @@ void LoRaMac::configureNetworkInterface()
  */
 void LoRaMac::handleSelfMessage(cMessage *msg)
 {
-    if (msg == endBeacon)
+    if (msg == endBeaconReception)
     {
-        beaconThings();
+        beaconScheduling();
         if(iGotBeacon)
         {
-            schedulePingPeriod();
-            iGotBeacon=false;
+            iGotBeacon = false;
+            if (isClassB)
+                schedulePingPeriod();
+            if (isClassS)
+                scheduleULslots();
         }
-        //increaseBeaconTime();
     }
 
     if (msg == beaconGuardStart)
@@ -259,51 +261,31 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
     if (msg == beaconGuardEnd)
         beaconGuard = false;
 
-/*    if (msg == beaconPeriod)
-    {
-        //cancelEvent(pingPeriod);
-        //cancelEvent(endPingSlot);
-        //schedulePingPeriod();
-        //scheduleAt(simTime() + beacon_reserved + timeToNextSlot, pingPeriod);
-        //scheduleAt(simTime() + beacon_reserved + timeToNextSlot + slotLen, endPingSlot);
-    }*/
     if (msg == endPingSlot)
     {
-        //timeToNextSlot = rand() % (valueOf(simTime())+128-(timeToNextSlot+slotLen)) + valueOf(simTime());
-        //timeToNextSlot = timeToNextSlot+slotLen + 2;
-        cancelEvent(pingPeriod);
-        cancelEvent(endPingSlot);
-        scheduleAt(simTime() + (pingOffset*slotLenTime) + timeToNextSlot - slotLenTime, pingPeriod);
-        EV<<"scheduling Next Ping Slot at "<<simTime()+(pingOffset*slotLenTime)+timeToNextSlot-slotLenTime<<endl;
-        scheduleAt(simTime() + (pingOffset*slotLenTime) + timeToNextSlot, endPingSlot);
+        simtime_t nextTime = (pingOffset*slotLenTime) + timeToNextSlot - slotLenTime;
+        EV << "scheduling Next Ping Slot at " << simTime() + nextTime << endl;
+        scheduleAt(simTime() + nextTime, pingPeriod);
+        scheduleAt(simTime() + nextTime + slotLenTime, endPingSlot);
     }
+
+    if (msg == TXslot)
+        scheduleAt(simTime() + slotLenght, TXslot);
 
     handleWithFsm(msg);
 }
 
 void LoRaMac::handleUpperMessage(cMessage *msg)
 {
-    if(fsm.getState() != IDLE)
-    {
-            error(fsm.getStateName());
-            error("Wrong, it should not happen");
-    }
-
     auto pkt = check_and_cast<Packet *>(msg);
-
     pkt->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
-
     auto pktEncap = encapsulate(pkt);
-
-    auto frame = pktEncap->removeAtFront<LoRaMacFrame>();
-    frame->setOriginTime(simTime());
-    pktEncap->insertAtFront(frame);
+    const auto &frame = pktEncap->peekAtFront<LoRaMacFrame>();
+    txQueue->enqueuePacket(pktEncap);
 
     EV << "frame " << pktEncap << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
-    txQueue->enqueuePacket(pktEncap);
-
-    if (fsm.getState() != IDLE)
+    if (fsm.getState() != IDLE || isClassS)
         EV << "deferring upper message transmission in " << fsm.getStateName() << " state\n";
     else
     {
@@ -314,34 +296,36 @@ void LoRaMac::handleUpperMessage(cMessage *msg)
 
 void LoRaMac::handleLowerMessage(cMessage *msg)
 {
-    if( (fsm.getState() == RECEIVING_1) || (fsm.getState() == RECEIVING_2) || (fsm.getState()== RECEIVING) || (fsm.getState()==RECEIVING_BEACON)) {
-        EV<<"I AM RECEIVING !!!!!!!!"<<endl;
+    if( (fsm.getState() == RECEIVING_1) || (fsm.getState() == RECEIVING_2) ||
+            (fsm.getState()== RECEIVING) || (fsm.getState()==RECEIVING_BEACON) )
+    {
         auto pkt = check_and_cast<Packet *>(msg);
         const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
-        if (frame->getPktType()== BEACON){
+
+        if (isBeacon(frame))
+        {
             int ping = pow(2,12)/frame->getPingNb();
             timeToNextSlot = ping*slotLenTime;
-            EV << timeToNextSlot<<endl;
-            EV<< "YAAAAAAY !!!!!!"<<endl;
-            handleWithFsm(msg);
+            EV << "time to next slot: " << timeToNextSlot<< endl;
         }
-        else if (frame->getPktType()==DOWNLINK){
-            //const omnetpp::SimTime DPAD = simTime() - bdw;
-            EV<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<endl;
-            std::cout<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<std::endl;
+
+        if (isDownlink(frame))
+        {
+            EV << "RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : " << DPAD<<endl;
             emit(macDPAD, DPAD.dbl());
-
-            if (isForUs(frame)){
+            if (isForUs(frame))
                 emit(macDPADOwnTraffic, DPAD.dbl());
-            }
+        }
 
-            handleWithFsm(msg);
-        }
-        else {
-            handleWithFsm(msg);
-        }
+        handleWithFsm(msg);
     }
-    else delete msg;
+
+    else
+    {
+        EV << "Received lower message but MAC FSM is not on a valid state for reception" << endl;
+        EV << "Deleting message " << msg << endl;
+        delete msg;
+    }
 }
 
 void LoRaMac::handleWithFsm(cMessage *msg)
@@ -349,22 +333,25 @@ void LoRaMac::handleWithFsm(cMessage *msg)
     Ptr<LoRaMacFrame>frame = nullptr;
 
     auto pkt = dynamic_cast<Packet *>(msg);
-    if (pkt) {
+    if (pkt)
+    {
         const auto &chunk = pkt->peekAtFront<Chunk>();
         frame = dynamicPtrCast<LoRaMacFrame>(constPtrCast<Chunk>(chunk));
     }
+
     if (isClassA)
     {
         FSMA_Switch(fsm)
-            {
+        {
             FSMA_State(IDLE)
-                {
+            {
                 FSMA_Enter(turnOffReceiver());
                 FSMA_Event_Transition(Idle-Transmit,
                                       isUpperMessage(msg),
                                       TRANSMIT,
-                );
-                }
+                                      );
+            }
+
             FSMA_State(TRANSMIT)
             {
                 FSMA_Enter(sendDataFrame(getCurrentTransmission()));
@@ -372,17 +359,19 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       msg == endTransmission,
                                       WAIT_DELAY_1,
                                       finishCurrentTransmission();
-                    numSent++;
-                );
+                                      numSent++;
+                                      );
             }
+
             FSMA_State(WAIT_DELAY_1)
             {
                 FSMA_Enter(turnOffReceiver());
                 FSMA_Event_Transition(Wait_Delay_1-Listening_1,
                                       msg == endDelay_1 || endDelay_1->isScheduled() == false,
                                       LISTENING_1,
-                );
+                                      );
             }
+
             FSMA_State(LISTENING_1)
             {
                 FSMA_Enter(turnOnReceiver());
@@ -390,73 +379,245 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       msg == endListening_1 || endListening_1->isScheduled() == false,
                                       WAIT_DELAY_2,
                                       DPAD = simTime() - bdw;
-                                      EV<<"DIDN'T RECEIVE AN ACK ON FIRST WINDOW "<<DPAD<<endl;
-                );
+                                      EV << "DIDN'T RECEIVE AN ACK ON FIRST WINDOW " << DPAD << endl;
+                                      );
                 FSMA_Event_Transition(Listening_1-Receiving1,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_1,
                                       DPAD = simTime() - bdw;
-
-                                      //EV<<"RECEIVED A DOWNLINK MESSAGE WITH A DPAD OF : "<<DPAD<<endl;
-                );
+                                      );
             }
+
             FSMA_State(RECEIVING_1)
             {
-                /*FSMA_Enter(EV<<"I AM INSIIIDE RECEIVING 1"<<endl;
-                    auto pkt = check_and_cast<Packet *>(msg);
-                    const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
-                    if(frame->getPktType()==DOWNLINK){
-                        DPAD = simTime() - bdw;
-                        EV<<"DPAD !!!!!!!!!!! "<<DPAD<<endl;
-                });*/
                 FSMA_Event_Transition(Receive-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame),
                                       LISTENING_1,
-                                      EV<<"I AM GOING BACK TO LISTENING "<<endl;
-                );
+                                      EV << "I AM GOING BACK TO LISTENING " << endl;
+                                      );
                 FSMA_Event_Transition(Receive-Unicast,
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
                                       sendUp(decapsulate(pkt));
-                    numReceived++;
-                    cancelEvent(endListening_1);
-                    cancelEvent(endDelay_2);
-                    cancelEvent(endListening_2);
-                );
+                                      numReceived++;
+                                      cancelEvent(endListening_1);
+                                      cancelEvent(endDelay_2);
+                                      cancelEvent(endListening_2);
+                                      );
                 FSMA_Event_Transition(Receive-BelowSensitivity,
                                       msg == droppedPacket,
                                       LISTENING_1,
-                                      EV<<"I AM GOING BACK TO LISTENING BUT BECAUSE OF POWER "<<endl;
-                );
-
+                                      EV << "I AM GOING BACK TO LISTENING BUT BECAUSE OF POWER " << endl;
+                                      );
             }
+
             FSMA_State(WAIT_DELAY_2)
             {
                 FSMA_Enter(turnOffReceiver());
                 FSMA_Event_Transition(Wait_Delay_2-Listening_2,
                                       msg == endDelay_2 || endDelay_2->isScheduled() == false,
                                       LISTENING_2,
-                );
-                FSMA_Event_Transition(Wait_Delay_2-Wait_Delay_2,
-                                      isReceiving(),
-                                      WAIT_DELAY_2,
-                                      EV<<"DIDN'T RECEIVE AN ACK ON FIRST WINDOW "<<DPAD<<endl;
-                );
+                                      );
             }
+
             FSMA_State(LISTENING_2)
             {
                 FSMA_Enter(turnOnReceiver());
                 FSMA_Event_Transition(Listening_2-idle,
                                       msg == endListening_2 || endListening_2->isScheduled() == false,
                                       IDLE,
+                                      EV << "DIDN'T RECEIVE AN ACK ON SECOND WINDOW " << DPAD << endl;
                                       //DPAD = simTime() - bdw;
-                );
+                                      );
                 FSMA_Event_Transition(Listening_2-Receiving2,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_2,
                                       DPAD = simTime() - bdw;
-                );
+                                      );
             }
+
+            FSMA_State(RECEIVING_2)
+            {
+                FSMA_Event_Transition(Receive2-Unicast-Not-For,
+                                      isLowerMessage(msg) && !isForUs(frame),
+                                      LISTENING_2,
+                                      );
+                FSMA_Event_Transition(Receive2-Unicast,
+                                      isLowerMessage(msg) && isForUs(frame),
+                                      IDLE,
+                                      sendUp(pkt);
+                                      numReceived++;
+                                      cancelEvent(endListening_2);
+                                      );
+                FSMA_Event_Transition(Receive2-BelowSensitivity,
+                                      msg == droppedPacket,
+                                      LISTENING_2,
+                                      );
+            }
+        }
+    }
+
+    // THE FSM FOR CLASS B
+    if (isClassB)
+    {
+        FSMA_Switch(fsm)
+        {
+            FSMA_State(IDLE)
+            {
+                FSMA_Enter(turnOffReceiver());
+                FSMA_Event_Transition(Idle-BeaconReception,
+                                      msg == beaconPeriod,
+                                      BEACON_RECEPTION,
+                                      EV << "going to Beacon Reception mode" << endl;
+                                      );
+                FSMA_Event_Transition(Idle-Transmit,
+                                      isUpperMessage(msg),
+                                      TRANSMIT,
+                                      );
+                FSMA_Event_Transition(Idle-ListeningOnPingSlot,
+                                      msg == pingPeriod && !beaconGuard,
+                                      PING_SLOT,
+                                      );
+            }
+
+            FSMA_State(BEACON_RECEPTION)
+            {
+                FSMA_Enter(turnOnReceiver());
+                FSMA_Event_Transition(BeaconReception-Idle,
+                                      msg == endBeaconReception,
+                                      IDLE,
+                                      increaseBeaconTime();
+                                      );
+                FSMA_Event_Transition(BeaconReception-ReceivingBeacon,
+                                      msg == mediumStateChange && isReceiving(),
+                                      RECEIVING_BEACON,
+                                      EV << "receiving packet..." << endl;
+                                      );
+            }
+
+            FSMA_State(RECEIVING_BEACON)
+            {
+                FSMA_Event_Transition(ReceivingBeacon-Unicast-Not-For,
+                                      isLowerMessage(msg) && isBeacon(frame),  //  && !isForUs(frame)
+                                      IDLE,
+                                      calculatePingPeriod(frame);
+                                      );
+                FSMA_Event_Transition(ReceivingBeacon-BelowSensitivity,
+                                      msg == droppedPacket,
+                                      IDLE,
+                                      increaseBeaconTime();
+                                      );
+            }
+
+            FSMA_State(PING_SLOT)
+            {
+                FSMA_Enter(turnOnReceiver());
+                FSMA_Event_Transition(ListeningOnPingSlot-Idle,
+                                      msg == endPingSlot && !isReceiving(),
+                                      IDLE,
+                                      );
+                FSMA_Event_Transition(ListeningOnPingSlot-ReceivingOnPingSlot,
+                                      msg == mediumStateChange && isReceiving(),
+                                      RECEIVING,
+                                      );
+            }
+
+            FSMA_State(RECEIVING)
+            {
+                FSMA_Event_Transition(ReceivingOnPingSlot-Unicast-Not-For,
+                                      isLowerMessage(msg) && !isForUs(frame),
+                                      IDLE,
+                                      );
+                FSMA_Event_Transition(ReceivingOnPingSlot-Unicast,
+                                      isLowerMessage(msg) && isForUs(frame),
+                                      IDLE,
+                                      sendUp(decapsulate(pkt));
+                                      numReceived++;
+                                      //cancelEvent(endPingSlot);
+                                      );
+                FSMA_Event_Transition(ReceivingOnPingSlot-BelowSensitivity,
+                                      msg == droppedPacket,
+                                      IDLE,
+                                      );
+            }
+
+            FSMA_State(TRANSMIT)
+            {
+                FSMA_Enter(sendDataFrame(getCurrentTransmission()));
+                FSMA_Event_Transition(Transmit-Wait_Delay_1,
+                                      msg == endTransmission,
+                                      WAIT_DELAY_1,
+                                      finishCurrentTransmission();
+                                      numSent++;
+                                      );
+            }
+
+            FSMA_State(WAIT_DELAY_1)
+            {
+                FSMA_Enter(turnOffReceiver());
+                FSMA_Event_Transition(Wait_Delay_1-Listening_1,
+                                      msg == endDelay_1 || endDelay_1->isScheduled() == false,
+                                      LISTENING_1,
+                                      );
+            }
+
+            FSMA_State(LISTENING_1)
+            {
+                FSMA_Enter(turnOnReceiver());
+                FSMA_Event_Transition(Listening_1-Wait_Delay_2,
+                                      msg == endListening_1 || endListening_1->isScheduled() == false,
+                                      WAIT_DELAY_2,
+                                      );
+                FSMA_Event_Transition(Listening_1-Receiving1,
+                                      msg == mediumStateChange && isReceiving(),
+                                      RECEIVING_1,
+                                      );
+            }
+
+            FSMA_State(RECEIVING_1)
+            {
+                FSMA_Event_Transition(Receive-Unicast-Not-For,
+                                      isLowerMessage(msg) && !isForUs(frame),
+                                      LISTENING_1,
+                                      );
+                FSMA_Event_Transition(Receive-Unicast,
+                                      isLowerMessage(msg) && isForUs(frame),
+                                      IDLE,
+                                      sendUp(decapsulate(pkt));
+                                      numReceived++;
+                                      cancelEvent(endListening_1);
+                                      cancelEvent(endDelay_2);
+                                      cancelEvent(endListening_2);
+                                      );
+                FSMA_Event_Transition(Receive-BelowSensitivity,
+                                      msg == droppedPacket,
+                                      LISTENING_1,
+                                      );
+
+            }
+
+            FSMA_State(WAIT_DELAY_2)
+            {
+                FSMA_Enter(turnOffReceiver());
+                FSMA_Event_Transition(Wait_Delay_2-Listening_2,
+                                      msg == endDelay_2 || endDelay_2->isScheduled() == false,
+                                      LISTENING_2,
+                                      );
+            }
+
+            FSMA_State(LISTENING_2)
+            {
+                FSMA_Enter(turnOnReceiver());
+                FSMA_Event_Transition(Listening_2-idle,
+                                      msg == endListening_2 || endListening_2->isScheduled() == false,
+                                      IDLE,
+                                      );
+                FSMA_Event_Transition(Listening_2-Receiving2,
+                                      msg == mediumStateChange && isReceiving(),
+                                      RECEIVING_2,
+                                      );
+            }
+
             FSMA_State(RECEIVING_2)
             {
                 FSMA_Event_Transition(Receive2-Unicast-Not-For,
@@ -467,211 +628,82 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
                                       sendUp(pkt);
-                    numReceived++;
-                    cancelEvent(endListening_2);
-                );
+                                      numReceived++;
+                                      cancelEvent(endListening_2);
+                                      );
                 FSMA_Event_Transition(Receive2-BelowSensitivity,
                                       msg == droppedPacket,
                                       LISTENING_2,
-                );
-
+                                      );
             }
-            }
-    }
-    // THE FSM FOR CLASS B
-    if (isClassB)
-        {
-            //beaconThings();
-            FSMA_Switch(fsm)
-                {
-                FSMA_State(IDLE)
-                {
-                    FSMA_Enter(turnOffReceiver());
-                    FSMA_Event_Transition(Idle-BeaconReception,
-                                          msg == beaconPeriod,
-                                          BEACON_RECEPTION,
-                                          EV<<"going to Beacon Reception"<<endl;
-                                          //delete msg;
-                                          );
-                    FSMA_Event_Transition(Idle-Transmit,
-                                          isUpperMessage(msg),
-                                          TRANSMIT,
-                    );
-                    FSMA_Event_Transition(Idle-ListeningOnPingSlot,
-                                          msg == pingPeriod && !beaconGuard,
-                                          PING_SLOT,
-                    );
-                }
-                FSMA_State(BEACON_RECEPTION)
-                {
-                    FSMA_Enter(turnOnReceiver());
-                    FSMA_Event_Transition(BeaconReception-Idle,
-                                          msg == endBeacon, // && !isReceiving(),
-                                          IDLE,
-                                          increaseBeaconTime();
-                                          );
-                    FSMA_Event_Transition(BeaconReception-ReceivingBeacon,
-                                          msg == mediumStateChange && isReceiving(),
-                                          RECEIVING_BEACON,
-                                          EV<<"I am going to receive"<<endl;
-                                          //schedulePingPeriod(frame);
-                                          //delete msg;
-                                          );
-                }
-                FSMA_State(RECEIVING_BEACON)
-                {
-                    FSMA_Event_Transition(ReceivingBeacon-Unicast-Not-For,
-                                          isLowerMessage(msg) && !isForUs(frame) && receivedBeacon(frame),
-                                          IDLE,
-                                          EV<<"I AM IN FIRST ONE"<<endl;
-                                          calculatePingPeriod(frame);
-                                          //sendUp(decapsulate(pkt));
-                                          //schedulePingPeriod(pkt);
-                    );
-                    /*FSMA_Event_Transition(ReceivingBeacon-Unicast,
-                                          isLowerMessage(msg) && isForUs(frame),
-                                          IDLE,
-                                          sendUp(decapsulate(pkt));
-                    numReceived++;
-                    //cancelEvent(endPingSlot);
-                    );*/
-/*                    FSMA_Event_Transition(ReceivingBeacon-mine,
-                                          frame->getPktType()== BEACON,
-                                          IDLE,
-                                          EV<<"I FOUND IT ?"<<endl;
-                    );*/
-                    FSMA_Event_Transition(ReceivingBeacon-BelowSensitivity,
-                                          msg == droppedPacket,
-                                          IDLE,
-                                          increaseBeaconTime();
-                    );
-                }
-                FSMA_State(PING_SLOT)
-                {
-                    FSMA_Enter(turnOnReceiver());
-                    FSMA_Event_Transition(ListeningOnPingSlot-Idle,
-                                          //!isReceiving(),
-                                          msg == endPingSlot && !isReceiving(),
-                                          IDLE,
-                                          //beaconThings();
-                    );
-                    FSMA_Event_Transition(ListeningOnPingSlot-ReceivingOnPingSlot,
-                                          msg == mediumStateChange && isReceiving(),
-                                          RECEIVING,
-                    );
-                }
-                FSMA_State(RECEIVING)
-                {
-                    FSMA_Event_Transition(ReceivingOnPingSlot-Unicast-Not-For,
-                                          isLowerMessage(msg) && !isForUs(frame),
-                                          IDLE,
-                    );
-                    FSMA_Event_Transition(ReceivingOnPingSlot-Unicast,
-                                          isLowerMessage(msg) && isForUs(frame),
-                                          IDLE,
-                                          sendUp(decapsulate(pkt));
-                    numReceived++;
-                    //cancelEvent(endPingSlot);
-                    );
-                    FSMA_Event_Transition(ReceivingOnPingSlot-BelowSensitivity,
-                                          msg == droppedPacket,
-                                          IDLE,
-                    );
-                }
-                FSMA_State(TRANSMIT)
-                {
-                    FSMA_Enter(sendDataFrame(getCurrentTransmission()));
-                    FSMA_Event_Transition(Transmit-Wait_Delay_1,
-                                          msg == endTransmission,
-                                          WAIT_DELAY_1,
-                                          finishCurrentTransmission();
-                        numSent++;
-                    );
-                }
-                FSMA_State(WAIT_DELAY_1)
-                {
-                    FSMA_Enter(turnOffReceiver());
-                    FSMA_Event_Transition(Wait_Delay_1-Listening_1,
-                                          msg == endDelay_1 || endDelay_1->isScheduled() == false,
-                                          LISTENING_1,
-                    );
-                }
-                FSMA_State(LISTENING_1)
-                {
-                    FSMA_Enter(turnOnReceiver());
-                    FSMA_Event_Transition(Listening_1-Wait_Delay_2,
-                                          msg == endListening_1 || endListening_1->isScheduled() == false,
-                                          WAIT_DELAY_2,
-                    );
-                    FSMA_Event_Transition(Listening_1-Receiving1,
-                                          msg == mediumStateChange && isReceiving(),
-                                          RECEIVING_1,
-                    );
-                }
-                FSMA_State(RECEIVING_1)
-                {
-                    FSMA_Event_Transition(Receive-Unicast-Not-For,
-                                          isLowerMessage(msg) && !isForUs(frame),
-                                          LISTENING_1,
-                                          EV<<"IT IS NOT FOR ME"<<endl;
-                    );
-                    FSMA_Event_Transition(Receive-Unicast,
-                                          isLowerMessage(msg) && isForUs(frame),
-                                          IDLE,
-                                          sendUp(decapsulate(pkt));
-                        numReceived++;
-                        cancelEvent(endListening_1);
-                        cancelEvent(endDelay_2);
-                        cancelEvent(endListening_2);
-                    );
-                    FSMA_Event_Transition(Receive-BelowSensitivity,
-                                          msg == droppedPacket,
-                                          LISTENING_1,
-                    );
-
-                }
-                FSMA_State(WAIT_DELAY_2)
-                {
-                    FSMA_Enter(turnOffReceiver());
-                    FSMA_Event_Transition(Wait_Delay_2-Listening_2,
-                                          msg == endDelay_2 || endDelay_2->isScheduled() == false,
-                                          LISTENING_2,
-                    );
-                }
-                FSMA_State(LISTENING_2)
-                {
-                    FSMA_Enter(turnOnReceiver());
-                    FSMA_Event_Transition(Listening_2-idle,
-                                          msg == endListening_2 || endListening_2->isScheduled() == false,
-                                          IDLE,
-                    );
-                    FSMA_Event_Transition(Listening_2-Receiving2,
-                                          msg == mediumStateChange && isReceiving(),
-                                          RECEIVING_2,
-                    );
-                }
-                FSMA_State(RECEIVING_2)
-                {
-                    FSMA_Event_Transition(Receive2-Unicast-Not-For,
-                                          isLowerMessage(msg) && !isForUs(frame),
-                                          LISTENING_2,
-                    );
-                    FSMA_Event_Transition(Receive2-Unicast,
-                                          isLowerMessage(msg) && isForUs(frame),
-                                          IDLE,
-                                          sendUp(pkt);
-                        numReceived++;
-                        cancelEvent(endListening_2);
-                    );
-                    FSMA_Event_Transition(Receive2-BelowSensitivity,
-                                          msg == droppedPacket,
-                                          LISTENING_2,
-                    );
-                }
-                }
         }
+    }
 
-    if (fsm.getState() == IDLE) {
+    // THE FSM FOR CLASS S
+    if (isClassS)
+    {
+        FSMA_Switch(fsm)
+        {
+            FSMA_State(IDLE)
+            {
+                FSMA_Enter(turnOffReceiver());
+                FSMA_Event_Transition(Idle-BeaconReception,
+                                      msg == beaconPeriod,
+                                      BEACON_RECEPTION,
+                                      EV << "Going to Beacon Reception" << endl;
+                                      );
+                FSMA_Event_Transition(Idle-Transmit,
+                                      msg == TXslot  && timeToTrasmit(),
+                                      TRANSMIT,
+                                      );
+            }
+
+            FSMA_State(BEACON_RECEPTION)
+            {
+                FSMA_Enter(turnOnReceiver());
+                FSMA_Event_Transition(BeaconReception-Idle,
+                                      msg == endBeaconReception,
+                                      IDLE,
+                                      increaseBeaconTime();
+                                      );
+                FSMA_Event_Transition(BeaconReception-ReceivingBeacon,
+                                      msg == mediumStateChange && isReceiving(),
+                                      RECEIVING_BEACON,
+                                      EV << "Going to Receiving Beacon" << endl;
+                                      );
+            }
+
+            FSMA_State(RECEIVING_BEACON)
+            {
+                FSMA_Event_Transition(ReceivingBeacon-Unicast-Not-For,
+                                      isLowerMessage(msg) && !isForUs(frame) && isBeacon(frame),
+                                      IDLE,
+                                      EV << "beacon received" << endl;
+                                      iGotBeacon = true;
+                                      );
+                FSMA_Event_Transition(ReceivingBeacon-BelowSensitivity,
+                                      msg == droppedPacket,
+                                      IDLE,
+                                      increaseBeaconTime();
+                                      );
+            }
+
+            FSMA_State(TRANSMIT)
+            {
+                FSMA_Enter(sendDataFrame(getCurrentTransmission()));
+                FSMA_Event_Transition(Transmit-IDLE,
+                                      msg == endTransmission,
+                                      IDLE,
+                                      finishCurrentTransmission();
+                                      numSent++;
+                                      );
+            }
+        }
+    }
+
+
+    if (fsm.getState() == IDLE)
+    {
         if (isReceiving())
             handleWithFsm(mediumStateChange);
         else if (currentTxFrame != nullptr)
@@ -681,39 +713,44 @@ void LoRaMac::handleWithFsm(cMessage *msg)
             handleWithFsm(currentTxFrame);
         }
     }
-    if (endSifs) {
+
+    if (endSifs)
+    {
         if (isLowerMessage(msg) && pkt->getOwner() == this && (endSifs->getContextPointer() != pkt))
             delete pkt;
     }
-    else {
+
+    else
+    {
         if (isLowerMessage(msg) && pkt->getOwner() == this)
             delete pkt;
     }
+
     getDisplayString().setTagArg("t", 0, fsm.getStateName());
 }
 
 void LoRaMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
     Enter_Method_Silent();
-    if (signalID == IRadio::receptionStateChangedSignal) {
+    if (signalID == IRadio::receptionStateChangedSignal)
+    {
         IRadio::ReceptionState newRadioReceptionState = (IRadio::ReceptionState)value;
-        if (receptionState == IRadio::RECEPTION_STATE_RECEIVING) {
+        if (receptionState == IRadio::RECEPTION_STATE_RECEIVING)
             radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-        }
+
         receptionState = newRadioReceptionState;
         handleWithFsm(mediumStateChange);
     }
- //   else if (signalID == receptionStartedSignal){
-   //     handleWithFsm(receptionStartedSignal);
-    //}
-    else if (signalID == LoRaRadio::droppedPacket) {
-
+    else if (signalID == LoRaRadio::droppedPacket)
+    {
         //radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
         handleWithFsm(droppedPacket);
     }
-    else if (signalID == IRadio::transmissionStateChangedSignal) {
+    else if (signalID == IRadio::transmissionStateChangedSignal)
+    {
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
-        if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE) {
+        if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
+        {
             handleWithFsm(endTransmission);
             radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
         }
@@ -734,6 +771,7 @@ Packet *LoRaMac::encapsulate(Packet *msg)
     frame->setLoRaSF(tag->getSpreadFactor());
     frame->setLoRaBW(tag->getBandwidth());
     frame->setLoRaCR(tag->getCodeRendundance());
+    frame->setOriginTime(simTime());
     frame->setSequenceNumber(sequenceNumber);
     frame->setReceiverAddress(MacAddress::BROADCAST_ADDRESS);
 
@@ -747,15 +785,10 @@ Packet *LoRaMac::encapsulate(Packet *msg)
 
 Packet *LoRaMac::decapsulate(Packet *frame)
 {
-
     auto loraHeader = frame->popAtFront<LoRaMacFrame>();
     frame->addTagIfAbsent<MacAddressInd>()->setSrcAddress(loraHeader->getTransmitterAddress());
     frame->addTagIfAbsent<MacAddressInd>()->setDestAddress(loraHeader->getReceiverAddress());
     frame->addTagIfAbsent<InterfaceInd>()->setInterfaceId(networkInterface->getInterfaceId());
-//    auto payloadProtocol = ProtocolGroup::ethertype.getProtocol(loraHeader->getNetworkProtocol());
-//    frame->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(payloadProtocol);
-//    frame->addTagIfAbsent<PacketProtocolTag>()->setProtocol(payloadProtocol);
-
     return frame;
 }
 
@@ -809,147 +842,77 @@ void LoRaMac::sendAckFrame()
 /****************************************************************
  * Helper functions.
  */
+
+// schedule beacon signals
+void LoRaMac::beaconScheduling()
+{
+    /*
+    cancelEvent(beaconPeriod);
+    cancelEvent(endBeaconReception);
+    cancelEvent(beaconGuardStart);
+    cancelEvent(beaconGuardEnd);
+    endBeaconReception = new cMessage("Beacon_Close");
+    beaconPeriod = new cMessage("Beacon_Period");
+    beaconGuardStart = new cMessage("Guard_Beacon");
+    beaconGuardEnd = new cMessage("Beacon_Guard_Close");
+    */
+
+    scheduleAt(simTime() + beaconPeriodTime, endBeaconReception);
+    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime - beaconGuardTime, beaconGuardStart);
+    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconGuardEnd);
+    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconPeriod);
+}
+
 void LoRaMac::increaseBeaconTime()
 {
-    //beaconThings();
     beaconReservedTime = beaconReservedTime + 1;
 }
-/*void LoRaMac::getTimervalue(const Ptr<const LoRaMacFrame> &frame)
-{
-    if (frame->getPktType()== BEACON){
-        //unsigned char key[16];
-        //aesEncrypt(message,key,rando);
-        beacon_reserved = 2.120;
-        timeToNextSlot = frame->getPingSlot();
-        EV << timeToNextSlot<<endl;
-        EV<< "YAAAAAAY !!!!!!"<<endl;
-        EV<<" I AM WORKIIIIIIIIIIIIING !!"<<endl;
-        //handleWithFsm(msg);
-    }
 
-}*/
 void LoRaMac::schedulePingPeriod()
 {
     cancelEvent(pingPeriod);
     cancelEvent(endPingSlot);
-    //endPingSlot = new cMessage("Ping_Slot_Open");
-    //pingPeriod = new cMessage("Ping_Period");
     scheduleAt(simTime() + (pingOffset*slotLenTime), pingPeriod);
     scheduleAt(simTime() + (pingOffset*slotLenTime) + slotLenTime, endPingSlot);
 }
+
+void LoRaMac::scheduleULslots()
+{
+    cancelEvent(TXslot);
+    scheduleAt(simTime() + clockThreshold, TXslot);
+}
+
 //calculate the pingSlotPeriod using Aes128 encryption for randomization
 void LoRaMac::calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame)
 {
-    //const Ptr<const LoRaMacFrame> &frame
-    //scheduleAt(simTime() + beacon_reserved + timeToNextSlot, pingPeriod);
-    //scheduleAt(simTime() + beacon_reserved + timeToNextSlot + slotLen, endPingSlot);
+    beaconReservedTime = 2.120;
+    unsigned char cipher[7];
 
-//    if (frame->getPktType()== BEACON){
-        //unsigned char key[16];
-        //aesEncrypt(message,key,rando);
-    iGotBeacon = true;
-        beaconReservedTime = 2.120;
-        //timeToNextSlot = frame->getPingPeriod();
+    cipher[0]=(unsigned char)(frame->getBeaconTimer()
+            + getAddress().getAddressByte(0)
+            + getAddress().getAddressByte(1)
+            + getAddress().getAddressByte(2)
+            + getAddress().getAddressByte(3)
+            + getAddress().getAddressByte(4)
+            + getAddress().getAddressByte(5)
+            );
+    cipher[1]=(unsigned char)(getAddress().getAddressByte(0));
+    cipher[2]=(unsigned char)(getAddress().getAddressByte(1));
+    cipher[3]=(unsigned char)(getAddress().getAddressByte(2));
+    cipher[4]=(unsigned char)(getAddress().getAddressByte(3));
+    cipher[5]=(unsigned char)(getAddress().getAddressByte(4));
+    cipher[6]=(unsigned char)(getAddress().getAddressByte(5));
 
-        unsigned char cipher[7];
-        //unsigned char* message = (unsigned char*)(frame->getBeaconTimer()+getAddress().getAddressByte(0)+getAddress().getAddressByte(1)+getAddress().getAddressByte(2)+getAddress().getAddressByte(3)+getAddress().getAddressByte(4)+getAddress().getAddressByte(5));
+    int message_len = strlen((const char*)cipher);
+    unsigned char cipher2[64];
+    unsigned char* key = (unsigned char*)"00000000000000000000000000000000";
 
-        cipher[0]=(unsigned char)(frame->getBeaconTimer()+getAddress().getAddressByte(0)+getAddress().getAddressByte(1)+getAddress().getAddressByte(2)+getAddress().getAddressByte(3)+getAddress().getAddressByte(4)+getAddress().getAddressByte(5));
-        //cipher[1]=(unsigned char)(frame->getTransmitterAddress().getAddressByte(0));
-        //cipher[2]=(unsigned char)(frame->getTransmitterAddress().getAddressByte(1));
-        //cipher[3]=(unsigned char)(frame->getTransmitterAddress().getAddressByte(2));
-        //cipher[4]=(unsigned char)(frame->getTransmitterAddress().getAddressByte(3));
-        //cipher[5]=(unsigned char)(frame->getTransmitterAddress().getAddressByte(4));
-        //cipher[6]=(unsigned char)(frame->getTransmitterAddress().getAddressByte(5));
+    int cipher_len = aesEncrypt(cipher,message_len,key,cipher2);
+    int period = pow(2,12)/(frame->getPingNb());
 
-        cipher[1]=(unsigned char)(getAddress().getAddressByte(0));
-        cipher[2]=(unsigned char)(getAddress().getAddressByte(1));
-        cipher[3]=(unsigned char)(getAddress().getAddressByte(2));
-        cipher[4]=(unsigned char)(getAddress().getAddressByte(3));
-        cipher[5]=(unsigned char)(getAddress().getAddressByte(4));
-        cipher[6]=(unsigned char)(getAddress().getAddressByte(5));
-
-        int message_len = strlen((const char*)cipher);
-        unsigned char cipher2[64];
-        //unsigned char* message = (unsigned char*)getAddress().getAddressByte(5);
-        unsigned char* key = (unsigned char*)"00000000000000000000000000000000";
-
-        printf("cipher=\n");
-
-        int cipher_len = aesEncrypt(cipher,message_len,key,cipher2);
-
-        for(int i = 0; i<cipher_len; i++){
-            printf("%02x ",cipher2[i]);
-        }
-
-        int period = pow(2,12)/(frame->getPingNb());
-
-
-        //pingOffset = (cipher2[0]+(cipher2[1]*256))% frame->getPingPeriod();
-        pingOffset = (cipher2[0]+(cipher2[1]*256))% period;
-
-        printf("RESULTAT = %d ",pingOffset);
-
-        printf("%02x ",cipher[0]);
-        printf("%02x ",cipher[1]);
-        printf("%02x ",cipher[2]);
-        printf("%02x ",cipher[3]);
-        printf("%02x ",cipher[4]);
-        printf("%02x ",cipher[5]);
-        printf("%02x ",cipher[6]);
-
-        EV << timeToNextSlot<<endl;
-        EV<< "YAAAAAAY !!!!!!"<<endl;
-        EV<<" I AM WORKIIIIIIIIIIIIING !!"<<endl;
-        //handleWithFsm(msg);
-//    }
-    EV<<"SCHEDULING !!!"<<endl;
-
-
-    //receivedPacket rcvPkt;
-    //rcvPkt.rcvdPacket = pkt;
-    //rcvPkt.endOfWaiting = new cMessage("endOfWaitingWindow");
-    //rcvPkt.endOfWaiting->setControlInfo(pkt);
-    //unsigned char yep = frame->getReceiverAddress().getAddressByte(0);
-
-
-    //const auto& networkHeader = getNetworkProtocolHeader(pkt);
-    //const L3Address& gwAddress = networkHeader->getSourceAddress();
-
-    //EV<<"ADDRESS "<<gwAddress<<endl;
-
-    //const Ptr<const LoRaMacFrame> &frame
-
-    //unsigned char* key = (unsigned char*)"00000000000000000000000000000000";
-    //unsigned char* message = (unsigned char*)"HELLO";
-
-    //uint64_t mehd = frame->getTransmitterAddress();
-
-    /*std::byte ar[] = (std::byte*) &(frame->getTransmitterAddress());
-    String s;
-    for (std::byte i = 0; i < 6 ; i++)
-    {
-        char buf[3];
-        sprintf(buf, "%02X", ar[i]);
-        s += buf;
-        if (i<5) s+= ':';
-    }*/
-/*
-    int message_len = strlen((const char*)message);
-    unsigned char cipher[64];
-
-
-    printf("cipher=\n");
-
-    int cipher_len = aesEncrypt(message,message_len,key,cipher);
-
-    for(int i = 0; i<cipher_len; i++){
-        printf("%02x ",cipher[i]);
-    }
-
-    //cancelEvent(pingPeriod);
-    //scheduleAt(simTime() + timeToNextSlot, pingPeriod);*/
+    pingOffset = (cipher2[0]+(cipher2[1]*256))% period;
 }
+
 int LoRaMac::aesEncrypt(unsigned char *message, int message_len, unsigned char *key, unsigned char *cipher)
 {
     int cipher_len = 0;
@@ -978,39 +941,11 @@ int LoRaMac::aesEncrypt(unsigned char *message, int message_len, unsigned char *
     EVP_CIPHER_CTX_free(ctx);
     return cipher_len;
 }
-//deal with all signals related to all different timing necessary for beacon message
-void LoRaMac::beaconThings()
-{
-    //EV<<"COME ON BEACON !!!!!!!!"<<endl;
-    cancelEvent(beaconPeriod);
-    cancelEvent(endBeacon);
-    cancelEvent(beaconGuardStart);
-    cancelEvent(beaconGuardEnd);
-    //cancelEvent(pingPeriod);
-    //cancelEvent(endPingSlot);
-    endBeacon = new cMessage("Beacon_Close");
-    beaconPeriod = new cMessage("Beacon_Period");
-    beaconGuardStart = new cMessage("Guard_Beacon");
-    beaconGuardEnd = new cMessage("Beacon_Guard_Close");
-    //beacon_period = beaconPeriodTime + 128;
-    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconPeriod);
-    scheduleAt(simTime() + beaconPeriodTime, endBeacon);
-    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime - beaconGuardTime, beaconGuardStart);
-    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconGuardEnd);
-    //timeToNextSlot = rand() % (simTime()+128) + simTime();
-    //scheduleAt(simTime() + timeToNextSlot, pingPeriod);
-    //scheduleAt(simTime() + timeToNextSlot + slotLen, endPingSlot);
 
-    //scheduleAt(simTime() + timeToNextSlot, pingPeriod);
-    //scheduleAt(simTime() + timeToNextSlot + slotLen, endPingSlot);
-    //deleteCurrentTxFrame();
-}
 void LoRaMac::finishCurrentTransmission()
 {
-    //scheduleAt(simTime() + waitDelayTime, endDelay);
-    //scheduleAt(simTime() + waitDelayTime + listeningTime, endListening);
+    bdw = simTime()+ waitDelay1Time;
     scheduleAt(simTime() + waitDelay1Time, endDelay_1);
-    bdw = simTime()+waitDelay1Time;
     scheduleAt(simTime() + waitDelay1Time + listening1Time, endListening_1);
     scheduleAt(simTime() + waitDelay1Time + listening1Time + waitDelay2Time, endDelay_2);
     scheduleAt(simTime() + waitDelay1Time + listening1Time + waitDelay2Time + listening2Time, endListening_2);
@@ -1038,9 +973,14 @@ bool LoRaMac::isAck(const Ptr<const LoRaMacFrame> &frame)
     return false;//dynamic_cast<LoRaMacFrame *>(frame);
 }
 
-bool LoRaMac::receivedBeacon(const Ptr<const LoRaMacFrame> &frame)
+bool LoRaMac::isBeacon(const Ptr<const LoRaMacFrame> &frame)
 {
     return frame->getPktType() == BEACON;
+}
+
+bool LoRaMac::isDownlink(const Ptr<const LoRaMacFrame> &frame)
+{
+    return frame->getPktType() == DOWNLINK;
 }
 
 bool LoRaMac::isBroadcast(const Ptr<const LoRaMacFrame> &frame)
@@ -1051,6 +991,12 @@ bool LoRaMac::isBroadcast(const Ptr<const LoRaMacFrame> &frame)
 bool LoRaMac::isForUs(const Ptr<const LoRaMacFrame> &frame)
 {
     return frame->getReceiverAddress() == address;
+}
+
+// possible implementation of an uplink transmission policy
+bool LoRaMac::timeToTrasmit()
+{
+    return !beaconGuard;
 }
 
 void LoRaMac::turnOnReceiver()
