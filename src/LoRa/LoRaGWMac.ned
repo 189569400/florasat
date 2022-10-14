@@ -18,14 +18,12 @@ package flora.LoRa;
 import inet.linklayer.base.MacProtocolBase;
 import inet.linklayer.contract.IMacProtocol;
 
-
 //
 // TODO auto-generated module
 //
 module LoRaGWMac extends MacProtocolBase like IMacProtocol
 {
     parameters:
-        //int satelliteID;
         string radioModule = default("^.radio"); // The path to the Radio module  //FIXME remove default value
         string address @mutable = default("auto"); 
         string classUsed = default("A");
@@ -33,8 +31,6 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         int maxQueueSize = default(-1); // maximum queue length in frames; only used if queueModule==""
         bool prioritizeByUP = default(false); // use priority queueing, based on IEEE 802.1d User Priority (UP)
         bool useAck = default(true);
-        int beaconTimer = default(128);
-        int pingNumber = default(4);
         int headerLength @unit(B) = default(8B);
         int ackLength @unit(B) = default(headerLength);
         double sifsTime @unit(s) = default(10us);
@@ -45,7 +41,18 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         int cwMax = default(1023); // maximum contention window
         int cwMulticast = default(cwMin); // multicast contention window
         int retryLimit = default(7); // maximum number of retries
+        
         //int dataSize @unit(B) = default(10B);
+        int beaconTimer = default(128);
+        int pingNumber = default(4);
+        
+        // lora parameters for beacon
+        int beaconSF = default(12);
+        double beaconTP = default(50);
+        double beaconCF= default(868000000);
+        double beaconBW = default(125000);
+        int beaconCR;
+            
         @class(LoRaGWMac);
     gates:
         input upperMgmtIn;

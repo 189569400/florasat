@@ -468,15 +468,17 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Idle-BeaconReception,
                                       msg == beaconPeriod,
                                       BEACON_RECEPTION,
-                                      EV << "going to Beacon Reception mode" << endl;
+                                      EV << "CLASS B: Going to Beacon Reception" << endl;
                                       );
                 FSMA_Event_Transition(Idle-Transmit,
                                       isUpperMessage(msg),
                                       TRANSMIT,
+                                      EV << "CLASS B: starting transmission" << endl;
                                       );
                 FSMA_Event_Transition(Idle-ListeningOnPingSlot,
                                       msg == pingPeriod && !beaconGuard,
                                       PING_SLOT,
+                                      EV << "CLASS B: starting Ping Slot" << endl;
                                       );
             }
 
@@ -486,12 +488,13 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(BeaconReception-Idle,
                                       msg == endBeaconReception,
                                       IDLE,
+                                      EV << "CLASS B: no beacon detected, increasing beacon time" << endl;
                                       increaseBeaconTime();
                                       );
                 FSMA_Event_Transition(BeaconReception-ReceivingBeacon,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_BEACON,
-                                      EV << "receiving packet..." << endl;
+                                      EV << "CLASS B: Going to Receiving Beacon" << endl;
                                       );
             }
 
@@ -500,11 +503,13 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(ReceivingBeacon-Unicast-Not-For,
                                       isLowerMessage(msg) && isBeacon(frame),  //  && !isForUs(frame)
                                       IDLE,
+                                      EV << "CLASS B: beacon received" << endl;
                                       calculatePingPeriod(frame);
                                       );
                 FSMA_Event_Transition(ReceivingBeacon-BelowSensitivity,
                                       msg == droppedPacket,
                                       IDLE,
+                                      EV << "CLASS B: beacon below sensitivity" << endl;
                                       increaseBeaconTime();
                                       );
             }
@@ -515,10 +520,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(ListeningOnPingSlot-Idle,
                                       msg == endPingSlot && !isReceiving(),
                                       IDLE,
+                                      EV << "CLASS B: no downlink detected, back to IDLE" << endl;
                                       );
                 FSMA_Event_Transition(ListeningOnPingSlot-ReceivingOnPingSlot,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING,
+                                      EV << "CLASS B: going to receive downlink on ping slot" << endl;
                                       );
             }
 
@@ -527,17 +534,19 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(ReceivingOnPingSlot-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame),
                                       IDLE,
+                                      EV << "CLASS B: wrong address downlink on ping slot, back to IDLE" << endl;
                                       );
                 FSMA_Event_Transition(ReceivingOnPingSlot-Unicast,
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
+                                      EV << "CLASS B: received downlink on ping slot, back to IDLE" << endl;
                                       sendUp(decapsulate(pkt));
                                       numReceived++;
-                                      //cancelEvent(endPingSlot);
                                       );
                 FSMA_Event_Transition(ReceivingOnPingSlot-BelowSensitivity,
                                       msg == droppedPacket,
                                       IDLE,
+                                      EV << "CLASS B: downlink below sensitivity, back to IDLE" << endl;
                                       );
             }
 
@@ -547,6 +556,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Transmit-Wait_Delay_1,
                                       msg == endTransmission,
                                       WAIT_DELAY_1,
+                                      EV << "CLASS B: transmission concluded" << endl;
                                       finishCurrentTransmission();
                                       numSent++;
                                       );
@@ -593,7 +603,6 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       msg == droppedPacket,
                                       LISTENING_1,
                                       );
-
             }
 
             FSMA_State(WAIT_DELAY_2)
@@ -650,11 +659,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Idle-BeaconReception,
                                       msg == beaconPeriod,
                                       BEACON_RECEPTION,
-                                      EV << "Going to Beacon Reception" << endl;
+                                      EV << "CLASS S: Going to Beacon Reception" << endl;
                                       );
                 FSMA_Event_Transition(Idle-Transmit,
                                       msg == TXslot  && timeToTrasmit(),
                                       TRANSMIT,
+                                      EV << "CLASS S: starting transmission" << endl;
                                       );
             }
 
@@ -664,12 +674,13 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(BeaconReception-Idle,
                                       msg == endBeaconReception,
                                       IDLE,
+                                      EV << "CLASS S: no beacon detected, increasing beacon time" << endl;
                                       increaseBeaconTime();
                                       );
                 FSMA_Event_Transition(BeaconReception-ReceivingBeacon,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_BEACON,
-                                      EV << "Going to Receiving Beacon" << endl;
+                                      EV << "CLASS S: Going to Receiving Beacon" << endl;
                                       );
             }
 
@@ -678,12 +689,13 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(ReceivingBeacon-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame) && isBeacon(frame),
                                       IDLE,
-                                      EV << "beacon received" << endl;
+                                      EV << "CLASS S: beacon received" << endl;
                                       iGotBeacon = true;
                                       );
                 FSMA_Event_Transition(ReceivingBeacon-BelowSensitivity,
                                       msg == droppedPacket,
                                       IDLE,
+                                      EV << "CLASS S: beacon below sensitivity" << endl;
                                       increaseBeaconTime();
                                       );
             }
@@ -694,6 +706,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Transmit-IDLE,
                                       msg == endTransmission,
                                       IDLE,
+                                      EV << "CLASS S: transmission concluded" << endl;
                                       finishCurrentTransmission();
                                       numSent++;
                                       );

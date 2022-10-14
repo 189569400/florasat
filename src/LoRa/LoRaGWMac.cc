@@ -61,15 +61,21 @@ void LoRaGWMac::initialize(int stage)
         waitingForDC = false;
         dutyCycleTimer = new cMessage("Duty Cycle Timer");
         beaconPeriod = new cMessage("Beacon Timer");
+
         beaconTimer = par("beaconTimer");
         pingNumber = par("pingNumber");
-        //pingPeriod = par("PingPeriod");
+
+        // lora parameters for beacon
+        beaconSF = par("beaconSF");
+        beaconTP = par("beaconTP");
+        beaconCF = par("beaconCF");
+        beaconBW = par("beaconBW");
+        beaconCR = par("beaconCR");
 
         const char *usedClass = par("classUsed");
-        if (!strcmp(usedClass,"B"))
+        if (!strcmp(usedClass,"B") || !strcmp(usedClass,"S"))
             scheduleAt(simTime() + 1, beaconPeriod);
 
-        //sendBeacon();
         const char *addressString = par("address");
         GW_forwardedDown = 0;
         GW_droppedDC = 0;
@@ -94,7 +100,6 @@ void LoRaGWMac::finish()
     recordScalar("GW_droppedDC", GW_droppedDC);
     cancelAndDelete(dutyCycleTimer);
     cancelAndDelete(beaconPeriod);
-    //cancelAndDelete(updateISLDistance);
 }
 
 
@@ -115,18 +120,20 @@ void LoRaGWMac::configureNetworkInterface()
 
 void LoRaGWMac::handleSelfMessage(cMessage *msg)
 {
-    if(msg == beaconPeriod)
+    if (msg == beaconPeriod)
     {
         scheduleAt(simTime() + beaconTimer, beaconPeriod);
         sendBeacon();
     }
-    if(msg == dutyCycleTimer)
+    if (msg == dutyCycleTimer)
         waitingForDC = false;
 }
 
 void LoRaGWMac::handleUpperMessage(cMessage *msg)
 {
-    if(!waitingForDC)
+    // TODO complete implementation of lorawan class B in GW
+
+    if (!waitingForDC)
     {
         auto pkt = check_and_cast<Packet *>(msg);
         const auto &frame = pkt->peekAtFront<LoRaMacFrame>();
@@ -185,7 +192,7 @@ void LoRaGWMac::sendPacketBack(Packet *receivedFrame)
     sendDown(pktBack);
 }
 
-//this function send beacon message when the class is set to B
+//this function send beacon message when the class is set to B or S
 void LoRaGWMac::sendBeacon()
 {
     auto beacon = new Packet("Beacon");
@@ -196,20 +203,14 @@ void LoRaGWMac::sendBeacon()
     tag->setDestAddress(MacAddress::BROADCAST_ADDRESS);
     beacon->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::apskPhy);
 
-    // TODO set transmission parameters as sim parameters
-    // set beacon spreading factor SF to 12
-    // set beacon bandwidth BW to 125 KHz
-    // set beacon center freq CF to 868 MHz
-    // set beacon TX power TP to 50(?)
+    units::values::Hz loRaBW = inet::units::values::Hz(beaconBW);
+    units::values::Hz loRaCF = inet::units::values::Hz(beaconCF);
 
-    int loRaSF = 12;
-    frame->setLoRaSF(loRaSF);
-    units::values::Hz loRaBW = inet::units::values::Hz(125000);
+    frame->setLoRaSF(beaconSF);
+    frame->setLoRaTP(beaconTP);
     frame->setLoRaBW(loRaBW);
-    units::values::Hz loRaCF = inet::units::values::Hz(868000000);
     frame->setLoRaCF(loRaCF);
-    double loRaTP = 50;
-    frame->setLoRaTP(loRaTP);
+
     frame->setBeaconTimer(beaconTimer);
     frame->setPingNb(pingNumber);
 

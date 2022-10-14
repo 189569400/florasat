@@ -67,8 +67,14 @@ protected:
 
     int lastSentMeasurement;
     int beaconTimer;
-
     int pingNumber;
+
+    int beaconSF;
+    int beaconCR = -1;
+    double beaconTP;
+    double beaconCF;
+    double beaconBW;
+
     IRadio *radio = nullptr;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
 
