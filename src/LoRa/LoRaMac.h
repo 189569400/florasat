@@ -8,7 +8,6 @@
 #include "inet/queueing/contract/IPacketQueue.h"
 #include "LoRaMacControlInfo_m.h"
 #include "LoRaMacFrame_m.h"
-#include "LoRaBeacon_m.h"
 #include "inet/common/Protocol.h"
 
 #include "LoRaRadio.h"

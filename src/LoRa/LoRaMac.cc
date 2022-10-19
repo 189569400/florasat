@@ -349,6 +349,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Idle-Transmit,
                                       isUpperMessage(msg),
                                       TRANSMIT,
+                                      EV << "CLASS A: starting transmission" << endl;
                                       );
             }
 
@@ -358,6 +359,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Transmit-Wait_Delay_1,
                                       msg == endTransmission,
                                       WAIT_DELAY_1,
+                                      EV << "CLASS A: transmission concluded" << endl;
                                       finishCurrentTransmission();
                                       numSent++;
                                       );
@@ -369,6 +371,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Wait_Delay_1-Listening_1,
                                       msg == endDelay_1 || endDelay_1->isScheduled() == false,
                                       LISTENING_1,
+                                      EV << "CLASS A: opening receive window 1" << endl;
                                       );
             }
 
@@ -379,11 +382,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       msg == endListening_1 || endListening_1->isScheduled() == false,
                                       WAIT_DELAY_2,
                                       DPAD = simTime() - bdw;
-                                      EV << "DIDN'T RECEIVE AN ACK ON FIRST WINDOW " << DPAD << endl;
+                                      EV << "CLASS A: didn't receive downlink on receive window 1" << endl;
                                       );
                 FSMA_Event_Transition(Listening_1-Receiving1,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_1,
+                                      EV << "CLASS A: receiving a message on receive window 1, analyzing packet..." << endl;
                                       DPAD = simTime() - bdw;
                                       );
             }
@@ -393,11 +397,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame),
                                       LISTENING_1,
-                                      EV << "I AM GOING BACK TO LISTENING " << endl;
+                                      EV << "CLASS A: wrong address downlink received, back to listening on window 1" << endl;
                                       );
                 FSMA_Event_Transition(Receive-Unicast,
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
+                                      EV << "CLASS A: received downlink successfully on window 1, back to IDLE" << endl;
                                       sendUp(decapsulate(pkt));
                                       numReceived++;
                                       cancelEvent(endListening_1);
@@ -407,7 +412,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive-BelowSensitivity,
                                       msg == droppedPacket,
                                       LISTENING_1,
-                                      EV << "I AM GOING BACK TO LISTENING BUT BECAUSE OF POWER " << endl;
+                                      EV << "CLASS A: low power downlink, back to listening on window 1" << endl;
                                       );
             }
 
@@ -417,6 +422,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Wait_Delay_2-Listening_2,
                                       msg == endDelay_2 || endDelay_2->isScheduled() == false,
                                       LISTENING_2,
+                                      EV << "CLASS A: opening receive window 2" << endl;
                                       );
             }
 
@@ -426,12 +432,13 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Listening_2-idle,
                                       msg == endListening_2 || endListening_2->isScheduled() == false,
                                       IDLE,
-                                      EV << "DIDN'T RECEIVE AN ACK ON SECOND WINDOW " << DPAD << endl;
+                                      EV << "CLASS A: didn't receive downlink on receive window 2" << endl;
                                       //DPAD = simTime() - bdw;
                                       );
                 FSMA_Event_Transition(Listening_2-Receiving2,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_2,
+                                      EV << "CLASS A: receiving a message on receive window 2, analyzing packet..." << endl;
                                       DPAD = simTime() - bdw;
                                       );
             }
@@ -441,10 +448,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive2-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame),
                                       LISTENING_2,
+                                      EV << "CLASS A: wrong address downlink received, back to listening on window 2" << endl;
                                       );
                 FSMA_Event_Transition(Receive2-Unicast,
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
+                                      EV << "CLASS A: received downlink successfully on window 2, back to IDLE" << endl;
                                       sendUp(pkt);
                                       numReceived++;
                                       cancelEvent(endListening_2);
@@ -452,6 +461,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive2-BelowSensitivity,
                                       msg == droppedPacket,
                                       LISTENING_2,
+                                      EV << "CLASS A: low power downlink, back to listening on window 2" << endl;
                                       );
             }
         }
@@ -568,6 +578,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Wait_Delay_1-Listening_1,
                                       msg == endDelay_1 || endDelay_1->isScheduled() == false,
                                       LISTENING_1,
+                                      EV << "CLASS B: opening receive window 1" << endl;
                                       );
             }
 
@@ -577,10 +588,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Listening_1-Wait_Delay_2,
                                       msg == endListening_1 || endListening_1->isScheduled() == false,
                                       WAIT_DELAY_2,
+                                      EV << "CLASS B: didn't receive downlink on receive window 1" << endl;
                                       );
                 FSMA_Event_Transition(Listening_1-Receiving1,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_1,
+                                      EV << "CLASS B: receiving a message on receive window 1, analyzing packet..." << endl;
                                       );
             }
 
@@ -589,10 +602,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame),
                                       LISTENING_1,
+                                      EV << "CLASS B: wrong address downlink received, back to listening on window 1" << endl;
                                       );
                 FSMA_Event_Transition(Receive-Unicast,
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
+                                      EV << "CLASS B: received downlink successfully on window 1, back to IDLE" << endl;
                                       sendUp(decapsulate(pkt));
                                       numReceived++;
                                       cancelEvent(endListening_1);
@@ -602,6 +617,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive-BelowSensitivity,
                                       msg == droppedPacket,
                                       LISTENING_1,
+                                      EV << "CLASS B: low power downlink, back to listening on window 2" << endl;
                                       );
             }
 
@@ -611,6 +627,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Wait_Delay_2-Listening_2,
                                       msg == endDelay_2 || endDelay_2->isScheduled() == false,
                                       LISTENING_2,
+                                      EV << "CLASS B: opening receive window 2" << endl;
                                       );
             }
 
@@ -620,10 +637,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Listening_2-idle,
                                       msg == endListening_2 || endListening_2->isScheduled() == false,
                                       IDLE,
+                                      EV << "CLASS B: didn't receive downlink on receive window 2" << endl;
                                       );
                 FSMA_Event_Transition(Listening_2-Receiving2,
                                       msg == mediumStateChange && isReceiving(),
                                       RECEIVING_2,
+                                      EV << "CLASS B: receiving a message on receive window 2, analyzing packet..." << endl;
                                       );
             }
 
@@ -632,10 +651,12 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive2-Unicast-Not-For,
                                       isLowerMessage(msg) && !isForUs(frame),
                                       LISTENING_2,
+                                      EV << "CLASS B: wrong address downlink received, back to listening on window 2" << endl;
                 );
                 FSMA_Event_Transition(Receive2-Unicast,
                                       isLowerMessage(msg) && isForUs(frame),
                                       IDLE,
+                                      EV << "CLASS B: received downlink successfully on window 2, back to IDLE" << endl;
                                       sendUp(pkt);
                                       numReceived++;
                                       cancelEvent(endListening_2);
@@ -643,6 +664,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                 FSMA_Event_Transition(Receive2-BelowSensitivity,
                                       msg == droppedPacket,
                                       LISTENING_2,
+                                      EV << "CLASS B: low power downlink, back to listening on window 2" << endl;
                                       );
             }
         }

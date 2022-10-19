@@ -65,8 +65,6 @@ void LoRaNetworkServerApp::initialize(int stage)
         dpadVector.setName("DPAD Vector");
         WATCH(netServerDPAD);
 
-        //calculationYay = new cMessage("it is Time to calculate delay !");
-        //scheduleAt(simTime()+calculationDelay,calculationYay);
 
         //BeaconTimer = new cMessage("Beacon Timer");
         //scheduleAt(simTime() + 1, BeaconTimer);
@@ -291,7 +289,6 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
     for(uint i=0;i<receivedPackets.size();i++)
     {
-        std::cout << "received packets" << endl;
         const auto &frameAux = receivedPackets[i].rcvdPacket->peekAtFront<LoRaMacFrame>();
         if(frameAux->getTransmitterAddress() == frame->getTransmitterAddress() && frameAux->getSequenceNumber() == frame->getSequenceNumber())
         {
@@ -304,7 +301,7 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
 
             for(uint j=0;j<receivedPackets[i].possibleGateways.size();j++)
             {
-                std::cout << "SNIRinGW: " << SNIRinGW << ", possibleGWSNIR: " << std::get<1>(receivedPackets[i].possibleGateways[j]) << endl;
+                //std::cout << "SNIRinGW: " << SNIRinGW << ", possibleGWSNIR: " << std::get<1>(receivedPackets[i].possibleGateways[j]) << endl;
                 if(SNIRinGW < std::get<1>(receivedPackets[i].possibleGateways[j]))
                 {
                     RSSIinGW = std::get<2>(receivedPackets[i].possibleGateways[j]);
@@ -318,34 +315,35 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
     emit(LoRa_ServerPacketReceived, true);
     if(WorkWithAck)
     {
-        simtime_t endTime= 0;
+        int lastSatID = 0;
+        simtime_t lastSatTime = 0;
         int numHops = frame->getNumHop();
         for (size_t i = 0; i < frame->getRouteArraySize(); i++)
         {
             if (frame->getTimestamps(i) > 0)
-                endTime = frame->getTimestamps(i);
+            {
+                lastSatID = frame->getRoute(i);
+                lastSatTime = frame->getTimestamps(i);
+            }
         }
 
         simtime_t nodesattime =  frame->getTimestamps(0) - frame->getOriginTime();
-        simtime_t satgroundtime =  frame->getGroundTime() - endTime;
-        simtime_t sattime = endTime - frame->getTimestamps(0);
+        simtime_t satgroundtime =  frame->getGroundTime() - lastSatTime;
+        simtime_t sattime = lastSatTime - frame->getTimestamps(0);
 
         double node2satTime = nodesattime.dbl();
         double sat2groundTime = satgroundtime.dbl();
         double islTime = sattime.dbl();
 
 
+        EV << "Packet creation on node at time: " << frame->getOriginTime() << endl;
         EV << "First hop in satellite " << frame->getRoute(0) << " at time " << frame->getTimestamps(0) << endl;
-        if(numHops)
-            EV << "Last hop in satellite " << frame->getRoute(numHops-1) << " at time " << frame->getTimestamps(numHops-1) << endl;
-        else
-            EV << "Last hop in satellite " << frame->getRoute(0) << " at time " << frame->getTimestamps(0) << endl;
-        EV << "Origin packet time at lora node :" << frame->getOriginTime() << endl;
-        EV << "packet arrival time at station: " << frame->getGroundTime() << endl;
+        EV << "Last hop in satellite " << lastSatID << " at time " << lastSatTime << endl;
+        EV << "Packet arrival time at ground station: " << frame->getGroundTime() << endl;
 
-        EV << "node to satellite time: " << nodesattime.dbl() << endl;
-        EV << "isl time: " << satgroundtime.dbl() << endl;
-        EV << "satellite to ground time: " << sattime.dbl() << endl;
+        EV << "Node to satellite time: " << nodesattime.dbl() << endl;
+        EV << "ISL time: " << sattime.dbl() << endl;
+        EV << "Satellite to ground time: " << satgroundtime.dbl() << endl;
 
         //ACKNOWLEDGMENT MESSAGE SENDING
         auto mgmtPacket = makeShared<LoRaAppPacket>();

@@ -27,7 +27,6 @@
 
 #include "LoRaMacControlInfo_m.h"
 #include "LoRaMacFrame_m.h"
-#include "LoRaBeacon_m.h"
 //#include "LoRaApp/LoRaAppPacket_m.h"
 
 #if INET_VERSION < 0x0403 || ( INET_VERSION == 0x0403 && INET_PATCH_LEVEL == 0x00 )

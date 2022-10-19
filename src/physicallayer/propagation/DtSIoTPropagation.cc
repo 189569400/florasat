@@ -22,6 +22,7 @@
 #include "libnorad/cEcef.h"
 #include <math.h>
 
+#include "LoRa/LoRaRadio.h"
 #include "LoRaPhy/LoRaTransmission.h"
 
 //namespace inet {
@@ -117,8 +118,13 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
     else if (const LoRaTransmission *loraTransmission = dynamic_cast<const LoRaTransmission*>(transmission))
     {
         if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility*>(mobility))
+        {
             distance = receiverSatMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt)*1000;  //OS3 uses KM for all measurements
+            EV << "\nDISTANCE FROM NODE IN POSITION (" << loraTransmission->getStartLongLatPosition().m_Lat << ", " << loraTransmission->getStartLongLatPosition().m_Lon
+                    << ") TO SATELLITE IN POSITION (" << receiverSatMobility->getLatitude() << ", " << receiverSatMobility->getLongitude()
+                    << ") IS: " << distance/1000 << " km" << endl;
+        }
         else if (const UniformGroundMobility *receiverGroundMobility = dynamic_cast<const UniformGroundMobility*>(mobility))
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
@@ -127,9 +133,7 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
     }
     else
-        EV_ERROR << "\nOTHER TRANSMITTER DETECTED";
-
-    EV << "\nDISTANCE: " << distance/1000 << " km" << endl;
+        EV_ERROR << "OTHER TRANSMITTER DETECTED";
 
     const Coord startArrivalPosition = ignoreMovementDuringPropagation ? mobility->getCurrentPosition() :
             computeArrivalPosition(startTime, startPosition, mobility);

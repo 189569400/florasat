@@ -207,9 +207,15 @@ void PacketHandlerWired::SetupRoute(Packet *pkt, int macFrameType)
 {
     pkt->trimFront();
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
+    int numHops = frame->getNumHop();  // 0 at this stage
+
     frame->setPktType(macFrameType);
+    frame->setNumHop(numHops + 1);
     frame->setRouteArraySize(maxHops);
     frame->setTimestampsArraySize(maxHops);
+    frame->setRoute(numHops, satIndex);
+    frame->setTimestamps(numHops, simTime());
+
     pkt->insertAtFront(frame);
 }
 
