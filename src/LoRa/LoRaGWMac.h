@@ -67,6 +67,7 @@ protected:
     int lastSentMeasurement;
     int beaconTimer;
     int pingNumber;
+    int beaconStart;
 
     int beaconSF;
     int beaconCR = -1;

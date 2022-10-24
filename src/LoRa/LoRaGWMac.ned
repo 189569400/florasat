@@ -43,6 +43,7 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         int retryLimit = default(7); // maximum number of retries
         
         //int dataSize @unit(B) = default(10B);
+        int beaconStart = default(1);
         int beaconTimer = default(128);
         int pingNumber = default(4);
         

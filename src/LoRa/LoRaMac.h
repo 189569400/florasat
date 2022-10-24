@@ -65,12 +65,13 @@ class LoRaMac : public MacProtocolBase
     simtime_t beaconPeriodTime = -1;
 
     simtime_t timeToNextSlot = -1;
-    simtime_t slotLenTime = -1;
+    simtime_t classBslotTime = -1;
     int pingOffset = -1;
+    int beaconStart = 1;
 
     simtime_t maxToA = -1;
     simtime_t clockThreshold = -1;
-    simtime_t slotLenght = 2*clockThreshold + maxToA;
+    simtime_t classSslotTime = -1;
 
     //@}
 
@@ -94,6 +95,7 @@ class LoRaMac : public MacProtocolBase
         WAIT_DELAY_2,
         LISTENING_2,
         RECEIVING_2,
+        UPLINK_SLOT,
     };
 
     IRadio *radio = nullptr;
@@ -171,8 +173,8 @@ class LoRaMac : public MacProtocolBase
     /** End of the beacon guard period */
     cMessage *beaconGuardEnd = nullptr;
 
-    /** Start of transmission slot */
-    cMessage *TXslot= nullptr;
+    /** Start of uplink transmission slot */
+    cMessage *beginTXslot= nullptr;
     //@}
 
     /** @name Statistics */

@@ -64,6 +64,7 @@ void LoRaGWMac::initialize(int stage)
 
         beaconTimer = par("beaconTimer");
         pingNumber = par("pingNumber");
+        beaconStart = par("beaconStart");
 
         // lora parameters for beacon
         beaconSF = par("beaconSF");
@@ -74,7 +75,7 @@ void LoRaGWMac::initialize(int stage)
 
         const char *usedClass = par("classUsed");
         if (!strcmp(usedClass,"B") || !strcmp(usedClass,"S"))
-            scheduleAt(simTime() + 1, beaconPeriod);
+            scheduleAt(simTime() + beaconStart, beaconPeriod);
 
         const char *addressString = par("address");
         GW_forwardedDown = 0;

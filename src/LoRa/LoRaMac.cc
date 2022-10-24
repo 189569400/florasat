@@ -99,14 +99,15 @@ void LoRaMac::initialize(int stage)
         beaconGuardTime = par("beaconGuardTime");
 
         // class B parameters
-        slotLenTime = par("slotLenTime");
+        classBslotTime = par("classBslotTime");
         timeToNextSlot = par("timeToNextSlot");
         pingOffset = par("pingOffset");
+        beaconStart = par("beaconStart");
 
         // class S parameters
-        maxToA = par("headerLength");
-        clockThreshold = par("headerLength");
-
+        maxToA = par("maxToA");
+        clockThreshold = par("clockThreshold");
+        classSslotTime = 2*clockThreshold + maxToA;
 
         const char *addressString = par("address");
         if (!strcmp(addressString, "auto")) {
@@ -144,7 +145,7 @@ void LoRaMac::initialize(int stage)
         pingPeriod = new cMessage("Ping_Period");
         endPingSlot = new cMessage("Ping_Slot_Close");
 
-        TXslot = new cMessage("Trasmission_Slot");
+        beginTXslot = new cMessage("UplinkSlot_Start");
 
 
         // set up internal queue
@@ -154,8 +155,8 @@ void LoRaMac::initialize(int stage)
         const char *usedClass = par("classUsed");
         if (strcmp(usedClass,"A"))
         {
-            scheduleAt(simTime() + 1, beaconPeriod);
-            scheduleAt(simTime() + 1 + beaconReservedTime, endBeaconReception);
+            scheduleAt(simTime() + beaconStart, beaconPeriod);
+            scheduleAt(simTime() + beaconStart + beaconReservedTime, endBeaconReception);
             isClassA = false;
 
             if (!strcmp(usedClass,"B"))
@@ -261,16 +262,16 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
     if (msg == beaconGuardEnd)
         beaconGuard = false;
 
+    if (msg == beginTXslot)
+        scheduleAt(simTime() + classSslotTime, beginTXslot);
+
     if (msg == endPingSlot)
     {
-        simtime_t nextTime = (pingOffset*slotLenTime) + timeToNextSlot - slotLenTime;
+        simtime_t nextTime = (pingOffset*classBslotTime) + timeToNextSlot - classBslotTime;
         EV << "scheduling Next Ping Slot at " << simTime() + nextTime << endl;
         scheduleAt(simTime() + nextTime, pingPeriod);
-        scheduleAt(simTime() + nextTime + slotLenTime, endPingSlot);
+        scheduleAt(simTime() + nextTime + classBslotTime, endPingSlot);
     }
-
-    if (msg == TXslot)
-        scheduleAt(simTime() + slotLenght, TXslot);
 
     handleWithFsm(msg);
 }
@@ -305,7 +306,7 @@ void LoRaMac::handleLowerMessage(cMessage *msg)
         if (isBeacon(frame))
         {
             int ping = pow(2,12)/frame->getPingNb();
-            timeToNextSlot = ping*slotLenTime;
+            timeToNextSlot = ping*classBslotTime;
             EV << "time to next slot: " << timeToNextSlot<< endl;
         }
 
@@ -683,10 +684,10 @@ void LoRaMac::handleWithFsm(cMessage *msg)
                                       BEACON_RECEPTION,
                                       EV << "CLASS S: Going to Beacon Reception" << endl;
                                       );
-                FSMA_Event_Transition(Idle-Transmit,
-                                      msg == TXslot  && timeToTrasmit(),
+                FSMA_Event_Transition(Idle-UplinkSlot,
+                                      msg == beginTXslot && timeToTrasmit(),
                                       TRANSMIT,
-                                      EV << "CLASS S: starting transmission" << endl;
+                                      EV << "CLASS S: entering uplink slot" << endl;
                                       );
             }
 
@@ -709,7 +710,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
             FSMA_State(RECEIVING_BEACON)
             {
                 FSMA_Event_Transition(ReceivingBeacon-Unicast-Not-For,
-                                      isLowerMessage(msg) && !isForUs(frame) && isBeacon(frame),
+                                      isLowerMessage(msg) && isBeacon(frame), // && !isForUs(frame)
                                       IDLE,
                                       EV << "CLASS S: beacon received" << endl;
                                       iGotBeacon = true;
@@ -741,9 +742,13 @@ void LoRaMac::handleWithFsm(cMessage *msg)
     {
         if (isReceiving())
             handleWithFsm(mediumStateChange);
-        else if (currentTxFrame != nullptr)
+
+        // in class S packets wait until the next uplink slot
+        else if (currentTxFrame != nullptr && !isClassS)
             handleWithFsm(currentTxFrame);
-        else if (!txQueue->isEmpty()) {
+
+        else if (!txQueue->isEmpty() && !isClassS)
+        {
             popTxQueue();
             handleWithFsm(currentTxFrame);
         }
@@ -907,19 +912,20 @@ void LoRaMac::schedulePingPeriod()
 {
     cancelEvent(pingPeriod);
     cancelEvent(endPingSlot);
-    scheduleAt(simTime() + (pingOffset*slotLenTime), pingPeriod);
-    scheduleAt(simTime() + (pingOffset*slotLenTime) + slotLenTime, endPingSlot);
+    scheduleAt(simTime() + (pingOffset*classBslotTime), pingPeriod);
+    scheduleAt(simTime() + (pingOffset*classBslotTime) + classBslotTime, endPingSlot);
 }
 
 void LoRaMac::scheduleULslots()
 {
-    cancelEvent(TXslot);
-    scheduleAt(simTime() + clockThreshold, TXslot);
+    cancelEvent(beginTXslot);
+    scheduleAt(simTime() + clockThreshold, beginTXslot);
 }
 
 //calculate the pingSlotPeriod using Aes128 encryption for randomization
 void LoRaMac::calculatePingPeriod(const Ptr<const LoRaMacFrame> &frame)
 {
+    iGotBeacon = true;
     beaconReservedTime = 2.120;
     unsigned char cipher[7];
 
@@ -979,12 +985,15 @@ int LoRaMac::aesEncrypt(unsigned char *message, int message_len, unsigned char *
 
 void LoRaMac::finishCurrentTransmission()
 {
+    deleteCurrentTxFrame();
+    if (isClassS)
+        return;
+
     bdw = simTime()+ waitDelay1Time;
     scheduleAt(simTime() + waitDelay1Time, endDelay_1);
     scheduleAt(simTime() + waitDelay1Time + listening1Time, endListening_1);
     scheduleAt(simTime() + waitDelay1Time + listening1Time + waitDelay2Time, endDelay_2);
     scheduleAt(simTime() + waitDelay1Time + listening1Time + waitDelay2Time + listening2Time, endListening_2);
-    deleteCurrentTxFrame();
 }
 
 Packet *LoRaMac::getCurrentTransmission()
@@ -1031,7 +1040,18 @@ bool LoRaMac::isForUs(const Ptr<const LoRaMacFrame> &frame)
 // possible implementation of an uplink transmission policy
 bool LoRaMac::timeToTrasmit()
 {
-    return !beaconGuard;
+    // if not in beacon guard period and
+    // if there is a queued message
+    if (!beaconGuard)
+    {
+        if (!txQueue->isEmpty())
+        {
+            popTxQueue();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void LoRaMac::turnOnReceiver()

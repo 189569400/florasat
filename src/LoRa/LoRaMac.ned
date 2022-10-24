@@ -36,13 +36,14 @@ module LoRaMac extends CsmaCaMac
         int beaconGuardTime = default(3);
         
         // class B parameters
-        double slotLenTime = default(0.03);
+        double classBslotTime = default(0.030);
         int timeToNextSlot = default(5);
         int pingOffset = default(5);
+        int beaconStart = default(1);
         
         // class S parameters
-        int maxToA = default(1);
-        int clockThreshold = default(1);
+        double maxToA = default(0.389376);
+        double clockThreshold = default(0.010);
         
         bitrate = 250bps;
         @class(LoRaMac);
