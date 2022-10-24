@@ -72,6 +72,9 @@ class LoRaMac : public MacProtocolBase
     simtime_t maxToA = -1;
     simtime_t clockThreshold = -1;
     simtime_t classSslotTime = -1;
+    int targetClassSslot = 1;
+    int maxClassSslots = 1;
+    int classSslotCounter = 0;
 
     //@}
 

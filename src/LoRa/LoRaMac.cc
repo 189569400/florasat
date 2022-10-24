@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
-//#include <cmath.h>
+#include <cmath>
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/common/UserPriority.h"
@@ -108,6 +108,8 @@ void LoRaMac::initialize(int stage)
         maxToA = par("maxToA");
         clockThreshold = par("clockThreshold");
         classSslotTime = 2*clockThreshold + maxToA;
+        maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
+
 
         const char *addressString = par("address");
         if (!strcmp(addressString, "auto")) {
@@ -263,7 +265,10 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
         beaconGuard = false;
 
     if (msg == beginTXslot)
+    {
+        classSslotCounter++;
         scheduleAt(simTime() + classSslotTime, beginTXslot);
+    }
 
     if (msg == endPingSlot)
     {
@@ -918,6 +923,11 @@ void LoRaMac::schedulePingPeriod()
 
 void LoRaMac::scheduleULslots()
 {
+    // when beacon is received begin scheduling of uplink slots
+    // and randomly determine the slot to be used during this beacon period
+    classSslotCounter = 0;
+    targetClassSslot = cComponent::intuniform(1, maxClassSslots);
+
     cancelEvent(beginTXslot);
     scheduleAt(simTime() + clockThreshold, beginTXslot);
 }
@@ -1041,14 +1051,13 @@ bool LoRaMac::isForUs(const Ptr<const LoRaMacFrame> &frame)
 bool LoRaMac::timeToTrasmit()
 {
     // if not in beacon guard period and
-    // if there is a queued message
-    if (!beaconGuard)
+    // if there is a queued message and
+    // if it is the corresponding slot
+    if (!beaconGuard && !txQueue->isEmpty()
+            && classSslotCounter == targetClassSslot)
     {
-        if (!txQueue->isEmpty())
-        {
-            popTxQueue();
-            return true;
-        }
+        popTxQueue();
+        return true;
     }
 
     return false;
