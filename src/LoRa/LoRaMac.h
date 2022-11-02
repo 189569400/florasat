@@ -76,6 +76,9 @@ class LoRaMac : public MacProtocolBase
     int maxClassSslots = 1;
     int classSslotCounter = 0;
 
+    cOutVector slotSelectionData;
+    cOutVector slotBeginTimes;
+
     //@}
 
 

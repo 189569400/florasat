@@ -26,9 +26,9 @@ module LoRaGWRadio extends FlatRadioBase
 {
      parameters:
         @signal[LoRaGWRadioReceptionStarted](type=bool); // optional
-        @statistic[LoRaGWRadioReceptionStarted](source=LoRaGWRadioReceptionStarted; record=count);
+        @statistic[LoRaGWRadioReceptionStarted](source=LoRaGWRadioReceptionStarted; record=count,vector);
         @signal[LoRaGWRadioReceptionFinishedCorrect](type=bool); // optional
-        @statistic[LoRaGWRadioReceptionFinishedCorrect](source=LoRaGWRadioReceptionFinishedCorrect; record=count);
+        @statistic[LoRaGWRadioReceptionFinishedCorrect](source=LoRaGWRadioReceptionFinishedCorrect; record=count,vector);
 
         @signal[packetSentToUpper](type=cPacket);
         @signal[packetReceivedFromUpper](type=cPacket);

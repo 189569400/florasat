@@ -21,7 +21,7 @@ simple LoRaNetworkServerApp like IApp
 {
     parameters:
         @signal[LoRa_ServerPacketReceived](type=bool); // optional
-        @statistic[LoRa_ServerPacketReceived](source=LoRa_ServerPacketReceived; record=count);
+        @statistic[LoRa_ServerPacketReceived](source=LoRa_ServerPacketReceived; record=vector); // record=count
         int localPort = default(-1);  // local port (-1: use ephemeral port)
         string localAddress = default("");
         int destPort = default(-1);

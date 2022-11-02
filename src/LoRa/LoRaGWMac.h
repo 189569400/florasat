@@ -40,10 +40,6 @@ using namespace inet::physicallayer;
 class LoRaGWMac: public MacProtocolBase {
 public:
 
-    bool waitingForDC;
-    cMessage *dutyCycleTimer;
-    cMessage *beaconPeriod;
-
     virtual void initialize(int stage) override;
     virtual void finish() override;
 
@@ -56,24 +52,75 @@ public:
     virtual void handleSelfMessage(cMessage *message) override;
 
     void sendPacketBack(Packet *receivedFrame);
+    void beaconScheduling();
+    void scheduleULslots();
     void sendBeacon();
     virtual MacAddress getAddress();
 
 protected:
 
+    bool isClassA = true;
+    bool isClassB = false;
+    bool isClassS = false;
+    bool beaconGuard = false;
+
     int outGate = -1;
     MacAddress address;
 
+    bool waitingForDC;
+
     int lastSentMeasurement;
-    int beaconTimer;
     int pingNumber;
-    int beaconStart;
 
     int beaconSF;
     int beaconCR = -1;
     double beaconTP;
     double beaconCF;
     double beaconBW;
+
+    int beaconNumber = -1;
+    int attemptedReceptionsPerSlot = 0;
+    int successfulReceptionsPerSlot = 0;
+
+    simtime_t beaconStart = -1;
+    simtime_t beaconGuardTime = -1;
+    simtime_t beaconReservedTime = -1;
+    int beaconPeriodTime = -1;
+
+    simtime_t maxToA = -1;
+    simtime_t clockThreshold = -1;
+    simtime_t classSslotTime = -1;
+
+    cMessage *dutyCycleTimer = nullptr;
+
+    /** End of the beacon period */
+    cMessage *beaconPeriod = nullptr;
+
+    /** End of the beacon reserved period */
+    cMessage *beaconReservedEnd = nullptr;
+
+    /** Start of the beacon guard period */
+    cMessage *beaconGuardStart = nullptr;
+
+    /** Start of uplink transmission slot */
+    cMessage *beginTXslot= nullptr;
+
+
+    // status for each slot during simulation
+    // 0 for no transmissions received (IDLE)
+    // 1 for a successful reception with no collisions
+    // 2 for a successful reception with collisions
+    // 3 for no successful reception with collisions
+    cOutVector classSslotStatus;
+
+    // beacon number of the corresponding slot
+    cOutVector classSslotBeacon;
+
+    // reception attempts per slot
+    cOutVector classSslotReceptionAttempts;
+
+    // successful receptions per slot, should be 0 or 1
+    cOutVector classSslotReceptionSuccess;
 
     IRadio *radio = nullptr;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;

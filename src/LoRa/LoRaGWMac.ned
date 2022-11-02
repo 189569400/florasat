@@ -43,9 +43,16 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         int retryLimit = default(7); // maximum number of retries
         
         //int dataSize @unit(B) = default(10B);
+        // beacon parameters
         int beaconStart = default(1);
-        int beaconTimer = default(128);
+        int beaconPeriodTime = default(128);
+        int beaconGuardTime = default(3);
+        double beaconReservedTime = default(2.120);
         int pingNumber = default(4);
+        
+        // class S parameters
+        double maxToA = default(1.8);
+        double clockThreshold = default(0.010);
         
         // lora parameters for beacon
         int beaconSF = default(12);

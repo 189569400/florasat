@@ -20,7 +20,7 @@
 #include "LoRaApp/SimpleLoRaApp.h"
 #include "ISLChannel.h"
 #include "PacketForwarder.h"
-#include "inet/mobility/single/BonnMotionMobility.h"
+
 #include <cmath>
 
 #include <string.h>
@@ -36,6 +36,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#include "LoRaGWRadio.h"
 
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
 
@@ -54,17 +55,33 @@ void LoRaGWMac::initialize(int stage)
 
         // subscribe for the information of the carrier sense
         cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
-        //radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
+        //radioModule->subscribe(LoRaGWRadio::LoRaGWRadioReceptionStarted, this);
+        //radioModule->subscribe(LoRaGWRadio::LoRaGWRadioReceptionFinishedCorrect, this);
+
         radio = check_and_cast<IRadio *>(radioModule);
 
         waitingForDC = false;
         dutyCycleTimer = new cMessage("Duty Cycle Timer");
         beaconPeriod = new cMessage("Beacon Timer");
+        beginTXslot = new cMessage("UplinkSlot_Start");
+        beaconGuardStart = new cMessage("Beacon_Guard_Start");
+        beaconReservedEnd = new cMessage("Beacon_Reserved_End");
 
-        beaconTimer = par("beaconTimer");
-        pingNumber = par("pingNumber");
+        // beacon parameters
         beaconStart = par("beaconStart");
+        beaconPeriodTime = par("beaconPeriodTime");
+        beaconReservedTime = par("beaconReservedTime");
+        beaconGuardTime = par("beaconGuardTime");
+
+        pingNumber = par("pingNumber");
+
+        // class S parameters
+        maxToA = par("maxToA");
+        clockThreshold = par("clockThreshold");
+        classSslotTime = 2*clockThreshold + maxToA;
+        // with current parameters, 67 slots
+        //maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
 
         // lora parameters for beacon
         beaconSF = par("beaconSF");
@@ -73,9 +90,24 @@ void LoRaGWMac::initialize(int stage)
         beaconBW = par("beaconBW");
         beaconCR = par("beaconCR");
 
+        classSslotStatus.setName("ClassS_Slot_Status");
+        classSslotBeacon.setName("ClassS_Slot_Beacon_Number");
+        classSslotReceptionAttempts.setName("ClassS_Reception_Attempts_Per_Slot");
+        classSslotReceptionSuccess.setName("ClassS_Successful_Receptions_Per_Slot");
+
+        // schedule beacon when using class B or S
         const char *usedClass = par("classUsed");
-        if (!strcmp(usedClass,"B") || !strcmp(usedClass,"S"))
+        if (strcmp(usedClass,"A"))
+        {
             scheduleAt(simTime() + beaconStart, beaconPeriod);
+            isClassA = false;
+
+            if (!strcmp(usedClass,"B"))
+                isClassB = true;
+
+            if (!strcmp(usedClass,"S"))
+                isClassS = true;
+        }
 
         const char *addressString = par("address");
         GW_forwardedDown = 0;
@@ -123,9 +155,49 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
 {
     if (msg == beaconPeriod)
     {
-        scheduleAt(simTime() + beaconTimer, beaconPeriod);
+        beaconNumber++;
+        beaconGuard = false;
+        beaconScheduling();
         sendBeacon();
     }
+
+    if (msg == beaconGuardStart)
+    {
+        beaconGuard = true;
+        if (isClassS)
+            cancelEvent(beginTXslot);
+    }
+
+    if (msg == beaconReservedEnd && isClassS)
+        scheduleAt(simTime() + clockThreshold, beginTXslot);
+
+    if (msg == beginTXslot)
+    {
+        if (successfulReceptionsPerSlot == 0)
+        {
+            if (attemptedReceptionsPerSlot == 0)
+                classSslotStatus.record(0);
+            else
+                classSslotStatus.record(3);
+        }
+
+        else if (successfulReceptionsPerSlot == 1)
+        {
+            if (attemptedReceptionsPerSlot == 1)
+                classSslotStatus.record(1);
+            else
+                classSslotStatus.record(2);
+        }
+
+        classSslotReceptionAttempts.record(attemptedReceptionsPerSlot);
+        classSslotReceptionSuccess.record(successfulReceptionsPerSlot);
+        classSslotBeacon.record(beaconNumber);
+        successfulReceptionsPerSlot = 0;
+        attemptedReceptionsPerSlot = 0;
+
+        scheduleAt(simTime() + classSslotTime, beginTXslot);
+    }
+
     if (msg == dutyCycleTimer)
         waitingForDC = false;
 }
@@ -193,6 +265,20 @@ void LoRaGWMac::sendPacketBack(Packet *receivedFrame)
     sendDown(pktBack);
 }
 
+// schedule beacon signals
+void LoRaGWMac::beaconScheduling()
+{
+    scheduleAt(simTime() + beaconPeriodTime, beaconPeriod);
+    scheduleAt(simTime() + beaconReservedTime, beaconReservedEnd);
+    scheduleAt(simTime() + beaconPeriodTime - beaconGuardTime, beaconGuardStart);
+}
+
+void LoRaGWMac::scheduleULslots()
+{
+    cancelEvent(beginTXslot);
+    scheduleAt(simTime() + clockThreshold, beginTXslot);
+}
+
 //this function send beacon message when the class is set to B or S
 void LoRaGWMac::sendBeacon()
 {
@@ -212,7 +298,7 @@ void LoRaGWMac::sendBeacon()
     frame->setLoRaBW(loRaBW);
     frame->setLoRaCF(loRaCF);
 
-    frame->setBeaconTimer(beaconTimer);
+    frame->setBeaconTimer(beaconPeriodTime);
     frame->setPingNb(pingNumber);
 
     beacon->insertAtFront(frame);
@@ -232,6 +318,14 @@ void LoRaGWMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t
 
         transmissionState = newRadioTransmissionState;
     }
+
+    /*
+    if (signalID == LoRaGWRadio::LoRaGWRadioReceptionStarted)
+        attemptedReceptionsPerSlot++;
+
+    if (signalID == LoRaGWRadio::LoRaGWRadioReceptionFinishedCorrect)
+        successfulReceptionsPerSlot++;
+    */
 }
 
 MacAddress LoRaGWMac::getAddress()
