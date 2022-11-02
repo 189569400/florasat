@@ -56,6 +56,9 @@ void LoRaGWMac::initialize(int stage)
         // subscribe for the information of the carrier sense
         cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
+
+        getSimulation()->getSystemModule()->subscribe("LoRaGWRadioReceptionStarted", this);
+        getSimulation()->getSystemModule()->subscribe("LoRaGWRadioReceptionFinishedCorrect", this);
         //radioModule->subscribe(LoRaGWRadio::LoRaGWRadioReceptionStarted, this);
         //radioModule->subscribe(LoRaGWRadio::LoRaGWRadioReceptionFinishedCorrect, this);
 
@@ -319,13 +322,15 @@ void LoRaGWMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t
         transmissionState = newRadioTransmissionState;
     }
 
-    /*
-    if (signalID == LoRaGWRadio::LoRaGWRadioReceptionStarted)
-        attemptedReceptionsPerSlot++;
+    if (simTime() >= getSimulation()->getWarmupPeriod())
+    {
+        signalName = getSignalName(signalID);
+        if (strcmp(signalName, "LoRaGWRadioReceptionStarted")==0)
+            attemptedReceptionsPerSlot++;
 
-    if (signalID == LoRaGWRadio::LoRaGWRadioReceptionFinishedCorrect)
-        successfulReceptionsPerSlot++;
-    */
+        if (strcmp(signalName, "LoRaGWRadioReceptionFinishedCorrect")==0)
+            successfulReceptionsPerSlot++;
+    }
 }
 
 MacAddress LoRaGWMac::getAddress()

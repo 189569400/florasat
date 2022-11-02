@@ -25,9 +25,9 @@ import inet.physicallayer.wireless.common.base.packetlevel.FlatRadioBase;
 module LoRaGWRadio extends FlatRadioBase
 {
      parameters:
-        @signal[LoRaGWRadioReceptionStarted](type=bool); // optional
+        @signal[LoRaGWRadioReceptionStarted](type=long); // optional
         @statistic[LoRaGWRadioReceptionStarted](source=LoRaGWRadioReceptionStarted; record=count,vector);
-        @signal[LoRaGWRadioReceptionFinishedCorrect](type=bool); // optional
+        @signal[LoRaGWRadioReceptionFinishedCorrect](type=long); // optional
         @statistic[LoRaGWRadioReceptionFinishedCorrect](source=LoRaGWRadioReceptionFinishedCorrect; record=count,vector);
 
         @signal[packetSentToUpper](type=cPacket);

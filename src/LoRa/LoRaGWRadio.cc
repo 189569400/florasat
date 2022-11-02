@@ -177,7 +177,7 @@ void LoRaGWRadio::startReception(cMessage *timer, IRadioSignal::SignalPart part)
     auto radioFrame = static_cast<WirelessSignal *>(timer->getControlInfo());
     auto arrival = radioFrame->getArrival();
     auto reception = radioFrame->getReception();
-    emit(LoRaGWRadioReceptionStarted, true);
+    emit(LoRaGWRadioReceptionStarted, 1);
     if (simTime() >= getSimulation()->getWarmupPeriod())
         LoRaGWRadioReceptionStarted_counter++;
     if (isReceiverMode(radioMode) && arrival->getStartTime(part) == simTime() && iAmTransmiting == false) {
@@ -262,7 +262,7 @@ void LoRaGWRadio::endReception(cMessage *timer)
             auto macFrame = medium->receivePacket(this, radioFrame);
             take(macFrame);
             emit(packetSentToUpperSignal, macFrame);
-            emit(LoRaGWRadioReceptionFinishedCorrect, true);
+            emit(LoRaGWRadioReceptionFinishedCorrect, 1);
             if (simTime() >= getSimulation()->getWarmupPeriod())
                 LoRaGWRadioReceptionFinishedCorrect_counter++;
             EV << macFrame->getCompleteStringRepresentation(evFlags) << endl;
