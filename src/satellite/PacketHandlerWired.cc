@@ -243,19 +243,11 @@ void PacketHandlerWired::insertSatinRoute(Packet *pkt)
 
 void PacketHandlerWired::forwardToGround(Packet *pkt)
 {
-
-    //PacketPrinter printer;
-    //printer.printPacket(std::cout, pkt);
-
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
     int numHops = frame->getNumHop();
-    int sourceSat;
-    if (numHops)
-        sourceSat = frame->getRoute(numHops-1);
-    else
-        sourceSat = satIndex;
+    int sourceSat = frame->getRoute(numHops-1);
 
-    // if message comes from leftsat or downsat or lora forward to ground
+    // if message comes from leftsat or downsat forward to ground
     if (sourceSat == satLeftIndex || sourceSat == satDownIndex)
     {
         EV << "Forwarding packet to ground station from satellite " << satIndex << ". Previous satellite hops:" << endl;
@@ -268,8 +260,6 @@ void PacketHandlerWired::forwardToGround(Packet *pkt)
         pkt->insertAtFront(frame);
         send(pkt, "lowerLayerGS$o");
         sentToGround++;
-
-
     }
     // or if it comes from lora forward to ground
     else if (pkt->arrivedOn("lowerLayerLoRaIn"))
@@ -298,19 +288,16 @@ void PacketHandlerWired::forwardToSatellite(Packet *pkt)
     auto frame = pkt->removeAtFront<LoRaMacFrame>();
     int macFrameType = frame->getPktType();
     int numHops = frame->getNumHop();
+    int sourceSat = frame->getRoute(numHops-1);
 
-    int sourceSat;
-    if (numHops)
-        sourceSat = frame->getRoute(numHops-1);
-    else
-        sourceSat = satIndex;
+    if (sourceSat != satIndex)
+    {
+        frame->setNumHop(numHops + 1);
+        frame->setRoute(numHops, satIndex);
+        frame->setTimestamps(numHops, simTime());
+    }
 
-    frame->setNumHop(numHops + 1);
-    frame->setRoute(numHops, satIndex);
-    frame->setTimestamps(numHops, simTime());
     pkt->insertAtFront(frame);
-
-
     // forward all uplink packets to the right then up
     if (macFrameType == UPLINK)
     {

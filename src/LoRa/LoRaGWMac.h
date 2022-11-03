@@ -53,7 +53,6 @@ public:
 
     void sendPacketBack(Packet *receivedFrame);
     void beaconScheduling();
-    void scheduleULslots();
     void sendBeacon();
     virtual MacAddress getAddress();
 
@@ -102,9 +101,8 @@ protected:
     /** Start of the beacon guard period */
     cMessage *beaconGuardStart = nullptr;
 
-    /** Start of uplink transmission slot */
-    cMessage *beginTXslot= nullptr;
-
+    /** End of uplink transmission slot */
+    cMessage *endTXslot = nullptr;
 
     // status for each slot during simulation
     // 0 for no transmissions received (IDLE)

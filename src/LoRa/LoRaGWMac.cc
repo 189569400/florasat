@@ -59,15 +59,13 @@ void LoRaGWMac::initialize(int stage)
 
         getSimulation()->getSystemModule()->subscribe("LoRaGWRadioReceptionStarted", this);
         getSimulation()->getSystemModule()->subscribe("LoRaGWRadioReceptionFinishedCorrect", this);
-        //radioModule->subscribe(LoRaGWRadio::LoRaGWRadioReceptionStarted, this);
-        //radioModule->subscribe(LoRaGWRadio::LoRaGWRadioReceptionFinishedCorrect, this);
 
         radio = check_and_cast<IRadio *>(radioModule);
 
         waitingForDC = false;
         dutyCycleTimer = new cMessage("Duty Cycle Timer");
         beaconPeriod = new cMessage("Beacon Timer");
-        beginTXslot = new cMessage("UplinkSlot_Start");
+        endTXslot = new cMessage("UplinkSlot_End");
         beaconGuardStart = new cMessage("Beacon_Guard_Start");
         beaconReservedEnd = new cMessage("Beacon_Reserved_End");
 
@@ -136,6 +134,9 @@ void LoRaGWMac::finish()
     recordScalar("GW_droppedDC", GW_droppedDC);
     cancelAndDelete(dutyCycleTimer);
     cancelAndDelete(beaconPeriod);
+    cancelAndDelete(endTXslot);
+    cancelAndDelete(beaconGuardStart);
+    cancelAndDelete(beaconReservedEnd);
 }
 
 
@@ -168,13 +169,13 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
     {
         beaconGuard = true;
         if (isClassS)
-            cancelEvent(beginTXslot);
+            cancelEvent(endTXslot);
     }
 
     if (msg == beaconReservedEnd && isClassS)
-        scheduleAt(simTime() + clockThreshold, beginTXslot);
+        scheduleAt(simTime() + clockThreshold + maxToA, endTXslot);
 
-    if (msg == beginTXslot)
+    if (msg == endTXslot)
     {
         if (successfulReceptionsPerSlot == 0)
         {
@@ -198,7 +199,7 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
         successfulReceptionsPerSlot = 0;
         attemptedReceptionsPerSlot = 0;
 
-        scheduleAt(simTime() + classSslotTime, beginTXslot);
+        scheduleAt(simTime() + classSslotTime, endTXslot);
     }
 
     if (msg == dutyCycleTimer)
@@ -276,11 +277,6 @@ void LoRaGWMac::beaconScheduling()
     scheduleAt(simTime() + beaconPeriodTime - beaconGuardTime, beaconGuardStart);
 }
 
-void LoRaGWMac::scheduleULslots()
-{
-    cancelEvent(beginTXslot);
-    scheduleAt(simTime() + clockThreshold, beginTXslot);
-}
 
 //this function send beacon message when the class is set to B or S
 void LoRaGWMac::sendBeacon()

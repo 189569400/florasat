@@ -86,6 +86,11 @@ network TestNetwork
         nsRouter.pppg++ <--> Eth1G <--> internetCloud.pppg++;
         internetCloud.pppg++ <--> DatarateChannel2 <--> gwRouter.pppg++;
         gwRouter.ethg++ <--> DatarateChannel2 <--> groundStation[0].ethg;
-        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[0].groundLink;
+        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[3].groundLink;
+        
+        loRaGW[0].up    <--> DatarateChannel1 <--> loRaGW[1].down;
+        loRaGW[0].right <--> DatarateChannel1 <--> loRaGW[2].left;
+        loRaGW[1].right <--> DatarateChannel1 <--> loRaGW[3].left;
+        loRaGW[2].up    <--> DatarateChannel1 <--> loRaGW[3].down;
 
 }
