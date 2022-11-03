@@ -107,6 +107,7 @@ module LoRaGWRadio extends FlatRadioBase
         transmitter.preambleDuration = 0.001s;
 
         bool iAmGateway = default(true);
+        int satIndex = default(0);
 
         @class(LoRaGWRadio); //originally it was @class(Radio);
 	gates:

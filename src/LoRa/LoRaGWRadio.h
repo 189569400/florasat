@@ -54,6 +54,7 @@ protected:
 
 public:
     bool iAmGateway;
+    int satIndex;
 
     std::list<cMessage *>concurrentReceptions;
     std::list<cMessage *>concurrentTransmissions;

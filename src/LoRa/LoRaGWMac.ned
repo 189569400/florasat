@@ -42,6 +42,8 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         int cwMulticast = default(cwMin); // multicast contention window
         int retryLimit = default(7); // maximum number of retries
         
+        int satIndex = default(0);
+        
         //int dataSize @unit(B) = default(10B);
         // beacon parameters
         int beaconStart = default(1);

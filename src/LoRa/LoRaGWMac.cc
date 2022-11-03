@@ -76,6 +76,7 @@ void LoRaGWMac::initialize(int stage)
         beaconGuardTime = par("beaconGuardTime");
 
         pingNumber = par("pingNumber");
+        satIndex = par("satIndex");
 
         // class S parameters
         maxToA = par("maxToA");
@@ -321,10 +322,10 @@ void LoRaGWMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t
     if (simTime() >= getSimulation()->getWarmupPeriod())
     {
         signalName = getSignalName(signalID);
-        if (strcmp(signalName, "LoRaGWRadioReceptionStarted")==0)
+        if (strcmp(signalName, "LoRaGWRadioReceptionStarted")==0 && (int)value==satIndex)
             attemptedReceptionsPerSlot++;
 
-        if (strcmp(signalName, "LoRaGWRadioReceptionFinishedCorrect")==0)
+        if (strcmp(signalName, "LoRaGWRadioReceptionFinishedCorrect")==0 && (int)value==satIndex)
             successfulReceptionsPerSlot++;
     }
 }

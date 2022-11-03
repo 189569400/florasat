@@ -27,6 +27,7 @@ void LoRaGWRadio::initialize(int stage)
 {
     FlatRadioBase::initialize(stage);
     iAmGateway = par("iAmGateway").boolValue();
+    satIndex = par("satIndex");
     if (stage == INITSTAGE_LAST) {
         setRadioMode(RADIO_MODE_TRANSCEIVER);
         LoRaGWRadioReceptionStarted = registerSignal("LoRaGWRadioReceptionStarted");
@@ -177,7 +178,7 @@ void LoRaGWRadio::startReception(cMessage *timer, IRadioSignal::SignalPart part)
     auto radioFrame = static_cast<WirelessSignal *>(timer->getControlInfo());
     auto arrival = radioFrame->getArrival();
     auto reception = radioFrame->getReception();
-    emit(LoRaGWRadioReceptionStarted, 1);
+    emit(LoRaGWRadioReceptionStarted, satIndex);
     if (simTime() >= getSimulation()->getWarmupPeriod())
         LoRaGWRadioReceptionStarted_counter++;
     if (isReceiverMode(radioMode) && arrival->getStartTime(part) == simTime() && iAmTransmiting == false) {
@@ -262,7 +263,7 @@ void LoRaGWRadio::endReception(cMessage *timer)
             auto macFrame = medium->receivePacket(this, radioFrame);
             take(macFrame);
             emit(packetSentToUpperSignal, macFrame);
-            emit(LoRaGWRadioReceptionFinishedCorrect, 1);
+            emit(LoRaGWRadioReceptionFinishedCorrect, satIndex);
             if (simTime() >= getSimulation()->getWarmupPeriod())
                 LoRaGWRadioReceptionFinishedCorrect_counter++;
             EV << macFrame->getCompleteStringRepresentation(evFlags) << endl;

@@ -67,6 +67,7 @@ protected:
     MacAddress address;
 
     bool waitingForDC;
+    int satIndex;
 
     int lastSentMeasurement;
     int pingNumber;
