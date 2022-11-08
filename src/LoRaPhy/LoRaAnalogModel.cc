@@ -22,6 +22,10 @@
 #include "LoRaReceiver.h"
 #include "LoRa/LoRaRadio.h"
 
+#include "mobility/GroundStationMobility.h"
+#include "mobility/SatelliteMobility.h"
+#include "mobility/UniformGroundMobility.h"
+
 namespace flora {
 
 Define_Module(LoRaAnalogModel);
@@ -85,21 +89,57 @@ const W LoRaAnalogModel::getBackgroundNoisePower(const LoRaBandListening *listen
 W LoRaAnalogModel::computeReceptionPower(const IRadio *receiverRadio, const ITransmission *transmission, const IArrival *arrival) const
 {
     const IRadioMedium *radioMedium = receiverRadio->getMedium();
-//    const IRadio *transmitterRadio = transmission->getTransmitter();
-//    const IAntenna *receiverAntenna = receiverRadio->getAntenna();
-//    const IAntenna *transmitterAntenna = transmitterRadio->getAntenna();
+    const IRadio *transmitterRadio = transmission->getTransmitter();
+
+    const IAntenna *receiverAntenna = receiverRadio->getAntenna();
+    const IAntenna *transmitterAntenna = transmitterRadio->getAntenna();
+
+    IMobility *receiverMobility = receiverAntenna->getMobility();
+    IMobility *transmitterMobility = transmitterAntenna->getMobility();
+
+    double distance = 0; //m
+
+    // if receiver is a node
+    if (const UniformGroundMobility *receiverGroundMobility = dynamic_cast<const UniformGroundMobility*>(receiverMobility))
+    {
+        if (const SatelliteMobility *transmitterSatMobility = dynamic_cast<const SatelliteMobility*>(transmitterMobility))
+            distance = receiverGroundMobility->getDistance(transmitterSatMobility->getLatitude(), transmitterSatMobility->getLongitude(), transmitterSatMobility->getAltitude());
+
+        if (const UniformGroundMobility *transmitterGroundMobility = dynamic_cast<const UniformGroundMobility*>(transmitterMobility))
+            distance = receiverGroundMobility->getDistance(transmitterGroundMobility->getLatitude(), transmitterGroundMobility->getLongitude(), 0);
+    }
+
+    // if receiver is a satellite
+    if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility*>(receiverMobility))
+    {
+        if (const SatelliteMobility *transmitterSatMobility = dynamic_cast<const SatelliteMobility*>(transmitterMobility))
+            distance = receiverSatMobility->getDistance(transmitterSatMobility->getLatitude(), transmitterSatMobility->getLongitude(), transmitterSatMobility->getAltitude());
+
+        if (const UniformGroundMobility *transmitterGroundMobility = dynamic_cast<const UniformGroundMobility*>(transmitterMobility))
+            distance = receiverSatMobility->getDistance(transmitterGroundMobility->getLatitude(), transmitterGroundMobility->getLongitude(), 0);
+    }
+
     const INarrowbandSignal *narrowbandSignalAnalogModel = check_and_cast<const INarrowbandSignal *>(transmission->getAnalogModel());
     const IScalarSignal *scalarSignalAnalogModel = check_and_cast<const IScalarSignal *>(transmission->getAnalogModel());
     const Coord receptionStartPosition = arrival->getStartPosition();
     const Coord receptionEndPosition = arrival->getEndPosition();
+
+    mps propagationSpeed = radioMedium->getPropagation()->getPropagationSpeed();
+    Hz centerFrequency = Hz(narrowbandSignalAnalogModel->getCenterFrequency());
+
 //    const Quaternion transmissionDirection = computeTransmissionDirection(transmission, arrival);
 //    const Quaternion transmissionAntennaDirection = transmission->getStartOrientation() - transmissionDirection;
 //    const Quaternion receptionAntennaDirection = transmissionDirection - arrival->getStartOrientation();
+
     double transmitterAntennaGain = computeAntennaGain(transmission->getTransmitterAntennaGain(), transmission->getStartPosition(), arrival->getStartPosition(), transmission->getStartOrientation());
     double receiverAntennaGain = computeAntennaGain(receiverRadio->getAntenna()->getGain().get(), arrival->getStartPosition(), transmission->getStartPosition(), arrival->getStartOrientation());
-    double pathLoss = radioMedium->getPathLoss()->computePathLoss(transmission, arrival);
+    double pathLoss = radioMedium->getPathLoss()->computePathLoss(propagationSpeed, centerFrequency, m(distance));
     double obstacleLoss = radioMedium->getObstacleLoss() ? radioMedium->getObstacleLoss()->computeObstacleLoss(narrowbandSignalAnalogModel->getCenterFrequency(), transmission->getStartPosition(), receptionStartPosition) : 1;
     W transmissionPower = scalarSignalAnalogModel->getPower();
+    EV << "Transmission Power is " << transmissionPower << endl;
+    EV << "Free Space Path Loss is " << pathLoss << endl;
+    EV << "Transmitter Antenna Gain is " << transmitterAntennaGain << endl;
+    EV << "Receiver Antenna Gain is " << receiverAntennaGain << endl;
     return transmissionPower * std::min(1.0, transmitterAntennaGain * receiverAntennaGain * pathLoss * obstacleLoss);
 }
 

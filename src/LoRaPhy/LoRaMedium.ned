@@ -27,8 +27,8 @@ module LoRaMedium extends RadioMedium
         //backgroundNoiseType = default("LoRaBackgroundNoise");
 
         // 802.15.4-2006, page 266
-        pathLoss.typename = default("LoRaLogNormalShadowing");
-        //pathLoss.typename = default("FreeSpacePathLoss");
+        //pathLoss.typename = default("LoRaLogNormalShadowing");
+        pathLoss.typename = default("FreeSpacePathLoss");
         backgroundNoise.typename = "DimensionalBackgroundNoise";
 
         // Reflects the thermal noise for the receiver sensitivity
