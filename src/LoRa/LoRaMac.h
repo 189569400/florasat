@@ -193,7 +193,11 @@ class LoRaMac : public MacProtocolBase
     long numReceived;
     long numSentBroadcast;
     long numReceivedBroadcast;
+    long numReceivedBeacons;
     //@}
+
+    const char beaconReceivedText[17] = "Beacon received!";
+
 
   public:
     /**

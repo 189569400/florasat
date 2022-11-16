@@ -62,9 +62,6 @@ module LoRaGWRadio extends FlatRadioBase
         transmitter.typename  = default("LoRaTransmitter");
         receiver.typename = default("LoRaReceiver");
 
-        //transmitterType = default("Ieee802154UWBIRTransmitter");
-        //receiverType = default("Ieee802154UWBIRReceiver");
-
         centerFrequency = 2450 MHz;
 
         // B_20dB ATmega256RFR2 (page 564)
@@ -109,8 +106,5 @@ module LoRaGWRadio extends FlatRadioBase
         bool iAmGateway = default(true);
         int satIndex = default(0);
 
-        @class(LoRaGWRadio); //originally it was @class(Radio);
-	gates:
-	    output me;
-            
+        @class(LoRaGWRadio);
 }

@@ -19,13 +19,10 @@ import flora.LoRaPhy.LoRaTransmitter;
 import flora.LoRaPhy.LoRaReceiver;
 import inet.physicallayer.wireless.common.base.packetlevel.FlatRadioBase;
 import inet.power.storage.IdealEpEnergyStorage;
+
 module LoRaRadio extends FlatRadioBase
 {
     parameters:
-        antenna.typename = default("IsotropicAntenna");
-        transmitter.typename = default("LoRaTransmitter");
-        receiver.typename = default("LoRaReceiver");
-
         @signal[packetSentToUpper](type=cPacket);
         @signal[packetReceivedFromUpper](type=cPacket);
         @signal[radioModeChanged](type=long);
@@ -47,9 +44,10 @@ module LoRaRadio extends FlatRadioBase
         @statistic[radioMode](title="Radio mode"; source=radioModeChanged; record=count,vector; interpolationmode=sample-hold);
         @statistic[receptionState](title="Radio reception state"; source=receptionStateChanged; record=count,vector; interpolationmode=sample-hold);
         @statistic[transmissionState](title="Radio transmission state"; source=transmissionStateChanged; record=count,vector; interpolationmode=sample-hold);
-
-        //transmitterType = default("Ieee802154UWBIRTransmitter");
-        //receiverType = default("Ieee802154UWBIRReceiver");
+        
+        antenna.typename = default("IsotropicAntenna");
+        transmitter.typename = default("LoRaTransmitter");
+        receiver.typename = default("LoRaReceiver");
 
         centerFrequency = 868 MHz;
         bandwidth = default(0.25 MHz);
@@ -82,13 +80,14 @@ module LoRaRadio extends FlatRadioBase
         //Default transmitter power set to maximum for cache limits
         transmitter.power = default(25.118mW);
         transmitter.preambleDuration = 0.001s;
-        //*.energySourceModule = default(absPath(energySourceModule));
-        //*.energySourceModule = default(absPath(energySourceModule));
+
         bool iAmGateway = default(false);
-        @class(LoRaRadio); //originally it was @class(Radio);
-        @display("bgb=215,413");
+        
+        @class(LoRaRadio);
+        @display("bgb=200,575");
+
     submodules:
         IdealEpEnergyStorage: IdealEpEnergyStorage {
-            @display("p=178,296");
+            @display("p=100,500");
         }
 }

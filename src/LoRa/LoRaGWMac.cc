@@ -303,6 +303,8 @@ void LoRaGWMac::sendBeacon()
 
     beacon->insertAtFront(frame);
     sendDown(beacon);
+    if (hasGUI())
+        getParentModule()->getParentModule()->bubble(beaconSentText);
 }
 
 

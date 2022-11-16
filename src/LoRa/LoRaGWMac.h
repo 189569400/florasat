@@ -58,6 +58,8 @@ public:
 
 protected:
 
+    const char beaconSentText[13] = "Beacon sent!";
+
     bool isClassA = true;
     bool isClassB = false;
     bool isClassS = false;

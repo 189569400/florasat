@@ -190,6 +190,7 @@ void LoRaMac::initialize(int stage)
         numReceived = 0;
         numSentBroadcast = 0;
         numReceivedBroadcast = 0;
+        numReceivedBeacons = 0;
         DPAD = 0;
 
         // initialize watches
@@ -227,6 +228,7 @@ void LoRaMac::finish()
     recordScalar("numReceived", numReceived);
     recordScalar("numSentBroadcast", numSentBroadcast);
     recordScalar("numReceivedBroadcast", numReceivedBroadcast);
+    recordScalar("numReceivedBeacons", numReceivedBeacons);
 }
 
 void LoRaMac::configureNetworkInterface()
@@ -254,11 +256,15 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
         beaconScheduling();
         if(iGotBeacon)
         {
+            numReceivedBeacons++;
             iGotBeacon = false;
             if (isClassB)
                 schedulePingPeriod();
             if (isClassS)
                 scheduleULslots();
+
+            if (hasGUI())
+                getParentModule()->getParentModule()->bubble(beaconReceivedText);
         }
     }
 

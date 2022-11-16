@@ -126,7 +126,7 @@ void LoRaGWRadio::startTransmission(Packet *macFrame, IRadioSignal::SignalPart p
         txTimer->setContextPointer(radioFrame);
         scheduleAt(transmission->getEndTime(part), txTimer);
         emit(transmissionStartedSignal, check_and_cast<const cObject *>(transmission));
-        //send(macFrame,"me");
+
         EV_INFO << "Transmission started: " << (IWirelessSignal *)radioFrame << " " << IRadioSignal::getSignalPartName(part) << " as " << transmission << endl;
         check_and_cast<LoRaMedium *>(medium)->emit(IRadioMedium::signalDepartureStartedSignal, check_and_cast<const cObject *>(transmission));
     }
