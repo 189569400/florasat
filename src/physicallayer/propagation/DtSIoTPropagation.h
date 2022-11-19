@@ -11,15 +11,12 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/PropagationBase.h"
 
 using namespace inet;
-
 using namespace physicallayer;
 
 namespace flora {
 
 //namespace flora {
-
 //namespace inet {
-
 //namespace physicallayer {
 
 

@@ -35,6 +35,7 @@ enum MacFrameType
     UPLINK = 3;
     DOWNLINK = 4;
 }
+
 class LoRaMacFrame extends inet::FieldsChunk {
     inet::MacAddress transmitterAddress;
     inet::MacAddress receiverAddress;
@@ -58,12 +59,6 @@ class LoRaMacFrame extends inet::FieldsChunk {
     int BeaconTime;
     
     int numHop = 0;
-    int tmpPath1;
-    int tmpPath2;
-    int tmpPath3;
-    int tmpPath4;
-    int tmpPath5;
-    int tmpPath6;
     int satNumber;
     //int SlotLen;
     

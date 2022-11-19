@@ -14,11 +14,10 @@
 // 
 
 #include "SimpleLoRaApp.h"
-#include "inet/mobility/static/StationaryMobility.h"
-#include "../LoRa/LoRaTagInfo_m.h"
 #include "inet/common/packet/Packet.h"
-#include "LoRa/ISLChannel.h"
-#include "../mobility/UniformGroundMobility.h"
+#include "inet/mobility/static/StationaryMobility.h"
+#include "LoRa/LoRaTagInfo_m.h"
+#include "mobility/UniformGroundMobility.h"
 
 namespace flora {
 

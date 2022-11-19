@@ -7,21 +7,18 @@
 
 #include "PacketHandlerWired.h"
 #include <cmath>
-#include "inet/networklayer/common/L3AddressResolver.h"
+
 #include "inet/common/ModuleAccess.h"
-#include "inet/applications/base/ApplicationPacket_m.h"
-#include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
-
 #include "inet/common/packet/printer/PacketPrinter.h"
-
+#include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
+#include "inet/applications/base/ApplicationPacket_m.h"
 
 #include "mobility/NoradA.h"
 #include "mobility/INorad.h"
-
-#include "../LoRaPhy/LoRaRadioControlInfo_m.h"
-#include "../LoRaPhy/LoRaPhyPreamble_m.h"
-
+#include "LoRaPhy/LoRaRadioControlInfo_m.h"
+#include "LoRaPhy/LoRaPhyPreamble_m.h"
 
 namespace flora{
 

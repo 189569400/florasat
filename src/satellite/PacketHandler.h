@@ -20,7 +20,7 @@
 
 #include "mobility/INorad.h"
 
-#include "../LoRaPhy/LoRaRadioControlInfo_m.h"
+#include "LoRaPhy/LoRaRadioControlInfo_m.h"
 #include "LoRa/LoRaMacControlInfo_m.h"
 #include "LoRa/LoRaMacFrame_m.h"
 

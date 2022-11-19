@@ -10,11 +10,8 @@ import inet.visualizer.common.IntegratedVisualizer;
 import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
 
 import flora.LoRaPhy.LoRaMedium;
-import flora.LoraNode.LoRaNode;
-import flora.LoraNode.LoRaGW;
+import flora.LoRa.LoRaNode;
 import flora.ground.GroundStation;
-import flora.LoRa.ISLChannel;
-
 import flora.satellite.SatelliteWired;
 
 @license(LGPL);

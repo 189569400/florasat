@@ -43,7 +43,7 @@ module DummyNic extends NetworkInterface like IWirelessInterface
         double bitrate @unit(bps) = default(10bps);
         *.interfaceTableModule = default(absPath(this.interfaceTableModule));
         *.energySourceModule = default(absPath(this.energySourceModule));
-        **.bitrate = this.bitrate;
+        **.bitrate = 100Mbps;
         radio.antenna.mobilityModule = "^.^.^.mobility";
         radio.transmitter.headerLength = 4B;
         radio.radioMediumModule = "^.^.^.dummyMedium";

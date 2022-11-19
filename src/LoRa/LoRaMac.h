@@ -77,7 +77,7 @@ class LoRaMac : public MacProtocolBase
     int classSslotCounter = 0;
 
     cOutVector slotSelectionData;
-    cOutVector slotBeginTimes;
+    //cOutVector slotBeginTimes;
 
     //@}
 

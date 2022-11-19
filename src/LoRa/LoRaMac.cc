@@ -46,8 +46,6 @@
 #include "LoRaMac.h"
 #include "LoRaTagInfo_m.h"
 
-#include "NetworkServerApp.h"
-
 using namespace std;
 
 namespace flora {
@@ -112,7 +110,7 @@ void LoRaMac::initialize(int stage)
         maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
 
         slotSelectionData.setName("ClassSTXSlotSelection");
-        slotBeginTimes.setName("slotBeginTimes");
+        //slotBeginTimes.setName("slotBeginTimes");
 
 
         const char *addressString = par("address");
@@ -276,9 +274,9 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
 
     if (msg == beginTXslot)
     {
-        classSslotCounter++;
-        scheduleAt(simTime() + classSslotTime, beginTXslot);
-        slotBeginTimes.record(simTime());
+        //classSslotCounter++;
+        //scheduleAt(simTime() + classSslotTime, beginTXslot);
+        //slotBeginTimes.record(simTime());
     }
 
     if (msg == endPingSlot)
@@ -931,7 +929,7 @@ void LoRaMac::scheduleULslots()
     slotSelectionData.record(targetClassSslot);
 
     cancelEvent(beginTXslot);
-    scheduleAt(simTime() + clockThreshold, beginTXslot);
+    scheduleAt(simTime() + clockThreshold + targetClassSslot*classSslotTime, beginTXslot);
 }
 
 //calculate the pingSlotPeriod using Aes128 encryption for randomization
@@ -1055,8 +1053,7 @@ bool LoRaMac::timeToTrasmit()
     // if not in beacon guard period and
     // if there is a queued message and
     // if it is the corresponding slot
-    if (!beaconGuard && !txQueue->isEmpty()
-            && classSslotCounter == targetClassSslot)
+    if (!beaconGuard && !txQueue->isEmpty()) //&& classSslotCounter == targetClassSslot)
     {
         popTxQueue();
         return true;

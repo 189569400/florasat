@@ -14,22 +14,11 @@
 // 
 
 #include "LoRaGWMac.h"
-#include "inet/common/ModuleAccess.h"
-#include "../LoRaPhy/LoRaPhyPreamble_m.h"
-#include "inet/common/ProtocolTag_m.h"
-#include "LoRaApp/SimpleLoRaApp.h"
-#include "ISLChannel.h"
-#include "PacketForwarder.h"
 
 #include <cmath>
-
 #include <string.h>
-//#include <omnetpp.h>
-#include "ISLChannel.h"
 #include <iostream>
 #include <fstream>
-
-
 #include <cstring>
 #include <sstream>
 #include <stdio.h>
@@ -37,7 +26,11 @@
 #include <inttypes.h>
 
 #include "LoRaGWRadio.h"
+#include "LoRaPhy/LoRaPhyPreamble_m.h"
+#include "LoRaApp/SimpleLoRaApp.h"
 
+#include "inet/common/ModuleAccess.h"
+#include "inet/common/ProtocolTag_m.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
 
 using namespace std;

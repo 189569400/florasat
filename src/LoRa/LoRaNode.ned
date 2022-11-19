@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package flora.LoraNode;
+package flora.LoRa;
 
 import inet.networklayer.common.InterfaceTable;
 import inet.mobility.contract.IMobility;

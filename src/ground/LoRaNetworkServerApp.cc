@@ -327,6 +327,10 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
             }
         }
 
+        //auto myAddress = frame->getTransmitterAddress();
+        //int numberOfTheSat = frame->getSatNumber(); //get the sat device ID
+        //int numberOfTheNode = myAddress.getAddressByte(5); //get the node last value on IP 'nodes are ordered in IP address'
+
         simtime_t nodesattime =  frame->getTimestamps(0) - frame->getOriginTime();
         simtime_t satgroundtime =  frame->getGroundTime() - lastSatTime;
         simtime_t sattime = lastSatTime - frame->getTimestamps(0);
