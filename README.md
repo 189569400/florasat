@@ -27,7 +27,7 @@ Please consider the the simulator is under active development, and it should **n
 
 - Edit the Makefile in the leosatellites repo root directory, in line 13 add the correct path to the curl library and the path to the os3 src directory
 
-- Clone `https://gitlab.inria.fr/jfraire/florasat.git` repo where INET is located and checkout to `framework` branch
+- Clone `https://gitlab.inria.fr/jfraire/florasat.git` repo where INET is located
 
 - Launch OMNeT++ IDE from the terminal with `omnetpp`. Add inet4.3, os3, leosatellites and florasat projects to the workspace
 
@@ -40,14 +40,12 @@ Please consider the the simulator is under active development, and it should **n
 - Finally, Build Project in order: os3, leosatellites, florasat
 
 
-**IMPORTANT** FLoRaSat will not with OMNeT++5 due to source code path inconsistency with version OMNeT++6
+**IMPORTANT** FLoRaSat will not work with OMNeT++5 due to inconsistency with version OMNeT++6
 
 
 ## Run simulations
 
-Multiple scenarios are under development on the framework branch:
-
-- In `/simulations/classic` there is no support for ground station. This scenario is the classic implementation of florasat found in the master branch with the addition of orbital propagation
+Two scenarios are under development:
 
 - In `/simulations/satelliteradio` the satellites/gateways use radio modules for inter satellite communication. This functionality does not work yet but it is open for development
 
