@@ -117,6 +117,15 @@ W LoRaAnalogModel::computeReceptionPower(const IRadio *receiverRadio, const ITra
 
         if (const UniformGroundMobility *transmitterGroundMobility = dynamic_cast<const UniformGroundMobility*>(transmitterMobility))
             distance = receiverSatMobility->getDistance(transmitterGroundMobility->getLatitude(), transmitterGroundMobility->getLongitude(), 0);
+
+        distance = distance*1000; // SatelliteMobility->getDistance() method returns distance in km
+    }
+
+    // distance is greater than distance to the horizon, fixed at 2830km for a satellite with altitude of 600km
+    if (distance>2830000)
+    {
+        EV << "Transmission beyond the horizon, received power is 0" << endl;
+        return W(0);
     }
 
     const INarrowbandSignal *narrowbandSignalAnalogModel = check_and_cast<const INarrowbandSignal *>(transmission->getAnalogModel());

@@ -76,7 +76,7 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
     else {
         W minReceptionPower = loRaReception->computeMinPower(reception->getStartTime(part), reception->getEndTime(part));
         W sensitivity = getSensitivity(loRaReception);
-        double sensitivity_dBm = math::mW2dBmW(double(sensitivity.get()));
+        double sensitivity_dBm = math::mW2dBmW(double(sensitivity.get()*1000));
         bool isReceptionPossible = minReceptionPower >= sensitivity;
         EV << "Receiver sensitivity is " << sensitivity << endl;
         EV << "Received sensitivity is " << sensitivity_dBm << " dBm" << endl;

@@ -13,20 +13,23 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 #include "LoRaMedium.h"
-#include "../LoRa/LoRaMacFrame_m.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/Simsignals.h"
+#include "inet/common/ProtocolTag_m.h"
 //#include "inet/linklayer/contract/IMACFrame.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/networklayer/common/NetworkInterface.h"
-#include "inet/common/ProtocolTag_m.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IInterference.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/Radio.h"
 #include "inet/physicallayer/wireless/common/medium/RadioMedium.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IErrorModel.h"
+
+#include "libnorad/cEcef.h"
+#include "LoRa/LoRaMacFrame_m.h"
+#include "LoRaTransmission.h"
 
 namespace flora {
 
@@ -38,6 +41,13 @@ LoRaMedium::LoRaMedium() : RadioMedium()
 
 LoRaMedium::~LoRaMedium()
 {
+}
+
+void LoRaMedium::initialize(int stage)
+{
+    RadioMedium::initialize(stage);
+    mapX = std::atoi(getParentModule()->getDisplayString().getTagArg("bgb", 0));
+    mapY = std::atoi(getParentModule()->getDisplayString().getTagArg("bgb", 1));
 }
 
 bool LoRaMedium::matchesMacAddressFilter(const IRadio *radio, const Packet *packet) const
@@ -60,6 +70,38 @@ bool LoRaMedium::matchesMacAddressFilter(const IRadio *radio, const Packet *pack
     return false;
 }
 
+bool LoRaMedium::isInCommunicationRange(const ITransmission *transmission, const Coord& startPosition, const Coord& endPosition) const
+{
+    m maxCommunicationRange = mediumLimitCache->getMaxCommunicationRange();
+
+    const LoRaTransmission *loRaTransmission = check_and_cast<const LoRaTransmission *>(transmission);
+    double transmitterLat = loRaTransmission->getStartLongLatPosition().m_Lat;
+    double transmitterLon = loRaTransmission->getStartLongLatPosition().m_Lon;
+    double transmitterAlt = loRaTransmission->getStartLongLatPosition().m_Alt;
+
+    double receiverX = startPosition.getX();
+    double receiverY = startPosition.getY();
+    double receiverZ = startPosition.getZ();
+
+    double receiverLon = (360 * receiverX / mapX) - 180;
+    double receiverLat = 90 - (180 * receiverY / mapY);
+    double receiverAlt = receiverZ;
+
+    double range = 2830000; // 2830km for 600km altitude
+
+    cEcef *transmitterEcef = new cEcef(transmitterLat, transmitterLon, transmitterAlt);
+    cEcef *receiverEcef = new cEcef(receiverLat, receiverLon, receiverAlt);
+    double distance = transmitterEcef->getDistance(*receiverEcef);
+
+    delete transmitterEcef;
+    delete receiverEcef;
+
+    // ideally check also end position, but florasat does not support movement during
+    // transmission, propagation and/or reception
+
+    return distance < range;
+    //return std::isnan(maxCommunicationRange.get()) || (distance < range);
+}
 
 const IReceptionResult *LoRaMedium::getReceptionResult(const IRadio *radio, const IListening *listening, const ITransmission *transmission) const
 {
