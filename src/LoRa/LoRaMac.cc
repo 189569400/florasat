@@ -106,7 +106,6 @@ void LoRaMac::initialize(int stage)
         maxToA = par("maxToA");
         clockThreshold = par("clockThreshold");
         classSslotTime = 2*clockThreshold + maxToA;
-        // with current parameters, 67 slots
         maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
 
         slotSelectionData.setName("ClassSTXSlotSelection");
