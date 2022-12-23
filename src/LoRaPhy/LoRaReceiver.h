@@ -52,11 +52,13 @@ private:
 
     double snirThreshold;
 
-    bool iAmGateway;
+    bool iAmGateway = false;
     bool alohaChannelModel;
+    int satIndex = -1;
 
     W energyDetection;
     simsignal_t LoRaReceptionCollision;
+    simsignal_t belowSensitivityReception;
 
     int nonOrthDelta[6][6] = {
        {1, -8, -9, -9, -9, -9},

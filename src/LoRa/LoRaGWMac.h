@@ -83,6 +83,7 @@ protected:
     int beaconNumber = -1;
     int attemptedReceptionsPerSlot = 0;
     int successfulReceptionsPerSlot = 0;
+    int belowSensitivityReceptions = 0;
 
     simtime_t beaconStart = -1;
     simtime_t beaconGuardTime = -1;

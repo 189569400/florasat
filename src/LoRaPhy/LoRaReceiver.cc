@@ -15,9 +15,9 @@
 
 #include "LoRaReceiver.h"
 #include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarNoise.h"
-#include "../LoRaApp/SimpleLoRaApp.h"
-#include "LoRaPhyPreamble_m.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
+#include "LoRaApp/SimpleLoRaApp.h"
+#include "LoRaPhyPreamble_m.h"
 
 namespace flora {
 
@@ -34,14 +34,16 @@ void LoRaReceiver::initialize(int stage)
     {
         snirThreshold = math::dB2fraction(par("snirThreshold"));
         if(strcmp(getParentModule()->getClassName(), "flora::LoRaGWRadio") == 0)
-        {
             iAmGateway = true;
-        } else iAmGateway = false;
         alohaChannelModel = par("alohaChannelModel");
-        LoRaReceptionCollision = registerSignal("LoRaReceptionCollision");
         numCollisions = 0;
         rcvBelowSensitivity = 0;
+        LoRaReceptionCollision = registerSignal("LoRaReceptionCollision");
+        belowSensitivityReception = registerSignal("belowSensitivityReception");
     }
+
+    if (stage == INITSTAGE_LAST && iAmGateway)
+        satIndex = getParentModule()->par("satIndex");
 }
 
 void LoRaReceiver::finish()
@@ -70,20 +72,27 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
 
     //auto *test = getParentModule();
     //const LoRaMac *loRaMac = check_and_cast<const LoRaMac *>(test->getParentModule()->par("mac"));
-    if (iAmGateway == false && (loRaListening->getLoRaCF() != loRaReception->getLoRaCF() || loRaListening->getLoRaBW() != loRaReception->getLoRaBW() || loRaListening->getLoRaSF() != loRaReception->getLoRaSF())) {
+    if (iAmGateway == false && (loRaListening->getLoRaCF() != loRaReception->getLoRaCF() || loRaListening->getLoRaBW() != loRaReception->getLoRaBW() || loRaListening->getLoRaSF() != loRaReception->getLoRaSF()))
+    {
         return false;
     }
-    else {
+    else
+    {
         W minReceptionPower = loRaReception->computeMinPower(reception->getStartTime(part), reception->getEndTime(part));
         W sensitivity = getSensitivity(loRaReception);
         double sensitivity_dBm = math::mW2dBmW(double(sensitivity.get()*1000));
         bool isReceptionPossible = minReceptionPower >= sensitivity;
+
         EV << "Receiver sensitivity is " << sensitivity << endl;
         EV << "Received sensitivity is " << sensitivity_dBm << " dBm" << endl;
-        EV << "Computing whether reception is possible: minimum reception power = " << minReceptionPower << ", sensitivity = " << sensitivity << " -> reception is " << (isReceptionPossible ? "possible" : "impossible") << endl;
+        EV << "Computing whether reception is possible: minimum reception power = " << minReceptionPower << ", sensitivity = "
+                << sensitivity << " -> reception is " << (isReceptionPossible ? "possible" : "impossible") << endl;
+
         if(isReceptionPossible == false) {
-           const_cast<LoRaReceiver* >(this)->rcvBelowSensitivity++;
+            const_cast<LoRaReceiver* >(this)->emit(belowSensitivityReception, satIndex);
+            const_cast<LoRaReceiver* >(this)->rcvBelowSensitivity++;
         }
+
         return isReceptionPossible;
     }
 }
@@ -102,13 +111,15 @@ bool LoRaReceiver::computeIsReceptionAttempted(const IListening *listening, cons
         else if (loraMac)
             rec = loraMac->getReceiverAddress();
 
-        if (iAmGateway == false) {
+        if (iAmGateway == false)
+        {
             auto *macLayer = check_and_cast<LoRaMac *>(getParentModule()->getParentModule()->getSubmodule("mac"));
             if (rec == macLayer->getAddress()) {
                 const_cast<LoRaReceiver* >(this)->numCollisions++;
             }
-            //EV << "Node: Extracted macFrame = " << loraMacFrame->getReceiverAddress() << ", node address = " << macLayer->getAddress() << std::endl;
-        } else {
+        }
+        else
+        {
             auto *gwMacLayer = check_and_cast<LoRaGWMac *>(getParentModule()->getParentModule()->getSubmodule("mac"));
             EV << "GW: Extracted macFrame = " << rec << ", node address = " << gwMacLayer->getAddress() << std::endl;
             if (rec == MacAddress::BROADCAST_ADDRESS) {
@@ -116,9 +127,9 @@ bool LoRaReceiver::computeIsReceptionAttempted(const IListening *listening, cons
             }
         }
         return false;
-    } else {
-        return true;
     }
+    else
+        return true;
 }
 
 bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference) const
