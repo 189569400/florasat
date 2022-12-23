@@ -89,6 +89,7 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
                 << sensitivity << " -> reception is " << (isReceptionPossible ? "possible" : "impossible") << endl;
 
         if(isReceptionPossible == false) {
+            std::cout << "below sensitivity at time " << simTime() << endl;
             const_cast<LoRaReceiver* >(this)->emit(belowSensitivityReception, satIndex);
             const_cast<LoRaReceiver* >(this)->rcvBelowSensitivity++;
         }

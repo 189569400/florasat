@@ -83,7 +83,6 @@ void LoRaGWMac::initialize(int stage)
         maxToA = par("maxToA");
         clockThreshold = par("clockThreshold");
         classSslotTime = 2*clockThreshold + maxToA;
-        // with current parameters, 67 slots
         //maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
 
         // lora parameters for beacon
@@ -97,6 +96,7 @@ void LoRaGWMac::initialize(int stage)
         classSslotBeacon.setName("ClassS_Slot_Beacon_Number");
         classSslotReceptionAttempts.setName("ClassS_Reception_Attempts_Per_Slot");
         classSslotReceptionSuccess.setName("ClassS_Successful_Receptions_Per_Slot");
+        classSslotReceptionBelowSensitivity.setName("ClassS_BelowSensitivity_Receptions_Per_Slot");
 
         // schedule beacon when using class B or S
         const char *usedClass = par("classUsed");
@@ -175,7 +175,7 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
     }
 
     if (msg == beaconReservedEnd && isClassS)
-        scheduleAt(simTime() + clockThreshold + maxToA, endTXslot);
+        scheduleAt(simTime() + classSslotTime, endTXslot);
 
     if (msg == endTXslot)
     {
@@ -204,6 +204,7 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
 
         classSslotReceptionAttempts.record(attemptedReceptionsPerSlot);
         classSslotReceptionSuccess.record(successfulReceptionsPerSlot);
+        classSslotReceptionBelowSensitivity.record(belowSensitivityReceptions);
         classSslotBeacon.record(beaconNumber);
         successfulReceptionsPerSlot = 0;
         attemptedReceptionsPerSlot = 0;

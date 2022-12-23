@@ -124,6 +124,9 @@ protected:
     // successful receptions per slot, should be 0 or 1
     cOutVector classSslotReceptionSuccess;
 
+    // reception below sensitivity per slot
+    cOutVector classSslotReceptionBelowSensitivity;
+
     IRadio *radio = nullptr;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
 
