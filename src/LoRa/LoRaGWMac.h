@@ -109,10 +109,13 @@ protected:
     cMessage *endTXslot = nullptr;
 
     // status for each slot during simulation
-    // 0 for no transmissions received (IDLE)
-    // 1 for a successful reception with no collisions
-    // 2 for a successful reception with collisions
-    // 3 for no successful reception with collisions
+    // 0 for no receptions (IDLE)
+    // 1 for a single failed reception (IDLE)
+    // 2 for multiple failed receptions all due to low power (IDLE)
+    // 3 for a single successful reception and no other transmission (SUCCESSFUL)
+    // 4 for a successful reception with the other transmissions with low power (SUCCESSFUL)
+    // 5 no successful reception and 2 or more collisions with enough power (COLLIDED)
+    // 6 for a successful reception and 2 or more collisions with enough power (COLLIDED)
     cOutVector classSslotStatus;
 
     // beacon number of the corresponding slot

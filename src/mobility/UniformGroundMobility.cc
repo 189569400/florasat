@@ -23,7 +23,7 @@ UniformGroundMobility::UniformGroundMobility()
     latitude = 0.0;
     centerLatitude = 0.0;
     centerLongitude = 0.0;
-    radius = 0.0;
+    deploymentRadius = 0.0;
     mapx = 0;
     mapy = 0;
 }
@@ -38,13 +38,51 @@ void UniformGroundMobility::initialize(int stage)
         mapy = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 1));
         centerLatitude = par("centerLatitude");
         centerLongitude = par("centerLongitude");
-        radius = par("radius");
+        deploymentRadius = par("deploymentRadius");
 
-        double r = radius * sqrt(cComponent::uniform(0, 1));
-        double a = cComponent::uniform(0, TWOPI);
+        double r = XKMPER_WGS72;             // earth radius
+        double randomRadius = deploymentRadius * sqrt(cComponent::uniform(0, 1));
+        double randomAngle = cComponent::uniform(0, TWOPI);
 
-        longitude = centerLongitude + r * cos(a);
-        latitude = centerLatitude + r * sin(a);
+
+        // reference center point on Earth
+        cEcef *P = new cEcef(centerLatitude, centerLongitude, r);
+        Coord *Px = new Coord(P->getX(), P->getY(), P->getZ());
+
+        // null island on Earth
+        cEcef *O = new cEcef(0, 0, r);
+        Coord *Ox = new Coord(O->getX(), O->getY(), O->getZ());
+
+        // get cross and dot products
+        Coord cross = *Ox % *Px;
+        double angle = Px->angle(*Ox);
+        cross.normalize();
+
+        // get rotation quaternion
+        Quaternion *q = new Quaternion(cross, angle);
+
+
+        double xi = (randomRadius/r)*cos(randomAngle)/RADS_PER_DEG; // longitude
+        double yi = (randomRadius/r)*sin(randomAngle)/RADS_PER_DEG; // latitude
+
+        cEcef *pointEcef = new cEcef(yi, xi, r);
+        Coord *pointCoord = new Coord(pointEcef->getX(), pointEcef->getY(), pointEcef->getZ());
+
+        Coord rotatedCoord = q->rotate(*pointCoord);
+        cEcef *rotatedEcef = new cEcef(rotatedCoord.getX(), rotatedCoord.getY(), rotatedCoord.getZ(), 0);
+
+        longitude = rotatedEcef->getLongitude();
+        latitude = rotatedEcef->getLatitude();
+
+
+        delete P;
+        delete O;
+        delete Px;
+        delete Ox;
+        delete pointEcef;
+        delete pointCoord;
+        delete rotatedEcef;
+
     }
 }
 
