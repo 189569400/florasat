@@ -59,7 +59,7 @@ LoRaMac::~LoRaMac()
     cancelAndDelete(droppedPacket);
     cancelAndDelete(pingPeriod);
     cancelAndDelete(beaconPeriod);
-    cancelAndDelete(endBeaconReception);
+    cancelAndDelete(beaconReservedEnd);
     cancelAndDelete(beaconGuardStart);
     cancelAndDelete(beaconGuardEnd);
     cancelAndDelete(endPingSlot);
@@ -106,7 +106,6 @@ void LoRaMac::initialize(int stage)
         maxToA = par("maxToA");
         clockThreshold = par("clockThreshold");
         classSslotTime = 2*clockThreshold + maxToA;
-        // with current parameters, 67 slots
         maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
 
         slotSelectionData.setName("ClassSTXSlotSelection");
@@ -144,7 +143,7 @@ void LoRaMac::initialize(int stage)
         beaconGuardStart = new cMessage("Beacon_Guard_Start");
         beaconGuardEnd = new cMessage("Beacon_Guard_End");
         beaconPeriod = new cMessage("Beacon_Period");
-        endBeaconReception = new cMessage("Beacon_Close");
+        beaconReservedEnd = new cMessage("Beacon_Close");
 
         pingPeriod = new cMessage("Ping_Period");
         endPingSlot = new cMessage("Ping_Slot_Close");
@@ -160,7 +159,6 @@ void LoRaMac::initialize(int stage)
         if (strcmp(usedClass,"A"))
         {
             scheduleAt(simTime() + beaconStart, beaconPeriod);
-            scheduleAt(simTime() + beaconStart + beaconReservedTime, endBeaconReception);
             isClassA = false;
 
             if (!strcmp(usedClass,"B"))
@@ -249,9 +247,15 @@ void LoRaMac::configureNetworkInterface()
  */
 void LoRaMac::handleSelfMessage(cMessage *msg)
 {
-    if (msg == endBeaconReception)
+
+    if (msg == beaconPeriod)
     {
+        beaconGuard = false;
         beaconScheduling();
+    }
+
+    if (msg == beaconReservedEnd)
+    {
         if(iGotBeacon)
         {
             numReceivedBeacons++;
@@ -269,15 +273,6 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
     if (msg == beaconGuardStart)
         beaconGuard = true;
 
-    if (msg == beaconGuardEnd)
-        beaconGuard = false;
-
-    if (msg == beginTXslot)
-    {
-        //classSslotCounter++;
-        //scheduleAt(simTime() + classSslotTime, beginTXslot);
-        //slotBeginTimes.record(simTime());
-    }
 
     if (msg == endPingSlot)
     {
@@ -511,7 +506,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
             {
                 FSMA_Enter(turnOnReceiver());
                 FSMA_Event_Transition(BeaconReception-Idle,
-                                      msg == endBeaconReception,
+                                      msg == beaconReservedEnd,
                                       IDLE,
                                       EV << "CLASS B: no beacon detected, increasing beacon time" << endl;
                                       increaseBeaconTime();
@@ -709,7 +704,7 @@ void LoRaMac::handleWithFsm(cMessage *msg)
             {
                 FSMA_Enter(turnOnReceiver());
                 FSMA_Event_Transition(BeaconReception-Idle,
-                                      msg == endBeaconReception,
+                                      msg == beaconReservedEnd,
                                       IDLE,
                                       EV << "CLASS S: no beacon detected, increasing beacon time" << endl;
                                       increaseBeaconTime();
@@ -900,10 +895,9 @@ void LoRaMac::sendAckFrame()
 // schedule beacon signals
 void LoRaMac::beaconScheduling()
 {
-    scheduleAt(simTime() + beaconPeriodTime, endBeaconReception);
-    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime - beaconGuardTime, beaconGuardStart);
-    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconGuardEnd);
-    scheduleAt(simTime() + beaconPeriodTime - beaconReservedTime, beaconPeriod);
+    scheduleAt(simTime() + beaconPeriodTime, beaconPeriod);
+    scheduleAt(simTime() + beaconReservedTime, beaconReservedEnd);
+    scheduleAt(simTime() + beaconPeriodTime - beaconGuardTime, beaconGuardStart);
 }
 
 void LoRaMac::increaseBeaconTime()
@@ -923,9 +917,7 @@ void LoRaMac::scheduleULslots()
 {
     // when beacon is received begin scheduling of uplink slots
     // and randomly determine the slot to be used during this beacon period
-    classSslotCounter = -1;
     targetClassSslot = cComponent::intuniform(0, maxClassSslots-1);
-
     slotSelectionData.record(targetClassSslot);
 
     cancelEvent(beginTXslot);
@@ -1053,7 +1045,7 @@ bool LoRaMac::timeToTrasmit()
     // if not in beacon guard period and
     // if there is a queued message and
     // if it is the corresponding slot
-    if (!beaconGuard && !txQueue->isEmpty()) //&& classSslotCounter == targetClassSslot)
+    if (!beaconGuard && !txQueue->isEmpty())
     {
         popTxQueue();
         return true;

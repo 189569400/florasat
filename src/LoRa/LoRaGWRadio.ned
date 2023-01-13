@@ -57,8 +57,7 @@ module LoRaGWRadio extends FlatRadioBase
         @statistic[bitErrorRate](title="Bit error rate"; source=bitErrorRate(packetSentToUpper); record=histogram);
         @statistic[symbolErrorRate](title="Symbol error rate"; source=symbolErrorRate(packetSentToUpper); record=histogram);
 
-        //antenna.typename = default("ConstantGainAntenna");
-        antenna.typename = default("ParabolicAntenna");
+        antenna.typename = default("ConstantGainAntenna");
         transmitter.typename  = default("LoRaTransmitter");
         receiver.typename = default("LoRaReceiver");
 

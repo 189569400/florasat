@@ -58,7 +58,7 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         
         // lora parameters for beacon
         int beaconSF = default(12);
-        double beaconTP = default(50);
+        double beaconTP = default(25);
         double beaconCF= default(868000000);
         double beaconBW = default(125000);
         int beaconCR = default(1);

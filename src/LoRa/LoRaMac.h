@@ -74,7 +74,6 @@ class LoRaMac : public MacProtocolBase
     simtime_t classSslotTime = -1;
     int targetClassSslot = 1;
     int maxClassSslots = 1;
-    int classSslotCounter = 0;
 
     cOutVector slotSelectionData;
     //cOutVector slotBeginTimes;
@@ -171,7 +170,7 @@ class LoRaMac : public MacProtocolBase
     cMessage *beaconPeriod = nullptr;
 
     /** End of the beacon listening slot */
-    cMessage *endBeaconReception = nullptr;
+    cMessage *beaconReservedEnd = nullptr;
 
     /** Start of the beacon guard period */
     cMessage *beaconGuardStart = nullptr;

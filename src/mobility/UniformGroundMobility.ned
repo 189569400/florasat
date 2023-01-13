@@ -28,7 +28,7 @@ simple UniformGroundMobility extends StationaryMobility
     parameters:
         double centerLatitude = default(-15.0);
         double centerLongitude = default(-56.0);
-        double radius = default(20.0);
+        double deploymentRadius = default(200.0);
         initFromDisplayString = false;
         updateFromDisplayString = false;
         @class(UniformGroundMobility);

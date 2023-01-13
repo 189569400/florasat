@@ -40,10 +40,38 @@ protected:
 
     double latitude, longitude;               // Geographic coordinates
     double centerLatitude, centerLongitude;   // Central reference point
-    double radius;                            // Radius in degrees
+    double deploymentRadius;                  // Radius in degrees
     double mapx, mapy;                        // size of canvas map
 };
 
 } // namespace inet
 
 #endif /* MOBILITY_UNIFORMGROUNDMOBILITY_H_ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

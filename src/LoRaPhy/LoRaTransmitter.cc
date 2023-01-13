@@ -64,18 +64,16 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
     const auto &frame = macFrame->peekAtFront<LoRaPhyPreamble>();
 
     int nPreamble = 8;
-    simtime_t Tsym = (pow(2, frame->getSpreadFactor()))/(frame->getBandwidth().get()/1000);
-    simtime_t Tpreamble = (nPreamble + 4.25) * Tsym / 1000;
+    int payloadBytes = iAmGateway ? 15 : 20;
 
-    //preambleDuration = Tpreamble;
-    int payloadBytes = 0;
-    if(iAmGateway) payloadBytes = 15;
-    else payloadBytes = 20;
     int payloadSymbNb = 8;
-    payloadSymbNb += std::ceil((8*payloadBytes - 4*frame->getSpreadFactor() + 28 + 16 - 20*0)/(4*(frame->getSpreadFactor()-2*0)))*(frame->getCodeRendundance() + 4);
+    payloadSymbNb += std::ceil((8*payloadBytes - 4*frame->getSpreadFactor() + 28 + 16 - 20*0) / (4*(frame->getSpreadFactor()-2*0))) * (frame->getCodeRendundance() + 4);
     if(payloadSymbNb < 8) payloadSymbNb = 8;
-    simtime_t Theader = 0.5 * (8+payloadSymbNb) * Tsym / 1000;
-    simtime_t Tpayload = 0.5 * (8+payloadSymbNb) * Tsym / 1000;
+
+    simtime_t Tsym = pow(2, frame->getSpreadFactor()) / frame->getBandwidth().get();
+    simtime_t Tpreamble = (nPreamble + 4.25) * Tsym;
+    simtime_t Theader = 0.5 * (8+payloadSymbNb) * Tsym;
+    simtime_t Tpayload = 0.5 * (8+payloadSymbNb) * Tsym;
 
     const simtime_t duration = Tpreamble + Theader + Tpayload;
     const simtime_t endTime = startTime + duration;

@@ -50,8 +50,16 @@ void LoRaGWMac::initialize(int stage)
         cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
 
+        // subscribe at LoRaGWNIC module level, which contains this module and radio
+        // module, the latter is where the signal origins within receiver submodule
+        getParentModule()->subscribe("belowSensitivityReception", this);
+
+
+        // subscribe at system module level, all signal received, i.e. all gateways
+        // (precisely, all LoRaGWRadio modules, source of the signal)
         getSimulation()->getSystemModule()->subscribe("LoRaGWRadioReceptionStarted", this);
         getSimulation()->getSystemModule()->subscribe("LoRaGWRadioReceptionFinishedCorrect", this);
+
 
         radio = check_and_cast<IRadio *>(radioModule);
 
@@ -75,7 +83,6 @@ void LoRaGWMac::initialize(int stage)
         maxToA = par("maxToA");
         clockThreshold = par("clockThreshold");
         classSslotTime = 2*clockThreshold + maxToA;
-        // with current parameters, 67 slots
         //maxClassSslots = floor((beaconPeriodTime - beaconGuardTime - beaconReservedTime) / classSslotTime);
 
         // lora parameters for beacon
@@ -89,6 +96,7 @@ void LoRaGWMac::initialize(int stage)
         classSslotBeacon.setName("ClassS_Slot_Beacon_Number");
         classSslotReceptionAttempts.setName("ClassS_Reception_Attempts_Per_Slot");
         classSslotReceptionSuccess.setName("ClassS_Successful_Receptions_Per_Slot");
+        classSslotReceptionBelowSensitivity.setName("ClassS_BelowSensitivity_Receptions_Per_Slot");
 
         // schedule beacon when using class B or S
         const char *usedClass = par("classUsed");
@@ -167,31 +175,40 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
     }
 
     if (msg == beaconReservedEnd && isClassS)
-        scheduleAt(simTime() + clockThreshold + maxToA, endTXslot);
+        scheduleAt(simTime() + classSslotTime, endTXslot);
 
     if (msg == endTXslot)
     {
+        // no successful reception during slot time
         if (successfulReceptionsPerSlot == 0)
         {
-            if (attemptedReceptionsPerSlot == 0)
+            if (attemptedReceptionsPerSlot == 0)                                        // no reception attempts, slot is IDLE
                 classSslotStatus.record(0);
-            else
-                classSslotStatus.record(3);
+            else if (attemptedReceptionsPerSlot == 1 && belowSensitivityReceptions > 0) // single reception with low power, slot is IDLE
+                classSslotStatus.record(1);
+            else if (attemptedReceptionsPerSlot == belowSensitivityReceptions)          // no reception with low power, slot is IDLE
+                classSslotStatus.record(2);
+            else                                                                        // 2 or more collisions, slot is COLLIDED
+                classSslotStatus.record(5);
         }
 
         else if (successfulReceptionsPerSlot == 1)
         {
-            if (attemptedReceptionsPerSlot == 1)
-                classSslotStatus.record(1);
-            else
-                classSslotStatus.record(2);
+            if (attemptedReceptionsPerSlot == 1)                                 // single reception, slot is SUCCESSFUL
+                classSslotStatus.record(3);
+            else if (attemptedReceptionsPerSlot == belowSensitivityReceptions+1) // only 1 reception with power, slot is SUCCESSFUL
+                classSslotStatus.record(4);
+            else                                                                 // 2 or more collisions, slot is COLLIDED
+                classSslotStatus.record(6);
         }
 
         classSslotReceptionAttempts.record(attemptedReceptionsPerSlot);
         classSslotReceptionSuccess.record(successfulReceptionsPerSlot);
+        classSslotReceptionBelowSensitivity.record(belowSensitivityReceptions);
         classSslotBeacon.record(beaconNumber);
         successfulReceptionsPerSlot = 0;
         attemptedReceptionsPerSlot = 0;
+        belowSensitivityReceptions = 0;
 
         scheduleAt(simTime() + classSslotTime, endTXslot);
     }
@@ -322,6 +339,9 @@ void LoRaGWMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t
 
         if (strcmp(signalName, "LoRaGWRadioReceptionFinishedCorrect")==0 && (int)value==satIndex)
             successfulReceptionsPerSlot++;
+
+        if (strcmp(signalName, "belowSensitivityReception")==0 && (int)value==satIndex)
+            belowSensitivityReceptions++;
     }
 }
 

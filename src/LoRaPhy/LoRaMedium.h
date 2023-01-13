@@ -37,11 +37,14 @@ class LoRaMedium : public RadioMedium
     friend class LoRaRadio;
 
 protected:
+    int mapX, mapY;
     virtual bool matchesMacAddressFilter(const IRadio *radio, const Packet *packet) const override;
+    virtual bool isInCommunicationRange(const ITransmission *transmission, const Coord& startPosition, const Coord& endPosition) const override;
         //@}
     public:
       LoRaMedium();
       virtual ~LoRaMedium();
+      virtual void initialize(int stage) override;
       //virtual const IReceptionDecision *getReceptionDecision(const IRadio *receiver, const IListening *listening, const ITransmission *transmission, IRadioSignal::SignalPart part) const override;
       virtual const IReceptionResult *getReceptionResult(const IRadio *receiver, const IListening *listening, const ITransmission *transmission) const override;
 };

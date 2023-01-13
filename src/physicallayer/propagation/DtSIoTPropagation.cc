@@ -129,7 +129,7 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
         {
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
                     loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
-            EV << "HERE" << endl;
+            //EV << "HERE" << endl;
         }
         else if (const GroundStationMobility *receiverGroundMobility = dynamic_cast<const GroundStationMobility*>(mobility))
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,

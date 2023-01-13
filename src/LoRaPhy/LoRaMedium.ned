@@ -28,6 +28,8 @@ module LoRaMedium extends RadioMedium
         //pathLoss.typename = default("LoRaLogNormalShadowing");
         pathLoss.typename = default("FreeSpacePathLoss");
         backgroundNoise.typename = "DimensionalBackgroundNoise";
+        
+        rangeFilter = "communicationRange";
 
         // Reflects the thermal noise for the receiver sensitivity
         // TODO couple with sensitivity
