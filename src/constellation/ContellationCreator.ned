@@ -4,8 +4,8 @@ simple ConstellationCreator
 {
     parameters:
         // satCount gets defined by nrOfGW
-        // int satCount = default(66);
-        int planeCount = default(6);
+        // int satCount;
+        int planeCount;
         double inclination = default(86.4);
         int altitude = default(780);
         int interPlaneSpacing = default(1);
