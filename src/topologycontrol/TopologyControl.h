@@ -10,6 +10,7 @@
 
 #include <string.h>
 #include <omnetpp.h>
+#include "topologycontrol/utilities/WalkerType.h"
 #include "mobility/NoradA.h"
 
 using namespace omnetpp;
@@ -34,7 +35,14 @@ namespace flora
 
     private:
         std::map<int, std::pair<cModule *, NoradA *>> getSatellites();
+        WalkerType parseWalkerType(std::string value);
         void updateIntraSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
+        void updateInterSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
+        void updateISLInWalkerDelta(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
+        void updateISLInWalkerStar(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
+        bool isIslEnabled(double latitude);
+        void updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay);
+        int calculateSatellitePlane(int id, int planeCount, int satsPerPlane);
 
     protected:
         /** @brief The message used for TopologyControl state changes. */
@@ -64,6 +72,9 @@ namespace flora
 
         /** @brief The minimum elevation between a satellite and a groundstation.*/
         double minimumElevation;
+
+        /** @brief The type of the walker constellation.*/
+        WalkerType walkerType;
     };
 
 } // flora

@@ -19,6 +19,8 @@ simple TopologyControl
 {
     parameters:
         double updateInterval @unit(s) = default(0.1s);
+        // must be delta or star
+        string walkerType;
         double upperLatitudeBound = default(70.0);
         double lowerLatitudeBound = default(-70.0);
         bool isClosedConstellation = default(true);

@@ -33,6 +33,7 @@ namespace flora
         }
         EV << "initialize TopologyControl" << endl;
         updateInterval = par("updateInterval");
+        walkerType = parseWalkerType(par("walkerType"));
         isClosedConstellation = par("isClosedConstellation");
         lowerLatitudeBound = par("lowerLatitudeBound");
         upperLatitudeBound = par("upperLatitudeBound");
@@ -51,6 +52,19 @@ namespace flora
         UpdateTopology();
         updateTimer = new cMessage("update");
         scheduleUpdate();
+    }
+
+    WalkerType TopologyControl::parseWalkerType(std::string value)
+    {
+        if (value == "DELTA")
+        {
+            return WalkerType::DELTA;
+        }
+        if (value == "STAR")
+        {
+            return WalkerType::STAR;
+        }
+        error("Error in WalkerType::parseWalkerType: Could not match %s to type", value.c_str());
     }
 
     void TopologyControl::handleMessage(cMessage *msg)
@@ -92,6 +106,7 @@ namespace flora
 
         // update ISL links
         updateIntraSatelliteLinks(satellites, planeCount, satsPerPlane);
+        updateInterSatelliteLinks(satellites, planeCount, satsPerPlane);
     }
 
     std::map<int, std::pair<cModule *, NoradA *>> TopologyControl::getSatellites()
@@ -103,12 +118,12 @@ namespace flora
             cModule *sat = getParentModule()->getSubmodule("loRaGW", i);
             if (sat == nullptr)
             {
-                error("Error in TopologyControl::getSatellites(): loRaGW with index %d is nullptr. Make sure the module exists.", i);
+                error("Error in TopologyControl::getSatellites(): loRaGW with index %zu is nullptr. Make sure the module exists.", i);
             }
             NoradA *noradA = check_and_cast<NoradA *>(sat->getSubmodule("NoradModule"));
             if (noradA == nullptr)
             {
-                error("Error in TopologyControl::getSatellites(): noradA module of loRaGW with index %d is nullptr. Make sure a module with name `NoradModule` exists.", i);
+                error("Error in TopologyControl::getSatellites(): noradA module of loRaGW with index %zu is nullptr. Make sure a module with name `NoradModule` exists.", i);
             }
             satellites.emplace(i, std::make_pair(sat, noradA));
         }
@@ -146,11 +161,11 @@ namespace flora
                 // calculate ISL channel params
                 double distance = curSat.second->getDistance(otherSat.second->getLatitude(), otherSat.second->getLongitude(), otherSat.second->getAltitude());
                 double delay = (islDelay * distance) / 1000000.0;
-                
+
                 // generate or update ISL channel from lower to upper sat
                 if (fromGateOut->isConnectedOutside())
                 {
-                    cDatarateChannel *isl_channel_up = check_and_cast<cDatarateChannel*>(fromGateOut->getChannel());
+                    cDatarateChannel *isl_channel_up = check_and_cast<cDatarateChannel *>(fromGateOut->getChannel());
                     isl_channel_up->setDelay(delay);
                     isl_channel_up->setDatarate(islDatarate);
                 }
@@ -167,7 +182,7 @@ namespace flora
                 // generate or update ISL channel from upper to lower sat
                 if (toGateOut->isConnectedOutside())
                 {
-                    cDatarateChannel *isl_channel_down = check_and_cast<cDatarateChannel*>(toGateOut->getChannel());
+                    cDatarateChannel *isl_channel_down = check_and_cast<cDatarateChannel *>(toGateOut->getChannel());
                     isl_channel_down->setDelay(delay);
                     isl_channel_down->setDatarate(islDatarate);
                 }
@@ -182,6 +197,111 @@ namespace flora
                 }
             }
         }
+    }
+
+    void TopologyControl::updateInterSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    {
+        if (walkerType == WalkerType::DELTA)
+            updateISLInWalkerDelta(satellites, planeCount, satsPerPlane);
+        else
+            updateISLInWalkerStar(satellites, planeCount, satsPerPlane);
+    }
+
+    void TopologyControl::updateISLInWalkerDelta(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    {
+    }
+
+    void TopologyControl::updateISLInWalkerStar(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    {
+        int satCount = satellites.size();
+        for (size_t i = 0; i < satCount; i++)
+        {
+            std::pair<cModule *, NoradA *> curSat = satellites.at(i);
+            int satPlane = calculateSatellitePlane(i, planeCount, satsPerPlane);
+
+            bool isLastPlane = satPlane == planeCount - 1;
+            if (isLastPlane)
+                break;
+            int rightIndex = (i + satsPerPlane) % satCount;
+            std::pair<cModule *, NoradA *> nextPlaneSat = satellites.at(rightIndex);
+
+            // calculate ISL channel params
+            double distance = curSat.second->getDistance(nextPlaneSat.second->getLatitude(), nextPlaneSat.second->getLongitude(), nextPlaneSat.second->getAltitude());
+            double delay = (islDelay * distance) / 1000000.0;
+            if (curSat.second->isAscending())
+            { // sat is moving up
+                cGate *rightGateOut = curSat.first->gateHalf("right", cGate::Type::OUTPUT);
+                cGate *leftGateOut = nextPlaneSat.first->gateHalf("left", cGate::Type::OUTPUT);
+
+                if (nextPlaneSat.second->isAscending() && isIslEnabled(curSat.second->getLatitude()) && isIslEnabled(nextPlaneSat.second->getLatitude()))
+                { // they are allowed to connect
+                    cGate *rightGateIn = curSat.first->gateHalf("right", cGate::Type::INPUT);
+                    cGate *leftGateIn = nextPlaneSat.first->gateHalf("left", cGate::Type::INPUT);
+
+                    // generate or update ISL channel from right to left sat
+                    updateOrCreateChannel(rightGateOut, leftGateIn, delay);
+                    updateOrCreateChannel(leftGateOut, rightGateIn, delay);
+                }
+                else
+                { // they are not allowed to have an connection
+                    rightGateOut->disconnect();
+                    leftGateOut->disconnect();
+                }
+            }
+            else
+            { // sat is moving down
+                cGate *leftGateOut = curSat.first->gateHalf("left", cGate::Type::OUTPUT);
+                cGate *rightGateOut = nextPlaneSat.first->gateHalf("right", cGate::Type::OUTPUT);
+
+                if (!nextPlaneSat.second->isAscending() && isIslEnabled(curSat.second->getLatitude()) && isIslEnabled(nextPlaneSat.second->getLatitude()))
+                { // they are allowed to connect
+                    cGate *leftGateIn = curSat.first->gateHalf("left", cGate::Type::INPUT);
+                    cGate *rightGateIn = nextPlaneSat.first->gateHalf("right", cGate::Type::INPUT);
+
+                    // generate or update ISL channel from right to left sat
+                    updateOrCreateChannel(leftGateOut, rightGateIn, delay);
+                    updateOrCreateChannel(rightGateOut, leftGateIn, delay);
+                }
+                else
+                { // they are not allowed to have an connection
+                    leftGateOut->disconnect();
+                    rightGateOut->disconnect();
+                }
+            }
+        }
+    }
+
+    bool TopologyControl::isIslEnabled(double latitude)
+    {
+        return latitude <= upperLatitudeBound && latitude >= lowerLatitudeBound;
+    }
+
+    void TopologyControl::updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay)
+    {
+        if (outGate->isConnectedOutside())
+        {
+            cDatarateChannel *channel = check_and_cast<cDatarateChannel *>(outGate->getChannel());
+            channel->setDelay(delay);
+            channel->setDatarate(islDatarate);
+        }
+        else
+        {
+            cDatarateChannel *channel = cDatarateChannel::create("IslChannel");
+            channel->setDelay(delay);
+            channel->setDatarate(islDatarate);
+            outGate->connectTo(inGate, channel);
+            channel->callInitialize();
+        }
+    }
+
+    int TopologyControl::calculateSatellitePlane(int id, int planeCount, int satsPerPlane)
+    {
+        int satPlane = (id - (id % satsPerPlane)) / satsPerPlane;
+        if (satPlane > planeCount - 1)
+        {
+            error("Error in TopologyControl::calculateSatellitePlane(): Calculated plane (%d) is bigger than number of planes - 1 (%d).", satPlane, planeCount - 1);
+        }
+        return satPlane;
     }
 
 } // flora
