@@ -1,7 +1,7 @@
 /*
  * WalkerType.h
  *
- * Created on: Jan 24, 2022
+ * Created on: Jan 24, 2023
  *     Author: Robin Ohs
  */
 

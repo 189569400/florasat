@@ -18,7 +18,7 @@ package flora.topologycontrol;
 simple TopologyControl
 {
     parameters:
-        double updateInterval @unit(s) = default(0.1s);
+        double updateInterval @unit(s) = default(10s);
         // must be delta or star
         string walkerType;
         double upperLatitudeBound = default(70.0);
