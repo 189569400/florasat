@@ -99,14 +99,25 @@ namespace flora
         {
             error("Error in ConstellationCreator::CreateSatellite(): sat(%d) is nullptr", index);
         }
-        NoradA *noradModule = check_and_cast<NoradA *>(sat->getSubmodule("NoradModule"));
-        if (noradModule == nullptr)
+        NoradA *oldNoradModule = check_and_cast<NoradA *>(sat->getSubmodule("NoradModule"));
+        if (oldNoradModule == nullptr)
         {
             error("Error in ConstellationCreator::CreateSatellite(): noradModule of sat(%d) is nullptr", index);
+        }
+
+        const char* satName = oldNoradModule->par("satName").stringValue();
+
+        oldNoradModule->deleteModule();
+
+        cModule *noradModule = omnetpp::cModuleType::get("leosatellites.mobility.NoradA")->create("NoradModule", sat);
+        if (noradModule == nullptr)
+        {
+            error("Error in ConstellationCreator::CreateSatellite(): Cannot create \"leosatellites.mobility.NoradA\".");
         }
         noradModule->par("satIndex").setIntValue(index);
         noradModule->par("baseYear").setIntValue(baseYear);
         noradModule->par("baseDay").setDoubleValue(baseDay);
+        noradModule->par("satName").setStringValue(satName);
         noradModule->par("planes").setIntValue(planeCount);
         noradModule->par("satPerPlane").setIntValue(satsPerPlane);
         noradModule->par("epochYear").setIntValue(epochYear);
@@ -116,7 +127,17 @@ namespace flora
         noradModule->par("altitude").setDoubleValue(altitude);
         noradModule->par("raan").setDoubleValue(raan);
         noradModule->par("meanAnomaly").setDoubleValue(meanAnomaly);
-        noradModule->initializeMobility(simTime());
+
+        noradModule->finalizeParameters();
+        noradModule->callInitialize();
+        NoradA *norad = check_and_cast<NoradA *>(noradModule);
+        if (norad == nullptr)
+        {
+            error("Error in ConstellationCreator::CreateSatellite(): Cannot find casted created module NoradModule.");
+        }
+        norad->initializeMobility(simTime());
+ 
+        
     }
 
 } // flora
