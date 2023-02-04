@@ -1,0 +1,40 @@
+/*
+ * RoutingBase.cc
+ *
+ * Created on: Feb 04, 2023
+ *     Author: Robin Ohs
+ */
+
+#include "RoutingBase.h"
+
+namespace flora
+{
+    Define_Module(RoutingBase);
+
+    ISLDirection RoutingBase::RoutePacket(cMessage *msg, cModule *callerSat)
+    {
+        return ISLDirection::DOWN;
+    }
+
+    bool RoutingBase::HasConnection(cModule* satellite, ISLDirection side)
+    {
+        if (satellite == nullptr)
+            error("RoutingBase::HasConnection(): satellite mullptr");
+        switch (side)
+        {
+        case UP:
+            return satellite->gateHalf("up", cGate::Type::OUTPUT)->isConnectedOutside();
+        case DOWN:
+            return satellite->gateHalf("down", cGate::Type::OUTPUT)->isConnectedOutside();
+        case LEFT:
+            return satellite->gateHalf("left", cGate::Type::OUTPUT)->isConnectedOutside();
+        case RIGHT:
+            return satellite->gateHalf("right", cGate::Type::OUTPUT)->isConnectedOutside();
+        case DOWNLINK:
+            return satellite->gateHalf("downlink", cGate::Type::OUTPUT)->isConnectedOutside();
+        default:
+            error("HasConnection is not implemented for this side.");
+        }
+        return false;
+    }
+}
