@@ -65,6 +65,8 @@ namespace flora
             return WalkerType::STAR;
         }
         error("Error in WalkerType::parseWalkerType: Could not match %s to type", value.c_str());
+        // line is never reached, but compiler creates warning without this line.
+        return WalkerType::DELTA;
     }
 
     void TopologyControl::handleMessage(cMessage *msg)
