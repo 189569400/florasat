@@ -8,15 +8,29 @@
 #ifndef TOPOLOGYCONTROL_COMMON_WALKERTYPE_H
 #define TOPOLOGYCONTROL_COMMON_WALKERTYPE_H
 
-#include <string>
+#include <string.h>
+#include <omnetpp.h>
+
+using namespace omnetpp;
 
 namespace flora
 {
-    /** @brief The type of the walker constellation. */
-    enum WalkerType
+
+    namespace WalkerType
     {
-        DELTA,
-        STAR
-    };
-}
+        /** @brief The type of the walker constellation. */
+        enum WalkerType
+        {
+            UNINITIALIZED,
+            DELTA,
+            STAR,
+        };
+
+        WalkerType parseWalkerType(std::string value);
+
+        std::string as_string(WalkerType walkerType);
+    } // walkertype
+
+} // flora
+
 #endif

@@ -11,7 +11,9 @@
 #include <string.h>
 #include <omnetpp.h>
 #include "topologycontrol/utilities/WalkerType.h"
+#include "topologycontrol/utilities/PrintMap.h"
 #include "mobility/NoradA.h"
+#include "mobility/GroundStationMobility.h"
 
 using namespace omnetpp;
 
@@ -35,16 +37,23 @@ namespace flora
 
     private:
         std::map<int, std::pair<cModule *, NoradA *>> getSatellites();
-        WalkerType parseWalkerType(std::string value);
-        void updateIntraSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
-        void updateInterSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
-        void updateISLInWalkerDelta(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
-        void updateISLInWalkerStar(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane);
+        std::map<cModule*, std::vector<int>> getGroundstations();
+        void updateIntraSatelliteLinks();
+        void updateInterSatelliteLinks();
+        void updateGroundstationLinks();
+        void updateISLInWalkerDelta();
+        void updateISLInWalkerStar();
         bool isIslEnabled(double latitude);
         void updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay);
-        int calculateSatellitePlane(int id, int planeCount, int satsPerPlane);
+        int calculateSatellitePlane(int id);
 
     protected:
+        /** @brief Map of satellites and their norad modules. */
+        std::map<int, std::pair<cModule *, NoradA *>> satellites;
+
+        /** @brief Map of groundstations and all satellites in range. */
+        std::map<cModule*, std::vector<int>> groundstationSatellites;
+
         /** @brief The message used for TopologyControl state changes. */
         cMessage *updateTimer;
 
@@ -74,7 +83,13 @@ namespace flora
         double minimumElevation;
 
         /** @brief The type of the walker constellation.*/
-        WalkerType walkerType;
+        WalkerType::WalkerType walkerType;
+
+        /** @brief The plane count of the topology */
+        int planeCount;
+
+        /** @brief The number of satellites per plane. */
+        int satsPerPlane;
     };
 
 } // flora

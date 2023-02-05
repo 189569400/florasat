@@ -16,7 +16,8 @@ namespace flora
                                          updateInterval(0),
                                          islDatarate(0.0),
                                          islDelay(0.0),
-                                         minimumElevation(10.0)
+                                         minimumElevation(10.0),
+                                         walkerType(WalkerType::UNINITIALIZED)
     {
     }
 
@@ -33,7 +34,7 @@ namespace flora
         }
         EV << "initialize TopologyControl" << endl;
         updateInterval = par("updateInterval");
-        walkerType = parseWalkerType(par("walkerType"));
+        walkerType = WalkerType::parseWalkerType(par("walkerType"));
         isClosedConstellation = par("isClosedConstellation");
         lowerLatitudeBound = par("lowerLatitudeBound");
         upperLatitudeBound = par("upperLatitudeBound");
@@ -49,24 +50,12 @@ namespace flora
            << "islDatarate: " << islDatarate << "; "
            << "minimumElevation: " << minimumElevation << endl;
 
+        satellites = getSatellites();
+        groundstationSatellites = getGroundstations();
+
         UpdateTopology();
         updateTimer = new cMessage("update");
         scheduleUpdate();
-    }
-
-    WalkerType TopologyControl::parseWalkerType(std::string value)
-    {
-        if (value == "DELTA")
-        {
-            return WalkerType::DELTA;
-        }
-        if (value == "STAR")
-        {
-            return WalkerType::STAR;
-        }
-        error("Error in WalkerType::parseWalkerType: Could not match %s to type", value.c_str());
-        // line is never reached, but compiler creates warning without this line.
-        return WalkerType::DELTA;
     }
 
     void TopologyControl::handleMessage(cMessage *msg)
@@ -96,24 +85,41 @@ namespace flora
 
     void TopologyControl::UpdateTopology()
     {
-        std::map<int, std::pair<cModule *, NoradA *>> satellites = getSatellites();
         if (satellites.size() == 0)
         {
             error("Error in TopologyControl::UpdateTopology(): No satellites found.");
             return;
         }
         // take first satellite and read number of planes + satellitesPerPlane
-        int planeCount = satellites.at(0).second->getNumberOfPlanes();
-        int satsPerPlane = satellites.at(0).second->getSatellitesPerPlane();
+        planeCount = satellites.at(0).second->getNumberOfPlanes();
+        satsPerPlane = satellites.at(0).second->getSatellitesPerPlane();
 
         // update ISL links
-        updateIntraSatelliteLinks(satellites, planeCount, satsPerPlane);
-        updateInterSatelliteLinks(satellites, planeCount, satsPerPlane);
+        updateIntraSatelliteLinks();
+        updateInterSatelliteLinks();
+        updateGroundstationLinks();
+    }
+
+    std::map<cModule *, std::vector<int>> TopologyControl::getGroundstations()
+    {
+        std::map<cModule *, std::vector<int>> loadedGroundstations;
+        int gsCount = getSystemModule()->getSubmoduleVectorSize("groundStation");
+        for (size_t i = 0; i < gsCount; i++)
+        {
+            cModule *groundstation = getSystemModule()->getSubmodule("groundStation", i);
+            if (groundstation == nullptr)
+            {
+                error("Error in TopologyControl::getGroundstations(): groundStation with index %zu is nullptr. Make sure the module exists.", i);
+            }
+            std::vector<int> emptyvector = {};
+            loadedGroundstations.emplace(groundstation, emptyvector);
+        }
+        return loadedGroundstations;
     }
 
     std::map<int, std::pair<cModule *, NoradA *>> TopologyControl::getSatellites()
     {
-        std::map<int, std::pair<cModule *, NoradA *>> satellites;
+        std::map<int, std::pair<cModule *, NoradA *>> loadedSatellites;
         int satCount = getParentModule()->getSubmoduleVectorSize("loRaGW");
         for (size_t i = 0; i < satCount; i++)
         {
@@ -127,12 +133,12 @@ namespace flora
             {
                 error("Error in TopologyControl::getSatellites(): noradA module of loRaGW with index %zu is nullptr. Make sure a module with name `NoradModule` exists.", i);
             }
-            satellites.emplace(i, std::make_pair(sat, noradA));
+            loadedSatellites.emplace(i, std::make_pair(sat, noradA));
         }
-        return satellites;
+        return loadedSatellites;
     }
 
-    void TopologyControl::updateIntraSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    void TopologyControl::updateIntraSatelliteLinks()
     {
         // iterate over planes
         for (size_t plane = 0; plane < planeCount; plane++)
@@ -201,25 +207,58 @@ namespace flora
         }
     }
 
-    void TopologyControl::updateInterSatelliteLinks(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    void TopologyControl::updateGroundstationLinks()
     {
-        if (walkerType == WalkerType::DELTA)
-            updateISLInWalkerDelta(satellites, planeCount, satsPerPlane);
-        else
-            updateISLInWalkerStar(satellites, planeCount, satsPerPlane);
+        auto iter = groundstationSatellites.begin();
+        while (iter != groundstationSatellites.end())
+        {
+            cModule *groundStation = iter->first;
+            GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundStation->getSubmodule("mobility"));
+
+            if (mobility == nullptr) {
+                error("Error in TopologyControl::updateGroundstationLinks(): mobility module of Groundstation is nullptr. Make sure a module with name `mobility` exists.");
+            }
+
+            std::vector<int> satellitesInRange;
+            for (size_t i = 0; i < satellites.size(); i++)
+            {
+                double elevation = ((INorad *)satellites.at(i).second)->getElevation(mobility->getLUTPositionY(), mobility->getLUTPositionX());
+                if (elevation >= minimumElevation)
+                {
+                    satellitesInRange.push_back(i);
+                }
+            }
+            groundstationSatellites.emplace();
+            ++iter;
+        };
+        utilities::PrintMap(groundstationSatellites);
     }
 
-    void TopologyControl::updateISLInWalkerDelta(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    void TopologyControl::updateInterSatelliteLinks()
+    {
+        switch (walkerType) {
+            case WalkerType::DELTA:
+                updateISLInWalkerDelta();
+                break;
+            case WalkerType::STAR:
+                updateISLInWalkerStar();
+                break;
+            default:
+                error("Error in TopologyControl::updateInterSatelliteLinks(): Unexpected WalkerType '%s'.", WalkerType::as_string(walkerType).c_str());
+        }
+    }
+
+    void TopologyControl::updateISLInWalkerDelta()
     {
     }
 
-    void TopologyControl::updateISLInWalkerStar(std::map<int, std::pair<cModule *, NoradA *>> satellites, int planeCount, int satsPerPlane)
+    void TopologyControl::updateISLInWalkerStar()
     {
         int satCount = satellites.size();
         for (size_t i = 0; i < satCount; i++)
         {
             std::pair<cModule *, NoradA *> curSat = satellites.at(i);
-            int satPlane = calculateSatellitePlane(i, planeCount, satsPerPlane);
+            int satPlane = calculateSatellitePlane(i);
 
             bool isLastPlane = satPlane == planeCount - 1;
             if (isLastPlane)
@@ -296,7 +335,7 @@ namespace flora
         }
     }
 
-    int TopologyControl::calculateSatellitePlane(int id, int planeCount, int satsPerPlane)
+    int TopologyControl::calculateSatellitePlane(int id)
     {
         int satPlane = (id - (id % satsPerPlane)) / satsPerPlane;
         if (satPlane > planeCount - 1)
