@@ -13,7 +13,7 @@ namespace flora
 
     ISLDirection RoutingBase::RoutePacket(cMessage *msg, cModule *callerSat)
     {
-        return ISLDirection::DOWN;
+        return ISLDirection::ISL_DOWN;
     }
 
     bool RoutingBase::HasConnection(cModule* satellite, ISLDirection side)
@@ -22,15 +22,15 @@ namespace flora
             error("RoutingBase::HasConnection(): satellite mullptr");
         switch (side)
         {
-        case UP:
+        case ISL_UP:
             return satellite->gateHalf("up", cGate::Type::OUTPUT)->isConnectedOutside();
-        case DOWN:
+        case ISL_DOWN:
             return satellite->gateHalf("down", cGate::Type::OUTPUT)->isConnectedOutside();
-        case LEFT:
+        case ISL_LEFT:
             return satellite->gateHalf("left", cGate::Type::OUTPUT)->isConnectedOutside();
-        case RIGHT:
+        case ISL_RIGHT:
             return satellite->gateHalf("right", cGate::Type::OUTPUT)->isConnectedOutside();
-        case DOWNLINK:
+        case ISL_DOWNLINK:
             return satellite->gateHalf("downlink", cGate::Type::OUTPUT)->isConnectedOutside();
         default:
             error("HasConnection is not implemented for this side.");

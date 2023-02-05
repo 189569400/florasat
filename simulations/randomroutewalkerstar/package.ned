@@ -48,6 +48,10 @@ network RandomRoute
             @display("p=695.185,549.115;i=satellit_blue");
         }
 
+        routing: RandomRouting {
+            @display("p=128,673.375");
+        }
+
         constellationCreator: ConstellationCreator {
             @display("p=128,473.375");
         }
@@ -97,6 +101,6 @@ network RandomRoute
         internetCloud.pppg++ <--> DatarateChannel2 <--> gwRouter.pppg++;
         gwRouter.ethg++ <--> DatarateChannel2 <--> groundStation[0].ethg;
         // TODO - Remove that static link
-        groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[0].groundLink;
+        // groundStation[0].satelliteLink <--> DatarateChannel2 <--> loRaGW[0].groundLink;
         
 }
