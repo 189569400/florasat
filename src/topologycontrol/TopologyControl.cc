@@ -51,7 +51,7 @@ namespace flora
            << "minimumElevation: " << minimumElevation << endl;
 
         satellites = getSatellites();
-        groundstationSatellites = getGroundstations();
+        groundstationInfos = getGroundstations();
 
         UpdateTopology();
         updateTimer = new cMessage("update");
@@ -100,9 +100,9 @@ namespace flora
         updateGroundstationLinks();
     }
 
-    std::map<cModule *, std::vector<int>> TopologyControl::getGroundstations()
+    std::vector<GroundstationInfo> TopologyControl::getGroundstations()
     {
-        std::map<cModule *, std::vector<int>> loadedGroundstations;
+        std::vector<GroundstationInfo> loadedGroundstations;
         int gsCount = getSystemModule()->getSubmoduleVectorSize("groundStation");
         for (size_t i = 0; i < gsCount; i++)
         {
@@ -111,9 +111,16 @@ namespace flora
             {
                 error("Error in TopologyControl::getGroundstations(): groundStation with index %zu is nullptr. Make sure the module exists.", i);
             }
-            std::vector<int> emptyvector = {};
-            loadedGroundstations.emplace(groundstation, emptyvector);
+            GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundstation->getSubmodule("mobility"));
+            if (mobility == nullptr)
+            {
+                error("Error in TopologyControl::getGroundstations(): mobility module of Groundstation is nullptr. Make sure a module with name `mobility` exists.");
+            }
+            GroundstationInfo created = GroundstationInfo(groundstation, mobility);
+            loadedGroundstations.push_back(created);
+            EV << "Created GroundstationInfo" << created.to_string() << endl;
         }
+        
         return loadedGroundstations;
     }
 
@@ -209,42 +216,34 @@ namespace flora
 
     void TopologyControl::updateGroundstationLinks()
     {
-        auto iter = groundstationSatellites.begin();
-        while (iter != groundstationSatellites.end())
+        for (GroundstationInfo &gsInfo : groundstationInfos)
         {
-            cModule *groundStation = iter->first;
-            GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundStation->getSubmodule("mobility"));
-
-            if (mobility == nullptr) {
-                error("Error in TopologyControl::updateGroundstationLinks(): mobility module of Groundstation is nullptr. Make sure a module with name `mobility` exists.");
-            }
-
-            std::vector<int> satellitesInRange;
+            gsInfo.satellites.clear();
             for (size_t i = 0; i < satellites.size(); i++)
             {
-                double elevation = ((INorad *)satellites.at(i).second)->getElevation(mobility->getLUTPositionY(), mobility->getLUTPositionX());
+                double elevation = ((INorad *)satellites.at(i).second)->getElevation(gsInfo.mobility->getLUTPositionY(), gsInfo.mobility->getLUTPositionX(), 0);
+                // EV << "Check groundstation contact: Sat[" << satellites.at(i).first << "] to " << gsInfo.groundStation << ". Elevation = " << elevation << endl;
                 if (elevation >= minimumElevation)
                 {
-                    satellitesInRange.push_back(i);
+                    gsInfo.satellites.push_back(satellites.at(i).first);
                 }
             }
-            groundstationSatellites.emplace();
-            ++iter;
+            EV << gsInfo.to_string() << endl;
         };
-        utilities::PrintMap(groundstationSatellites);
     }
 
     void TopologyControl::updateInterSatelliteLinks()
     {
-        switch (walkerType) {
-            case WalkerType::DELTA:
-                updateISLInWalkerDelta();
-                break;
-            case WalkerType::STAR:
-                updateISLInWalkerStar();
-                break;
-            default:
-                error("Error in TopologyControl::updateInterSatelliteLinks(): Unexpected WalkerType '%s'.", WalkerType::as_string(walkerType).c_str());
+        switch (walkerType)
+        {
+        case WalkerType::DELTA:
+            updateISLInWalkerDelta();
+            break;
+        case WalkerType::STAR:
+            updateISLInWalkerStar();
+            break;
+        default:
+            error("Error in TopologyControl::updateInterSatelliteLinks(): Unexpected WalkerType '%s'.", WalkerType::as_string(walkerType).c_str());
         }
     }
 

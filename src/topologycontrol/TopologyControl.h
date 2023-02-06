@@ -8,10 +8,12 @@
 #ifndef TOPOLOGYCONTROL_TOPOLOGYCONTROL_H
 #define TOPOLOGYCONTROL_TOPOLOGYCONTROL_H
 
-#include <string.h>
+#include <string>
 #include <omnetpp.h>
+#include <map>
 #include "topologycontrol/utilities/WalkerType.h"
 #include "topologycontrol/utilities/PrintMap.h"
+#include "topologycontrol/GroundstationInfo.h"
 #include "mobility/NoradA.h"
 #include "mobility/GroundStationMobility.h"
 
@@ -37,12 +39,14 @@ namespace flora
 
     private:
         std::map<int, std::pair<cModule *, NoradA *>> getSatellites();
-        std::map<cModule*, std::vector<int>> getGroundstations();
+        std::vector<GroundstationInfo> getGroundstations();
+        
         void updateIntraSatelliteLinks();
         void updateInterSatelliteLinks();
         void updateGroundstationLinks();
         void updateISLInWalkerDelta();
         void updateISLInWalkerStar();
+
         bool isIslEnabled(double latitude);
         void updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay);
         int calculateSatellitePlane(int id);
@@ -51,8 +55,8 @@ namespace flora
         /** @brief Map of satellites and their norad modules. */
         std::map<int, std::pair<cModule *, NoradA *>> satellites;
 
-        /** @brief Map of groundstations and all satellites in range. */
-        std::map<cModule*, std::vector<int>> groundstationSatellites;
+        /** @brief Structs that represent groundstations and all satellites in range. */
+        std::vector<GroundstationInfo> groundstationInfos;
 
         /** @brief The message used for TopologyControl state changes. */
         cMessage *updateTimer;
