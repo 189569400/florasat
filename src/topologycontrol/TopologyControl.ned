@@ -18,13 +18,19 @@ package flora.topologycontrol;
 simple TopologyControl
 {
     parameters:
-        double updateInterval @unit(s) = default(10s);
+        double updateInterval @unit(s) = default(1s);
         // must be delta or star
         string walkerType;
         double upperLatitudeBound = default(70.0);
         double lowerLatitudeBound = default(-70.0);
         bool isClosedConstellation = default(true);
-        double islDelay = default(0.002);
-        double islDatarate = default(1000);
-        double minimumElevation = default(10.0);
+        // speed of light (s/km)
+        double islDelay = default(0.0000033356);
+        // 2.5 GBit/s
+        double islDatarate = default(2500000000);
+        // speed of light (s/km)
+        double groundlinkDelay = default(0.0000033356);
+        // 10 MBit/s
+        double groundlinkDatarate = default(10000000);
+        double minimumElevation = default(-20.0);
 }
