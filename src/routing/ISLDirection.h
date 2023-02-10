@@ -13,7 +13,14 @@
 namespace flora
 {
 
-enum ISLDirection {ISL_LEFT, ISL_UP, ISL_RIGHT, ISL_DOWN, ISL_DOWNLINK};
+    enum ISLDirection
+    {
+        ISL_LEFT,
+        ISL_UP,
+        ISL_RIGHT,
+        ISL_DOWN,
+        ISL_DOWNLINK
+    };
 
 } // flora
 
