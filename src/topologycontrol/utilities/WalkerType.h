@@ -15,22 +15,23 @@ using namespace omnetpp;
 
 namespace flora
 {
-
-    namespace WalkerType
+    namespace topologycontrol
     {
-        /** @brief The type of the walker constellation. */
-        enum WalkerType
+        namespace WalkerType
         {
-            UNINITIALIZED,
-            DELTA,
-            STAR,
-        };
+            /** @brief The type of the walker constellation. */
+            enum WalkerType
+            {
+                UNINITIALIZED,
+                DELTA,
+                STAR,
+            };
 
-        WalkerType parseWalkerType(std::string value);
+            WalkerType parseWalkerType(std::string value);
 
-        std::string as_string(WalkerType walkerType);
-    } // walkertype
-
+            std::string as_string(WalkerType walkerType);
+        } // walkertype
+    }     // topologycontrol
 } // flora
 
 #endif

@@ -9,34 +9,35 @@
 
 namespace flora
 {
-
-    namespace WalkerType
+    namespace topologycontrol
     {
-        WalkerType parseWalkerType(std::string value)
+        namespace WalkerType
         {
-            if (value == "DELTA")
+            WalkerType parseWalkerType(std::string value)
             {
-                return WalkerType::DELTA;
+                if (value == "DELTA")
+                {
+                    return WalkerType::DELTA;
+                }
+                else if (value == "STAR")
+                {
+                    return WalkerType::STAR;
+                }
+                throw cRuntimeError("Error in WalkerType.parseWalkerType(): Could not find provided WalkerType.");
             }
-            else if (value == "STAR")
-            {
-                return WalkerType::STAR;
-            }
-            throw cRuntimeError("Error in WalkerType.parseWalkerType(): Could not find provided WalkerType.");
-        }
 
-        std::string as_string(WalkerType walkerType)
-        {
-            switch (walkerType)
+            std::string as_string(WalkerType walkerType)
             {
-            case DELTA:
-                return "DELTA";
-            case STAR:
-                return "STAR";
-            default:
-                throw cRuntimeError("Error in WalkerType.parseWalkerType(): Could not find provided WalkerType or is uninitialized.");
+                switch (walkerType)
+                {
+                case DELTA:
+                    return "DELTA";
+                case STAR:
+                    return "STAR";
+                default:
+                    throw cRuntimeError("Error in WalkerType.parseWalkerType(): Could not find provided WalkerType or is uninitialized.");
+                }
             }
-        }
-
-    } // WalkerType
+        } // WalkerType
+    }     // topologycontrol
 } // flora

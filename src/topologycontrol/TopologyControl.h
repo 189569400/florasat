@@ -14,7 +14,8 @@
 #include "topologycontrol/utilities/WalkerType.h"
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
-#include "topologycontrol/GroundstationInfo.h"
+#include "topologycontrol/data/GroundstationInfo.h"
+#include "topologycontrol/data/SatelliteInfo.h"
 #include "mobility/NoradA.h"
 #include "mobility/GroundStationMobility.h"
 
@@ -22,92 +23,105 @@ using namespace omnetpp;
 
 namespace flora
 {
-    class TopologyControl : public cSimpleModule
+    namespace topologycontrol
     {
-    public:
-        TopologyControl();
-        void UpdateTopology();
-        GroundstationInfo *loadGroundstationInfo(int gsId);
-        int calculateSatellitePlane(int id);
+        const std::string ISL_CHANNEL_NAME = "IslChannel";
+        const std::string ISL_UP_NAME = "up";
+        const std::string ISL_DOWN_NAME = "down";
+        const std::string ISL_LEFT_NAME = "left";
+        const std::string ISL_RIGHT_NAME = "right";
+        const std::string SAT_GROUNDLINK_NAME = "groundLink";
+        const std::string GS_SATLINK_NAME = "satelliteLink";
 
-    protected:
-        virtual ~TopologyControl();
-        virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return 2; }
-        virtual void handleMessage(cMessage *msg) override;
-        void handleSelfMessage(cMessage *msg);
-        /** @brief Schedules the update timer that will update the topology state.*/
-        void scheduleUpdate();
+        class TopologyControl : public cSimpleModule
+        {
+        public:
+            TopologyControl();
+            void UpdateTopology();
+            GroundstationInfo *getGroundstationInfo(int gsId);
+            int calculateSatellitePlane(int id);
 
-    private:
-        std::map<int, std::pair<cModule *, NoradA *>> getSatellites();
-        std::vector<GroundstationInfo> getGroundstations();
-        void updateIntraSatelliteLinks();
-        void updateInterSatelliteLinks();
-        void updateGroundstationLinks();
-        void updateISLInWalkerDelta();
-        void updateISLInWalkerStar();
-        void trackTopologyChange();
-        bool isIslEnabled(double latitude);
-        /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
-        ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
-        /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/
-        ChannelState deleteChannel(cGate *outGate);
+        protected:
+            virtual ~TopologyControl();
+            virtual void initialize(int stage) override;
+            virtual int numInitStages() const override { return 2; }
+            virtual void handleMessage(cMessage *msg) override;
+            void handleSelfMessage(cMessage *msg);
+            /** @brief Schedules the update timer that will update the topology state.*/
+            void scheduleUpdate();
 
-    protected:
-        /** @brief Map of satellites and their norad modules. */
-        std::map<int, std::pair<cModule *, NoradA *>> satellites;
+        private:
+            void loadSatellites();
+            void loadGroundstations();
+            void updateIntraSatelliteLinks();
+            void updateInterSatelliteLinks();
+            void updateGroundstationLinks();
+            void updateISLInWalkerDelta();
+            void updateISLInWalkerStar();
+            void trackTopologyChange();
+            bool isIslEnabled(double latitude);
+            /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
+            ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
+            /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/
+            ChannelState deleteChannel(cGate *outGate);
 
-        /** @brief Structs that represent groundstations and all satellites in range. */
-        std::vector<GroundstationInfo> groundstationInfos;
+        protected:
+            /** @brief Map of satellites and their norad modules. */
+            // std::map<int, std::pair<cModule *, NoradA *>> satellites;
+            std::map<int, SatelliteInfo> satelliteInfos;
+            int satelliteCount;
 
-        /** @brief The message used for TopologyControl state changes. */
-        cMessage *updateTimer;
+            /** @brief Structs that represent groundstations and all satellites in range. */
+            std::map<int, GroundstationInfo> groundstationInfos;
+            int groundstationCount;
 
-        /** @brief The upper latitude to shut down inter-plane ISL. (Noth-Pole) */
-        double upperLatitudeBound;
+            /** @brief The message used for TopologyControl state changes. */
+            cMessage *updateTimer;
 
-        /** @brief The lower latitude to shut down inter-plane ISL. (South-Pole) */
-        double lowerLatitudeBound;
+            /** @brief The upper latitude to shut down inter-plane ISL. (Noth-Pole) */
+            double upperLatitudeBound;
 
-        /**
-         * @brief The simulation time interval used to regularly signal mobility state changes.
-         *
-         * The 0 value turns off the signal.
-         */
-        simtime_t updateInterval;
+            /** @brief The lower latitude to shut down inter-plane ISL. (South-Pole) */
+            double lowerLatitudeBound;
 
-        /** @brief Are satellites distributed over entire plane (Connect last and first satellite in plane). */
-        bool isClosedConstellation;
+            /**
+             * @brief The simulation time interval used to regularly signal mobility state changes.
+             *
+             * The 0 value turns off the signal.
+             */
+            simtime_t updateInterval;
 
-        /** @brief Delay of the isl channel, in microseconds/km. */
-        double islDelay;
+            /** @brief Are satellites distributed over entire plane (Connect last and first satellite in plane). */
+            bool isClosedConstellation;
 
-        /** @brief Datarate of the isl channel, in bit/second. */
-        double islDatarate;
+            /** @brief Delay of the isl channel, in microseconds/km. */
+            double islDelay;
 
-        /** @brief Delay of the groundlink channel, in microseconds/km. */
-        double groundlinkDelay;
+            /** @brief Datarate of the isl channel, in bit/second. */
+            double islDatarate;
 
-        /** @brief Datarate of the groundlink channel, in bit/second. */
-        double groundlinkDatarate;
+            /** @brief Delay of the groundlink channel, in microseconds/km. */
+            double groundlinkDelay;
 
-        /** @brief The minimum elevation between a satellite and a groundstation.*/
-        double minimumElevation;
+            /** @brief Datarate of the groundlink channel, in bit/second. */
+            double groundlinkDatarate;
 
-        /** @brief The type of the walker constellation.*/
-        WalkerType::WalkerType walkerType;
+            /** @brief The minimum elevation between a satellite and a groundstation.*/
+            double minimumElevation;
 
-        /** @brief The plane count of the topology */
-        int planeCount;
+            /** @brief The type of the walker constellation.*/
+            WalkerType::WalkerType walkerType;
 
-        /** @brief The number of satellites per plane. */
-        int satsPerPlane;
+            /** @brief The plane count of the topology */
+            int planeCount;
 
-        /** @brief Used to indicate if there was a change to the topology. */
-        bool topologyChanged = false;
-    };
+            /** @brief The number of satellites per plane. */
+            int satsPerPlane;
 
+            /** @brief Used to indicate if there was a change to the topology. */
+            bool topologyChanged = false;
+        };
+    } // topologycontrol
 } // flora
 
 #endif // TOPOLOGYCONTROL_TOPOLOGYCONTROL_H

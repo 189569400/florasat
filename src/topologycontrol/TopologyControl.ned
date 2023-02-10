@@ -18,6 +18,7 @@ package flora.topologycontrol;
 simple TopologyControl
 {
     parameters:
+        @class(topologycontrol::TopologyControl);
         double updateInterval @unit(s) = default(1s);
         // must be delta or star
         string walkerType;
@@ -32,5 +33,5 @@ simple TopologyControl
         double groundlinkDelay = default(0.0000033356);
         // 10 MBit/s
         double groundlinkDatarate = default(10000000);
-        double minimumElevation = default(-20.0);
+        double minimumElevation = default(10.0);
 }

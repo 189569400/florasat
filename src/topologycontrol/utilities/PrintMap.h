@@ -12,7 +12,7 @@
 
 namespace flora
 {
-    namespace utilities
+    namespace topologycontrol
     {
         /** @brief Prints a map where the second argument has a toString method. */
         template <typename Z, typename T>
@@ -30,7 +30,7 @@ namespace flora
             }
             EV << endl;
         };
-    } // utilities
+    } // topologycontrol
 
 } // flora
 

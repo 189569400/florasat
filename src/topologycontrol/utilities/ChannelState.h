@@ -15,14 +15,17 @@ using namespace omnetpp;
 
 namespace flora
 {
-    /** @brief Used to indicate if there was a state change to a channel. UPDATED is equal to UNCHANGED. */
-    enum ChannelState
+    namespace topologycontrol
     {
-        CREATED,
-        DELETED,
-        UPDATED,
-        UNCHANGED,
-    };
+        /** @brief Used to indicate if there was a state change to a channel. UPDATED is equal to UNCHANGED. */
+        enum ChannelState
+        {
+            CREATED,
+            DELETED,
+            UPDATED,
+            UNCHANGED,
+        };
+    } // topologycontrol
 } // flora
 
 #endif
