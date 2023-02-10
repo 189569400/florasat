@@ -18,11 +18,12 @@ namespace flora
 {
     struct GroundstationInfo
     {
+        int groundStationId;
         cModule *groundStation;
         GroundStationMobility *mobility;
-        std::vector<cModule *> satellites;
+        cModule* satellite;
 
-        GroundstationInfo(cModule *gs, GroundStationMobility* gsMobility) : groundStation(gs), mobility(gsMobility), satellites(){};
+        GroundstationInfo(int gsId, cModule *gs, GroundStationMobility* gsMobility) : groundStationId(gsId), groundStation(gs), mobility(gsMobility), satellite(nullptr){};
 
         std::string to_string();
     };

@@ -13,10 +13,7 @@ namespace flora
     {
         std::stringstream ss;
         ss << groundStation << ": {";
-        for (auto itr : satellites)
-        {
-            ss << itr << ", ";
-        }
+        ss << satellite;
         ss << "}";
         return ss.str();
     }

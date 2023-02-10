@@ -12,6 +12,7 @@
 #include <omnetpp.h>
 #include <map>
 #include "topologycontrol/utilities/WalkerType.h"
+#include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
 #include "topologycontrol/GroundstationInfo.h"
 #include "mobility/NoradA.h"
@@ -21,12 +22,13 @@ using namespace omnetpp;
 
 namespace flora
 {
-
     class TopologyControl : public cSimpleModule
     {
     public:
         TopologyControl();
         void UpdateTopology();
+        GroundstationInfo *loadGroundstationInfo(int gsId);
+        int calculateSatellitePlane(int id);
 
     protected:
         virtual ~TopologyControl();
@@ -40,16 +42,17 @@ namespace flora
     private:
         std::map<int, std::pair<cModule *, NoradA *>> getSatellites();
         std::vector<GroundstationInfo> getGroundstations();
-        
         void updateIntraSatelliteLinks();
         void updateInterSatelliteLinks();
         void updateGroundstationLinks();
         void updateISLInWalkerDelta();
         void updateISLInWalkerStar();
-
+        void trackTopologyChange();
         bool isIslEnabled(double latitude);
-        void updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay);
-        int calculateSatellitePlane(int id);
+        /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
+        ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
+        /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/
+        ChannelState deleteChannel(cGate *outGate);
 
     protected:
         /** @brief Map of satellites and their norad modules. */
@@ -83,6 +86,12 @@ namespace flora
         /** @brief Datarate of the isl channel, in bit/second. */
         double islDatarate;
 
+        /** @brief Delay of the groundlink channel, in microseconds/km. */
+        double groundlinkDelay;
+
+        /** @brief Datarate of the groundlink channel, in bit/second. */
+        double groundlinkDatarate;
+
         /** @brief The minimum elevation between a satellite and a groundstation.*/
         double minimumElevation;
 
@@ -94,6 +103,9 @@ namespace flora
 
         /** @brief The number of satellites per plane. */
         int satsPerPlane;
+
+        /** @brief Used to indicate if there was a change to the topology. */
+        bool topologyChanged = false;
     };
 
 } // flora

@@ -30,27 +30,32 @@ namespace flora
     {
         if (stage == 0)
         {
+            updateInterval = par("updateInterval");
+            walkerType = WalkerType::parseWalkerType(par("walkerType"));
+            isClosedConstellation = par("isClosedConstellation");
+            lowerLatitudeBound = par("lowerLatitudeBound");
+            upperLatitudeBound = par("upperLatitudeBound");
+            islDelay = par("islDelay");
+            islDatarate = par("islDatarate");
+            groundlinkDelay = par("groundlinkDelay");
+            groundlinkDatarate = par("groundlinkDatarate");
+            minimumElevation = par("minimumElevation");
+            EV << "Load parameters: "
+               << "updateInterval: " << updateInterval << "; "
+               << "isClosedConstellation: " << isClosedConstellation << "; "
+               << "lowerLatitudeBound: " << lowerLatitudeBound << "; "
+               << "upperLatitudeBound: " << upperLatitudeBound << "; "
+               << "islDelay: " << islDelay << "; "
+               << "islDatarate: " << islDatarate << "; "
+               << "minimumElevation: " << minimumElevation << endl;
             return;
         }
         EV << "initialize TopologyControl" << endl;
-        updateInterval = par("updateInterval");
-        walkerType = WalkerType::parseWalkerType(par("walkerType"));
-        isClosedConstellation = par("isClosedConstellation");
-        lowerLatitudeBound = par("lowerLatitudeBound");
-        upperLatitudeBound = par("upperLatitudeBound");
-        islDelay = par("islDelay");
-        islDatarate = par("islDatarate");
-        minimumElevation = par("minimumElevation");
-        EV << "Load parameters: "
-           << "updateInterval: " << updateInterval << "; "
-           << "isClosedConstellation: " << isClosedConstellation << "; "
-           << "lowerLatitudeBound: " << lowerLatitudeBound << "; "
-           << "upperLatitudeBound: " << upperLatitudeBound << "; "
-           << "islDelay: " << islDelay << "; "
-           << "islDatarate: " << islDatarate << "; "
-           << "minimumElevation: " << minimumElevation << endl;
-
         satellites = getSatellites();
+        // take first satellite and read number of planes + satellitesPerPlane
+        planeCount = satellites.at(0).second->getNumberOfPlanes();
+        satsPerPlane = satellites.at(0).second->getSatellitesPerPlane();
+
         groundstationInfos = getGroundstations();
 
         UpdateTopology();
@@ -90,14 +95,27 @@ namespace flora
             error("Error in TopologyControl::UpdateTopology(): No satellites found.");
             return;
         }
-        // take first satellite and read number of planes + satellitesPerPlane
-        planeCount = satellites.at(0).second->getNumberOfPlanes();
-        satsPerPlane = satellites.at(0).second->getSatellitesPerPlane();
-
-        // update ISL links
+        // update ISL links and groundlinks
+        topologyChanged = false;
         updateIntraSatelliteLinks();
         updateInterSatelliteLinks();
         updateGroundstationLinks();
+
+        // if there was any change to the topology, track current contacts
+        if (topologyChanged)
+            trackTopologyChange();
+    }
+
+    GroundstationInfo *TopologyControl::loadGroundstationInfo(int gsId)
+    {
+        for (GroundstationInfo &gsInfo : groundstationInfos)
+        {
+            if (gsInfo.groundStationId == gsId)
+            {
+                return &gsInfo;
+            }
+        }
+        return nullptr;
     }
 
     std::vector<GroundstationInfo> TopologyControl::getGroundstations()
@@ -116,11 +134,11 @@ namespace flora
             {
                 error("Error in TopologyControl::getGroundstations(): mobility module of Groundstation is nullptr. Make sure a module with name `mobility` exists.");
             }
-            GroundstationInfo created = GroundstationInfo(groundstation, mobility);
+            GroundstationInfo created = GroundstationInfo(groundstation->par("groundStationId"), groundstation, mobility);
             loadedGroundstations.push_back(created);
             EV << "Created GroundstationInfo" << created.to_string() << endl;
         }
-        
+
         return loadedGroundstations;
     }
 
@@ -175,61 +193,89 @@ namespace flora
 
                 // calculate ISL channel params
                 double distance = curSat.second->getDistance(otherSat.second->getLatitude(), otherSat.second->getLongitude(), otherSat.second->getAltitude());
-                double delay = (islDelay * distance) / 1000000.0;
+                double delay = islDelay * distance;
 
                 // generate or update ISL channel from lower to upper sat
-                if (fromGateOut->isConnectedOutside())
-                {
-                    cDatarateChannel *isl_channel_up = check_and_cast<cDatarateChannel *>(fromGateOut->getChannel());
-                    isl_channel_up->setDelay(delay);
-                    isl_channel_up->setDatarate(islDatarate);
-                }
-                else
-                {
-                    EV << "Connect " << index << " to " << (isLastSatInPlane ? plane * satsPerPlane : index + 1) << "; distance: " << distance << "; delay: " << delay << ";" << endl;
-                    cDatarateChannel *isl_channel_up = cDatarateChannel::create("IslChannel");
-                    isl_channel_up->setDelay(delay);
-                    isl_channel_up->setDatarate(islDatarate);
-                    fromGateOut->connectTo(toGateIn, isl_channel_up);
-                    isl_channel_up->callInitialize();
-                }
-
-                // generate or update ISL channel from upper to lower sat
-                if (toGateOut->isConnectedOutside())
-                {
-                    cDatarateChannel *isl_channel_down = check_and_cast<cDatarateChannel *>(toGateOut->getChannel());
-                    isl_channel_down->setDelay(delay);
-                    isl_channel_down->setDatarate(islDatarate);
-                }
-                else
-                {
-                    EV << "Connect " << index << " to " << (isLastSatInPlane ? plane * satsPerPlane : index + 1) << "; distance: " << distance << "; delay: " << delay << ";" << endl;
-                    cDatarateChannel *isl_channel_down = cDatarateChannel::create("IslChannel");
-                    isl_channel_down->setDelay(delay);
-                    isl_channel_down->setDatarate(islDatarate);
-                    toGateOut->connectTo(fromGateIn, isl_channel_down);
-                    isl_channel_down->callInitialize();
-                }
+                updateOrCreateChannel(fromGateOut, toGateIn, delay, islDatarate);
+                updateOrCreateChannel(toGateOut, fromGateIn, delay, islDatarate);
             }
         }
     }
 
     void TopologyControl::updateGroundstationLinks()
     {
+        // Connect nearest satellite
         for (GroundstationInfo &gsInfo : groundstationInfos)
         {
-            gsInfo.satellites.clear();
+            // find nearest satellite with elevation >= minElevation
+            cModule *nearestSatellite = nullptr;
+            INorad *nearestSatelliteNorad = nullptr;
+            double currentElevation = -99999;
             for (size_t i = 0; i < satellites.size(); i++)
             {
                 double elevation = ((INorad *)satellites.at(i).second)->getElevation(gsInfo.mobility->getLUTPositionY(), gsInfo.mobility->getLUTPositionX(), 0);
-                // EV << "Check groundstation contact: Sat[" << satellites.at(i).first << "] to " << gsInfo.groundStation << ". Elevation = " << elevation << endl;
-                if (elevation >= minimumElevation)
+                if ((nearestSatellite == nullptr || elevation > currentElevation) && elevation >= minimumElevation)
                 {
-                    gsInfo.satellites.push_back(satellites.at(i).first);
+                    nearestSatellite = satellites.at(i).first;
+                    nearestSatelliteNorad = satellites.at(i).second;
+                    currentElevation = elevation;
                 }
             }
-            EV << gsInfo.to_string() << endl;
-        };
+
+            // no nearest satellite and has old connection
+            if (nearestSatellite == nullptr && gsInfo.satellite != nullptr)
+            {
+                cGate *uplink = gsInfo.groundStation->gateHalf("satelliteLink", cGate::Type::OUTPUT);
+                cGate *downlink = gsInfo.satellite->gateHalf("groundLink", cGate::Type::OUTPUT);
+                deleteChannel(uplink);
+                deleteChannel(downlink);
+                gsInfo.satellite = nullptr;
+                EV << "Groundstation disconnect: " << gsInfo.to_string() << endl;
+                topologyChanged = true;
+                continue;
+            }
+
+            // get the gates
+            cGate *uplinkO = gsInfo.groundStation->gateHalf("satelliteLink", cGate::Type::OUTPUT);
+            cGate *uplinkI = gsInfo.groundStation->gateHalf("satelliteLink", cGate::Type::INPUT);
+            cGate *downlinkO = nearestSatellite->gateHalf("groundLink", cGate::Type::OUTPUT);
+            cGate *downlinkI = nearestSatellite->gateHalf("groundLink", cGate::Type::INPUT);
+
+            // distance between nearest satellite and groundstation (km)
+            double distance = nearestSatelliteNorad->getDistance(gsInfo.mobility->getLUTPositionY(), gsInfo.mobility->getLUTPositionX(), 0);
+            // delay of the channel between nearest satellite and groundstation (ms)
+            double delay = distance * groundlinkDelay;
+
+            // has nearest satellite and is the old one
+            if (gsInfo.satellite == nearestSatellite)
+            {
+                // update the channel
+                updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
+                updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
+                EV << "Groundstation update: " << gsInfo.to_string() << endl;
+            }
+            // has nearest satellite and is not the old one
+            else
+            {
+                // remove connection between old nearest satellite and groundstation
+                if (gsInfo.satellite != nullptr)
+                {
+                    cGate *oldUplinkO = gsInfo.satellite->gateHalf("groundLink", cGate::Type::OUTPUT);
+                    oldUplinkO->disconnect();
+                }
+                deleteChannel(uplinkO);
+                deleteChannel(downlinkO);
+
+                // connect new
+                updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
+                updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
+                gsInfo.satellite = nearestSatellite;
+                EV << "Groundstation connect [Distance: " << distance << "; Delay: " << delay << "]: " << gsInfo.to_string() << endl;
+                topologyChanged = true;
+            }
+        }
+
+        // TODO: Support N satellites to M groundstations connections
     }
 
     void TopologyControl::updateInterSatelliteLinks()
@@ -267,7 +313,8 @@ namespace flora
 
             // calculate ISL channel params
             double distance = curSat.second->getDistance(nextPlaneSat.second->getLatitude(), nextPlaneSat.second->getLongitude(), nextPlaneSat.second->getAltitude());
-            double delay = (islDelay * distance) / 1000000.0;
+            double delay = islDelay * distance;
+
             if (curSat.second->isAscending())
             { // sat is moving up
                 cGate *rightGateOut = curSat.first->gateHalf("right", cGate::Type::OUTPUT);
@@ -279,13 +326,25 @@ namespace flora
                     cGate *leftGateIn = nextPlaneSat.first->gateHalf("left", cGate::Type::INPUT);
 
                     // generate or update ISL channel from right to left sat
-                    updateOrCreateChannel(rightGateOut, leftGateIn, delay);
-                    updateOrCreateChannel(leftGateOut, rightGateIn, delay);
+                    ChannelState state1 = updateOrCreateChannel(rightGateOut, leftGateIn, delay, islDatarate);
+                    ChannelState state2 = updateOrCreateChannel(leftGateOut, rightGateIn, delay, islDatarate);
+
+                    // if any channel was created, we have a topologyupdate
+                    if (state1 == ChannelState::CREATED || state2 == ChannelState::CREATED)
+                    {
+                        topologyChanged = true;
+                    }
                 }
                 else
                 { // they are not allowed to have an connection
-                    rightGateOut->disconnect();
-                    leftGateOut->disconnect();
+                    ChannelState state1 = deleteChannel(rightGateOut);
+                    ChannelState state2 = deleteChannel(leftGateOut);
+
+                    // if any channel was deleted, we have a topologyupdate
+                    if (state1 == ChannelState::DELETED || state2 == ChannelState::DELETED)
+                    {
+                        topologyChanged = true;
+                    }
                 }
             }
             else
@@ -299,13 +358,25 @@ namespace flora
                     cGate *rightGateIn = nextPlaneSat.first->gateHalf("right", cGate::Type::INPUT);
 
                     // generate or update ISL channel from right to left sat
-                    updateOrCreateChannel(leftGateOut, rightGateIn, delay);
-                    updateOrCreateChannel(rightGateOut, leftGateIn, delay);
+                    ChannelState state1 = updateOrCreateChannel(leftGateOut, rightGateIn, delay, islDatarate);
+                    ChannelState state2 = updateOrCreateChannel(rightGateOut, leftGateIn, delay, islDatarate);
+
+                    // if any channel was created, we have a topologyupdate
+                    if (state1 == ChannelState::CREATED || state2 == ChannelState::CREATED)
+                    {
+                        topologyChanged = true;
+                    }
                 }
                 else
                 { // they are not allowed to have an connection
-                    leftGateOut->disconnect();
-                    rightGateOut->disconnect();
+                    ChannelState state1 = deleteChannel(leftGateOut);
+                    ChannelState state2 = deleteChannel(rightGateOut);
+
+                    // if any channel was deleted, we have a topologyupdate
+                    if (state1 == ChannelState::DELETED || state2 == ChannelState::DELETED)
+                    {
+                        topologyChanged = true;
+                    }
                 }
             }
         }
@@ -316,22 +387,34 @@ namespace flora
         return latitude <= upperLatitudeBound && latitude >= lowerLatitudeBound;
     }
 
-    void TopologyControl::updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay)
+    ChannelState TopologyControl::updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate)
     {
         if (outGate->isConnectedOutside())
         {
             cDatarateChannel *channel = check_and_cast<cDatarateChannel *>(outGate->getChannel());
             channel->setDelay(delay);
-            channel->setDatarate(islDatarate);
+            channel->setDatarate(datarate);
+            return ChannelState::UPDATED;
         }
         else
         {
             cDatarateChannel *channel = cDatarateChannel::create("IslChannel");
             channel->setDelay(delay);
-            channel->setDatarate(islDatarate);
+            channel->setDatarate(datarate);
             outGate->connectTo(inGate, channel);
             channel->callInitialize();
+            return ChannelState::CREATED;
         }
+    }
+
+    ChannelState TopologyControl::deleteChannel(cGate *outGate)
+    {
+        if (outGate->isConnectedOutside())
+        {
+            outGate->disconnect();
+            return ChannelState::DELETED;
+        }
+        return ChannelState::UNCHANGED;
     }
 
     int TopologyControl::calculateSatellitePlane(int id)
@@ -342,6 +425,11 @@ namespace flora
             error("Error in TopologyControl::calculateSatellitePlane(): Calculated plane (%d) is bigger than number of planes - 1 (%d).", satPlane, planeCount - 1);
         }
         return satPlane;
+    }
+
+    void TopologyControl::trackTopologyChange()
+    {
+        EV << "Topology was changed at " << simTime() << endl;
     }
 
 } // flora
