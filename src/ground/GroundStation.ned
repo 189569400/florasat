@@ -76,6 +76,7 @@ module GroundStation like INetworkNode //WirelessHost
         interfaceTable: InterfaceTable {
             @display("p=71,77");
         }
+
         routingTable: <routingTableType> like IRoutingTable if routingTableType != "" {
             parameters:
                 @display("p=71,235;is=s");

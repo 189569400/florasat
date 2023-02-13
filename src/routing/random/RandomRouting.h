@@ -9,16 +9,18 @@
 #define ROUTING_RANDOMROUTING_H
 
 #include <omnetpp.h>
-#include "routing/RoutingBase.h"
+#include "inet/common/packet/Packet.h"
+#include "routing/ISLDirection.h"
 
 using namespace omnetpp;
 
 namespace flora
 {
-    class RandomRouting : public RoutingBase
+    class RandomRouting : public cSimpleModule
     {
         public:
-            virtual ISLDirection RoutePacket(cMessage *msg, cModule *callerSat) override;
+            ISLDirection RoutePacket(inet::Packet *pkt, cModule *callerSat);
+            bool HasConnection(cModule* satellite, ISLDirection side);
     };
 } // flora
 

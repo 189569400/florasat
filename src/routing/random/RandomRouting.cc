@@ -11,7 +11,7 @@ namespace flora
 {
     Define_Module(RandomRouting);
 
-    ISLDirection RandomRouting::RoutePacket(cMessage *msg, cModule *callerSat)
+    ISLDirection RandomRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat)
     {
         int gate = intuniform(0, 3);
 
@@ -24,6 +24,28 @@ namespace flora
         } else if (gate == 3 && HasConnection(callerSat, ISLDirection::ISL_RIGHT)) {
             return ISLDirection::ISL_RIGHT;
         }
-        return RoutePacket(msg, callerSat);
+        return RoutePacket(pkt, callerSat);
+    }
+
+    bool RandomRouting::HasConnection(cModule* satellite, ISLDirection side)
+    {
+        if (satellite == nullptr)
+            error("RoutingBase::HasConnection(): satellite mullptr");
+        switch (side)
+        {
+        case ISL_UP:
+            return satellite->gateHalf("up", cGate::Type::OUTPUT)->isConnectedOutside();
+        case ISL_DOWN:
+            return satellite->gateHalf("down", cGate::Type::OUTPUT)->isConnectedOutside();
+        case ISL_LEFT:
+            return satellite->gateHalf("left", cGate::Type::OUTPUT)->isConnectedOutside();
+        case ISL_RIGHT:
+            return satellite->gateHalf("right", cGate::Type::OUTPUT)->isConnectedOutside();
+        case ISL_DOWNLINK:
+            return satellite->gateHalf("groundLink", cGate::Type::OUTPUT)->isConnectedOutside();
+        default:
+            error("HasConnection is not implemented for this side.");
+        }
+        return false;
     }
 }

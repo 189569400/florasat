@@ -11,7 +11,7 @@ namespace flora
 {
     Define_Module(RoutingBase);
 
-    ISLDirection RoutingBase::RoutePacket(cMessage *msg, cModule *callerSat)
+    ISLDirection RoutingBase::RoutePacket(inet::Packet *pkt, cModule *callerSat)
     {
         return ISLDirection::ISL_DOWN;
     }
@@ -31,7 +31,7 @@ namespace flora
         case ISL_RIGHT:
             return satellite->gateHalf("right", cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_DOWNLINK:
-            return satellite->gateHalf("downlink", cGate::Type::OUTPUT)->isConnectedOutside();
+            return satellite->gateHalf("groundLink", cGate::Type::OUTPUT)->isConnectedOutside();
         default:
             error("HasConnection is not implemented for this side.");
         }

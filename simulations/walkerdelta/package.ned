@@ -1,4 +1,4 @@
-package flora.simulations.randomroutewalkerstar;
+package flora.simulations.walkerdelta;
 
 import inet.applications.udpapp.UdpBasicApp;
 import inet.node.inet.Router;
@@ -19,11 +19,11 @@ import flora.routing.random.RandomRouting;
 import flora.routing.directed.DirectedRouting;
 
 @license(LGPL);
-network RandomRoute
+network WalkerDelta
 {
     parameters:
-        int nrOfGS = default(7);
-        int nrOfGW = default(66);
+        int nrOfGS = default(6);
+        int nrOfGW = default(240);
         @display("bgb=2160,1080;bgi=background_earth,s");
 
     submodules:
@@ -34,10 +34,6 @@ network RandomRoute
         loRaGW[nrOfGW]: SatelliteRouting {
             @display("p=695.185,549.115;i=satellit_blue");
         }
-
-        // loRaNodes[nrOfNodes]: LoRaNode {
-        //     @display("p=695.185,733.055;is=vs");
-        // }
 
         routing: DirectedRouting {
             @display("p=-128,673.375");
@@ -50,36 +46,6 @@ network RandomRoute
         topologyControl: TopologyControl {
             @display("p=-128,573.375");
         }
-
-        // LoRaMedium: LoRaMedium {
-        //     @display("p=124.43,297.55");
-        // }
-
-        // dummyMedium: UnitDiskRadioMedium {
-        //     @display("p=121.725,927.815;is=s");
-        // }
-
-        // networkServer: StandardHost {
-        //     @display("p=1117.165,733.055;is=s");
-        // }
-        
-        // configurator: Ipv4NetworkConfigurator {
-        //     parameters:
-        //         assignDisjunctSubnetAddresses = false;
-        //         @display("p=124.43,102.79");
-        // }
-
-        // internetCloud: InternetCloud {
-        //     @display("p=1117.165,462.555;is=s");
-        // }
-
-        // gwRouter: Router {
-        //     @display("p=1117.165,343.535;is=s");
-        // }
-
-        // nsRouter: Router {
-        //     @display("p=1117.165,586.985;is=s");
-        // }
 
         visualizer: IntegratedVisualizer {
             @display("p=-128,675.0");

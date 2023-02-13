@@ -1,0 +1,4 @@
+#!/bin/sh
+cd `dirname $0`
+../src/protsim -n .:../src $*
+# for shared lib, use: opp_run -l ../src/protsim -n .:../src $*

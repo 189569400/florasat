@@ -1,0 +1,6 @@
+package flora.routing.directed;
+
+simple DirectedRouting
+{
+    parameters:
+}
