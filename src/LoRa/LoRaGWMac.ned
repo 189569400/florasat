@@ -46,9 +46,9 @@ module LoRaGWMac extends MacProtocolBase like IMacProtocol
         
         //int dataSize @unit(B) = default(10B);
         // beacon parameters
-        int beaconStart = default(1);
-        int beaconPeriodTime = default(128);
-        int beaconGuardTime = default(3);
+        double beaconStart = default(1);
+        double beaconPeriodTime = default(128);
+        double beaconGuardTime = default(3);
         double beaconReservedTime = default(2.120);
         int pingNumber = default(4);
         

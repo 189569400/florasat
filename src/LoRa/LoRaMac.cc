@@ -68,6 +68,7 @@ LoRaMac::~LoRaMac()
     cancelAndDelete(endDelay_2);
     cancelAndDelete(endListening_2);
     cancelAndDelete(mediumStateChange);
+    cancelAndDelete(beginTXslot);
 }
 
 /****************************************************************

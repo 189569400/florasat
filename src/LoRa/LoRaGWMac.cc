@@ -179,28 +179,32 @@ void LoRaGWMac::handleSelfMessage(cMessage *msg)
 
     if (msg == endTXslot)
     {
-        // no successful reception during slot time
-        if (successfulReceptionsPerSlot == 0)
+        int detectableReceptions = attemptedReceptionsPerSlot - belowSensitivityReceptions;
+
+        if (successfulReceptionsPerSlot == 0)    // no successful reception during slot time
         {
-            if (attemptedReceptionsPerSlot == 0)                                        // no reception attempts, slot is IDLE
+            if (attemptedReceptionsPerSlot == 0) // no reception attempts, slot is IDLE
                 classSslotStatus.record(0);
-            else if (attemptedReceptionsPerSlot == 1 && belowSensitivityReceptions > 0) // single reception with low power, slot is IDLE
+            else if (detectableReceptions == 0)  // all reception attempts with low power, slot is IDLE
                 classSslotStatus.record(1);
-            else if (attemptedReceptionsPerSlot == belowSensitivityReceptions)          // no reception with low power, slot is IDLE
-                classSslotStatus.record(2);
-            else                                                                        // 2 or more collisions, slot is COLLIDED
-                classSslotStatus.record(5);
+            else if (detectableReceptions >= 1)  // at least two receptions collided, slot is COLLIDED
+                classSslotStatus.record(4);
+            else                                 // single reception over sensitivity but collided with another, slot is COLLIDED
+                std::cout << "SUCCESSFUL IS 0, BUT THIS SHOULD BE AN IMPOSSIBLE CASE" << endl;
         }
 
-        else if (successfulReceptionsPerSlot == 1)
+        else if (successfulReceptionsPerSlot == 1) // one successful reception during slot time
         {
-            if (attemptedReceptionsPerSlot == 1)                                 // single reception, slot is SUCCESSFUL
+            if (detectableReceptions == 1)         // single reception over sensitivity, slot is SUCCESSFUL
+                classSslotStatus.record(2);
+            else if (detectableReceptions >= 2)    // at least two receptions collided, slot is COLLIDED
                 classSslotStatus.record(3);
-            else if (attemptedReceptionsPerSlot == belowSensitivityReceptions+1) // only 1 reception with power, slot is SUCCESSFUL
-                classSslotStatus.record(4);
-            else                                                                 // 2 or more collisions, slot is COLLIDED
-                classSslotStatus.record(6);
+            else                                   // impossible
+                std::cout << "SUCCESSFUL IS 1, BUT THIS SHOULD BE AN IMPOSSIBLE CASE" << endl;
         }
+
+        else // two or more successful reception during slot time
+            std::cout << "SUCCESSFUL IS " << successfulReceptionsPerSlot << " , BUT THIS SHOULD BE AN IMPOSSIBLE CASE" << endl;
 
         classSslotReceptionAttempts.record(attemptedReceptionsPerSlot);
         classSslotReceptionSuccess.record(successfulReceptionsPerSlot);

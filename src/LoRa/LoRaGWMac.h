@@ -88,7 +88,7 @@ protected:
     simtime_t beaconStart = -1;
     simtime_t beaconGuardTime = -1;
     simtime_t beaconReservedTime = -1;
-    int beaconPeriodTime = -1;
+    double beaconPeriodTime = -1;
 
     simtime_t maxToA = -1;
     simtime_t clockThreshold = -1;
@@ -109,13 +109,11 @@ protected:
     cMessage *endTXslot = nullptr;
 
     // status for each slot during simulation
-    // 0 for no receptions (IDLE)
-    // 1 for a single failed reception (IDLE)
-    // 2 for multiple failed receptions all due to low power (IDLE)
-    // 3 for a single successful reception and no other transmission (SUCCESSFUL)
-    // 4 for a successful reception with the other transmissions with low power (SUCCESSFUL)
-    // 5 no successful reception and 2 or more collisions with enough power (COLLIDED)
-    // 6 for a successful reception and 2 or more collisions with enough power (COLLIDED)
+    // 0 no reception attempts, slot is IDLE
+    // 1 all reception attempts with low power, slot is IDLE
+    // 2 single reception over sensitivity, slot is SUCCESSFUL
+    // 3 at least two receptions collided, slot is COLLIDED
+    // 4 at least two receptions collided, slot is COLLIDED
     cOutVector classSslotStatus;
 
     // beacon number of the corresponding slot

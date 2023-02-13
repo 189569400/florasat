@@ -367,11 +367,11 @@ void LoRaNetworkServerApp::processScheduledPacket(cMessage* selfMsg)
         frameToSend->setLoRaBW(frame->getLoRaBW());
         frameToSend->setNumHop(frame->getNumHop());
 
-        auto pktAux = new Packet("HI I AM AN ACK MESSAGE !");
-        mgmtPacket->setChunkLength(B(par("headerLength").intValue()));
+        //auto pktAux = new Packet("HI I AM AN ACK MESSAGE !");
+        //mgmtPacket->setChunkLength(B(par("headerLength").intValue()));
 
-        pktAux->insertAtFront(mgmtPacket);
-        pktAux->insertAtFront(frameToSend);
+        //pktAux->insertAtFront(mgmtPacket);
+        //pktAux->insertAtFront(frameToSend);
         //socket.sendTo(pktAux, pickedGateway, destPort);
 
     }

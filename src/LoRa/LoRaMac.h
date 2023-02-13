@@ -60,6 +60,7 @@ class LoRaMac : public MacProtocolBase
     bool iGotBeacon = false;
     bool beaconGuard = false;
 
+    simtime_t beaconStart = 1;
     simtime_t beaconGuardTime = -1;
     simtime_t beaconReservedTime = -1;
     simtime_t beaconPeriodTime = -1;
@@ -67,7 +68,6 @@ class LoRaMac : public MacProtocolBase
     simtime_t timeToNextSlot = -1;
     simtime_t classBslotTime = -1;
     int pingOffset = -1;
-    int beaconStart = 1;
 
     simtime_t maxToA = -1;
     simtime_t clockThreshold = -1;

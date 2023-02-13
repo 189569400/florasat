@@ -84,6 +84,7 @@ class SimpleLoRaApp : public cSimpleModule, public ILifecycle
 
     public:
         SimpleLoRaApp() {}
+        virtual ~SimpleLoRaApp();
         simsignal_t LoRa_AppPacketSent;
 
         //LoRa physical layer parameters
