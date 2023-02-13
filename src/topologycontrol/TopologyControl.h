@@ -66,8 +66,7 @@ namespace flora
             ChannelState deleteChannel(cGate *outGate);
 
         protected:
-            /** @brief Map of satellites and their norad modules. */
-            // std::map<int, std::pair<cModule *, NoradA *>> satellites;
+            /** @brief Map of satellite ids and their correspinding SatelliteInfo data struct. */
             std::map<int, SatelliteInfo> satelliteInfos;
             int satelliteCount;
 

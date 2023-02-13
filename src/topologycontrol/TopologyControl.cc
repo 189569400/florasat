@@ -99,11 +99,6 @@ namespace flora
                 return;
             }
             // update ISL links and groundlinks
-            for (size_t i = 0; i < satelliteCount; i++)
-            {
-                SatelliteInfo *satInfo = &satelliteInfos.at(i);
-                EV << satInfo->to_string() << endl;
-            }
             topologyChanged = false;
             updateIntraSatelliteLinks();
             updateInterSatelliteLinks();
