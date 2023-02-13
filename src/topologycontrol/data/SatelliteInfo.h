@@ -25,6 +25,11 @@ namespace flora
             NoradA *noradModule;
             int groundStationId = -1;
 
+            int leftSatellite = -1;
+            int rightSatellite = -1;
+            int upSatellite = -1;
+            int downSatellite = -1;
+
             SatelliteInfo(int satId, cModule *satModule, NoradA *norad) : satelliteId(satId),
                                                                           satelliteModule(satModule),
                                                                           noradModule(norad){};

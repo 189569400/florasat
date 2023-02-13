@@ -16,9 +16,11 @@ namespace flora
             std::stringstream ss;
             ss << "{";
             ss << "\"satelliteId\": " << satelliteId << ",";
-            ss << "\"satelliteModule\": " << satelliteModule << ",";
-            ss << "\"noradModule\": " << noradModule << ",";
             ss << "\"groundStationId\": " << groundStationId << ",";
+            ss << "\"up\": " << upSatellite << ",";
+            ss << "\"down\": " << downSatellite << ",";
+            ss << "\"left\": " << leftSatellite << ",";
+            ss << "\"right\": " << rightSatellite << ",";
             ss << "}";
             return ss.str();
         }
