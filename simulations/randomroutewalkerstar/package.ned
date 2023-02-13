@@ -15,6 +15,7 @@ import flora.ground.GroundStation;
 import flora.satellite.SatelliteWired;
 import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.TopologyControl;
+import flora.routing.random.RandomRouting;
 
 @license(LGPL);
 network RandomRoute
