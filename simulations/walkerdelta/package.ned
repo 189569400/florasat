@@ -17,6 +17,7 @@ import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.TopologyControl;
 import flora.routing.random.RandomRouting;
 import flora.routing.directed.DirectedRouting;
+import flora.mobility.FasterSatMobility;
 
 @license(LGPL);
 network WalkerDelta
@@ -45,6 +46,10 @@ network WalkerDelta
 
         topologyControl: TopologyControl {
             @display("p=-128,573.375");
+        }
+
+        fasterSatMobility: FasterSatMobility {
+            @display("p=-128,673.375");
         }
 
         visualizer: IntegratedVisualizer {
