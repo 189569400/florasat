@@ -8,8 +8,7 @@
 #include "DtSIoTPropagation.h"
 #include "inet/physicallayer/wireless/common/signal/Arrival.h"
 
-#include "physicallayer/unitdisk/SatelliteUnitDiskTransmission.h"
-#include "physicallayer/apskradio/SatelliteApskScalarTransmission.h"
+#include "../unitdisk/SatelliteUnitDiskTransmission.h"
 
 #include "mobility/SatSGP4Mobility.h"
 #include "mobility/LUTMotionMobility.h"
