@@ -22,7 +22,7 @@ namespace flora
             virtual ISLDirection RoutePacket(inet::Packet *pkt, cModule *callerSat);
 
         protected:
-            bool HasConnection(cModule* satellite, ISLDirection side);
+            virtual bool HasConnection(cModule* satellite, ISLDirection side);
     };
 } // flora
 

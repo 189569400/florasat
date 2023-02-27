@@ -23,7 +23,6 @@ namespace flora
             int satelliteId;
             cModule *satelliteModule;
             NoradA *noradModule;
-            int groundStationId = -1;
 
             int leftSatellite = -1;
             int rightSatellite = -1;

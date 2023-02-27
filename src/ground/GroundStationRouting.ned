@@ -23,7 +23,7 @@ module GroundStationRouting
         int groundStationId;
 
     gates:
-        inout satelliteLink;
+        inout satelliteLink[20];
 
     submodules:
         mobility: GroundStationMobility {
@@ -35,5 +35,24 @@ module GroundStationRouting
         }
 
     connections allowunconnected:
-        satelliteLink <--> packetGenerator.satelliteLink;
+        satelliteLink[0] <--> packetGenerator.satelliteLink[0];
+        satelliteLink[1] <--> packetGenerator.satelliteLink[1];
+        satelliteLink[2] <--> packetGenerator.satelliteLink[2];
+        satelliteLink[3] <--> packetGenerator.satelliteLink[3];
+        satelliteLink[4] <--> packetGenerator.satelliteLink[4];
+        satelliteLink[5] <--> packetGenerator.satelliteLink[5];
+        satelliteLink[6] <--> packetGenerator.satelliteLink[6];
+        satelliteLink[7] <--> packetGenerator.satelliteLink[7];
+        satelliteLink[8] <--> packetGenerator.satelliteLink[8];
+        satelliteLink[9] <--> packetGenerator.satelliteLink[9];
+        satelliteLink[10] <--> packetGenerator.satelliteLink[10];
+        satelliteLink[11] <--> packetGenerator.satelliteLink[11];
+        satelliteLink[12] <--> packetGenerator.satelliteLink[12];
+        satelliteLink[13] <--> packetGenerator.satelliteLink[13];
+        satelliteLink[14] <--> packetGenerator.satelliteLink[14];
+        satelliteLink[15] <--> packetGenerator.satelliteLink[15];
+        satelliteLink[16] <--> packetGenerator.satelliteLink[16];
+        satelliteLink[17] <--> packetGenerator.satelliteLink[17];
+        satelliteLink[18] <--> packetGenerator.satelliteLink[18];
+        satelliteLink[19] <--> packetGenerator.satelliteLink[19];
 }

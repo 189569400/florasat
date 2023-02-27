@@ -23,5 +23,5 @@ simple PacketGenerator
         double updateInterval @unit(s) = default(0.5s);
 
     gates:
-        inout satelliteLink @labels(satelliteLink);
+        inout satelliteLink[20] @labels(satelliteLink);
 }

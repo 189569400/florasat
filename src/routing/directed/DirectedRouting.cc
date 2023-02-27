@@ -31,13 +31,20 @@ namespace flora
 
         int routingSatIndex = callerSat->getIndex();
 
-        int destSatIndex = topologyControl->getGroundstationInfo(destGroundstationId)->satelliteId;
-        // EV << "ROUTE TO " << destGroundstationId << " over sat " << destSatIndex << endl;
+        int destSatIndex = -1;
+        for (int number : topologyControl->getGroundstationInfo(destGroundstationId)->satellites)
+        {
+            destSatIndex = number;
+            break;
+        }
+        if(destSatIndex == - 1) {
+            error("DestSatIndex was not set!");
+        }
 
         if (routingSatIndex == destSatIndex)
         {
             // EV << "END SAT REACHED. SEND TO GROUND" << endl;
-            return ISLDirection::ISL_DOWNLINK;
+            return ISLDirection(Direction::ISL_DOWNLINK, 0);
         }
 
         int myPlane = topologyControl->calculateSatellitePlane(routingSatIndex);
@@ -49,24 +56,24 @@ namespace flora
         {
             if (isAscending)
             {
-                if (HasConnection(callerSat, ISLDirection::ISL_RIGHT))
+                if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1)))
                 {
-                    return ISLDirection::ISL_RIGHT;
+                    return ISLDirection(Direction::ISL_RIGHT, -1);
                 }
                 else
                 {
-                    return ISLDirection::ISL_DOWN;
+                    return ISLDirection(Direction::ISL_DOWN, -1);
                 }
             }
             else
             {
-                if (HasConnection(callerSat, ISLDirection::ISL_LEFT))
+                if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1)))
                 {
-                    return ISLDirection::ISL_LEFT;
+                    return ISLDirection(Direction::ISL_LEFT, -1);
                 }
                 else
                 {
-                    return ISLDirection::ISL_UP;
+                    return ISLDirection(Direction::ISL_UP, -1);
                 }
             }
         }
@@ -74,36 +81,36 @@ namespace flora
         {
             if (isAscending)
             {
-                if (HasConnection(callerSat, ISLDirection::ISL_LEFT))
+                if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1)))
                 {
-                    return ISLDirection::ISL_LEFT;
+                    return ISLDirection(Direction::ISL_LEFT, -1);
                 }
                 else
                 {
-                    return ISLDirection::ISL_DOWN;
+                    return ISLDirection(Direction::ISL_DOWN, -1);
                 }
             }
             else
             {
-                if (HasConnection(callerSat, ISLDirection::ISL_RIGHT))
+                if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1)))
                 {
-                    return ISLDirection::ISL_RIGHT;
+                    return ISLDirection(Direction::ISL_RIGHT, -1);
                 }
                 else
                 {
-                    return ISLDirection::ISL_UP;
+                    return ISLDirection(Direction::ISL_UP, -1);
                 }
             }
         }
         else if (myPlane == destPlane)
         {
-            if (routingSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection::ISL_UP))
+            if (routingSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1)))
             {
-                return ISLDirection::ISL_UP;
+                return ISLDirection(Direction::ISL_UP, -1);
             }
-            else if (routingSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection::ISL_DOWN))
+            else if (routingSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1)))
             {
-                return ISLDirection::ISL_DOWN;
+                return ISLDirection(Direction::ISL_DOWN, -1);
             }
             else
             {
@@ -125,8 +132,8 @@ namespace flora
     bool DirectedRouting::HasConnection(cModule *satellite, ISLDirection side)
     {
         if (satellite == nullptr)
-            error("RoutingBase::HasConnection(): satellite mullptr");
-        switch (side)
+            error("DirectedRouting::HasConnection(): satellite mullptr");
+        switch (side.direction)
         {
         case ISL_UP:
             return satellite->gateHalf("up", cGate::Type::OUTPUT)->isConnectedOutside();
@@ -137,7 +144,7 @@ namespace flora
         case ISL_RIGHT:
             return satellite->gateHalf("right", cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_DOWNLINK:
-            return satellite->gateHalf("groundLink", cGate::Type::OUTPUT)->isConnectedOutside();
+            return satellite->gateHalf("groundLink", cGate::Type::OUTPUT, side.gateIndex)->isConnectedOutside();
         default:
             error("HasConnection is not implemented for this side.");
         }

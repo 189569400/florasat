@@ -17,7 +17,12 @@ namespace flora
             ss << "{";
             ss << "\"groundStationId\": " << groundStationId << ",";
             ss << "\"groundStation\": " << groundStation << ",";
-            ss << "\"satelliteId\": " << satelliteId << ",";
+            ss << "\"satellites\": " << "[";
+            for(int satellite : satellites)
+            {
+                ss << satellite << ",";
+            }
+            ss << "],";
             ss << "}";
             return ss.str();
         }

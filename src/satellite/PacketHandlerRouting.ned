@@ -30,5 +30,5 @@ simple PacketHandlerRouting
         inout down1;
         
         // GroundStation gates
-        inout groundLink1 @labels(GroundStationGate);
+        inout groundLink1[20] @labels(GroundStationGate);
 }

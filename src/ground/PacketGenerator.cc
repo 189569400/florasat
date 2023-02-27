@@ -64,8 +64,15 @@ namespace flora
         ss << "GS[" << groundStationId << "]: Send msg to " << destination << ".";
         EV << ss.str() << endl;
 
-        send(newPacket, "satelliteLink$o");
-
+        for (size_t i = 0; i < 20; i++)
+        {
+            if (getParentModule()->gateHalf("satelliteLink", cGate::Type::OUTPUT, i)->isConnectedOutside())
+            {
+                cGate *gate = gateHalf("satelliteLink", cGate::Type::OUTPUT, i);
+                send(newPacket, gate);
+                break;
+            }
+        }
         sentPackets = sentPackets + 1;
         scheduleUpdate();
     }
@@ -91,7 +98,8 @@ namespace flora
         simtime_t latency = simTime() - frame->getOriginTime();
 
         std::stringstream ss;
-        ss << "GS[" << destination << "]: Received msg from " << source << endl << " -> Hops:" << hops << " | Latency: " << latency * 1000 << "ms | Route: {";
+        ss << "GS[" << destination << "]: Received msg from " << source << endl
+           << " -> Hops:" << hops << " | Latency: " << latency * 1000 << "ms | Route: {";
         for (size_t i = 0; i < frame->getRouteArraySize(); i++)
         {
             int pathSat = frame->getRoute(i);

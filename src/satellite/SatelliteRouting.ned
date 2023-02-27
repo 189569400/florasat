@@ -25,7 +25,7 @@ module SatelliteRouting
     parameters:
 
     gates:
-        inout groundLink;
+        inout groundLink[20];
         inout left;
         inout right;
         inout up;
@@ -51,6 +51,25 @@ module SatelliteRouting
         packetHandler.right1  <--> right;
         packetHandler.left1  <--> left;
         packetHandler.up1  <--> up;
-        packetHandler.groundLink1  <--> groundLink;
+        packetHandler.groundLink1[0]  <--> groundLink[0];
+        packetHandler.groundLink1[1]  <--> groundLink[1];
+        packetHandler.groundLink1[2]  <--> groundLink[2];
+        packetHandler.groundLink1[3]  <--> groundLink[3];
+        packetHandler.groundLink1[4]  <--> groundLink[4];
+        packetHandler.groundLink1[5]  <--> groundLink[5];
+        packetHandler.groundLink1[6]  <--> groundLink[6];
+        packetHandler.groundLink1[7]  <--> groundLink[7];
+        packetHandler.groundLink1[8]  <--> groundLink[8];
+        packetHandler.groundLink1[9]  <--> groundLink[9];
+        packetHandler.groundLink1[10]  <--> groundLink[10];
+        packetHandler.groundLink1[11]  <--> groundLink[11];
+        packetHandler.groundLink1[12]  <--> groundLink[12];
+        packetHandler.groundLink1[13]  <--> groundLink[13];
+        packetHandler.groundLink1[14]  <--> groundLink[14];
+        packetHandler.groundLink1[15]  <--> groundLink[15];
+        packetHandler.groundLink1[16]  <--> groundLink[16];
+        packetHandler.groundLink1[17]  <--> groundLink[17];
+        packetHandler.groundLink1[18]  <--> groundLink[18];
+        packetHandler.groundLink1[19]  <--> groundLink[19];
 
 }

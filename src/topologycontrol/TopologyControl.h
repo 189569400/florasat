@@ -9,6 +9,8 @@
 #define TOPOLOGYCONTROL_TOPOLOGYCONTROL_H
 
 #include <string>
+#include <set>
+#include <algorithm>
 #include <omnetpp.h>
 #include <map>
 #include "topologycontrol/utilities/WalkerType.h"
@@ -16,6 +18,7 @@
 #include "topologycontrol/utilities/PrintMap.h"
 #include "topologycontrol/data/GroundstationInfo.h"
 #include "topologycontrol/data/SatelliteInfo.h"
+#include "topologycontrol/data/GsSatConnection.h"
 #include "mobility/NoradA.h"
 #include "mobility/GroundStationMobility.h"
 
@@ -44,7 +47,7 @@ namespace flora
         protected:
             virtual ~TopologyControl();
             virtual void initialize(int stage) override;
-            virtual int numInitStages() const override { return 2; }
+            virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
             virtual void handleMessage(cMessage *msg) override;
             void handleSelfMessage(cMessage *msg);
             /** @brief Schedules the update timer that will update the topology state.*/
@@ -73,6 +76,9 @@ namespace flora
             /** @brief Structs that represent groundstations and all satellites in range. */
             std::map<int, GroundstationInfo> groundstationInfos;
             int groundstationCount;
+
+            /** @brief Structs that represent connections between satellites and groundstations. */
+            std::map<std::pair<int, int>, GsSatConnection> gsSatConnections;
 
             /** @brief The message used for TopologyControl state changes. */
             cMessage *updateTimer;

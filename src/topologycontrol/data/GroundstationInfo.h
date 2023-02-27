@@ -9,6 +9,7 @@
 #define TOPOLOGYCONTROL_GROUNDSTATIONINFO_H
 
 #include <omnetpp.h>
+#include <set>
 #include <sstream>
 #include "mobility/GroundStationMobility.h"
 
@@ -23,8 +24,7 @@ namespace flora
             int groundStationId;
             cModule *groundStation;
             GroundStationMobility *mobility;
-            int satelliteId = -1;
-
+            std::set<int> satellites;
             GroundstationInfo(int gsId, cModule *gs, GroundStationMobility *gsMobility) : groundStationId(gsId),
                                                                                           groundStation(gs),
                                                                                           mobility(gsMobility){};

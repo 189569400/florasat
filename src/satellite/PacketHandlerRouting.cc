@@ -36,10 +36,6 @@ namespace flora
 
     void PacketHandlerRouting::handleMessage(cMessage *msg)
     {
-        if(!msg->isSelfMessage())
-        {
-            // EV << "SAT [" << satIndex << "]: Msg arrived on " << msg->getArrivalGate() << endl;
-        }
         auto pkt = check_and_cast<inet::Packet*>(msg);
 
 
@@ -60,7 +56,7 @@ namespace flora
 
         auto outputGate = routing->RoutePacket(pkt, getParentModule());
 
-        switch (outputGate)
+        switch (outputGate.direction)
         {
         case ISL_DOWN:
         {
@@ -125,7 +121,7 @@ namespace flora
         }
         case ISL_DOWNLINK:
         {
-            cGate *downGate = gate("groundLink1$o");
+            cGate *downGate = gate("groundLink1$o", outputGate.gateIndex);
             if (downGate->getTransmissionChannel()->isBusy())
             {
                 // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send ground is busy." << endl;

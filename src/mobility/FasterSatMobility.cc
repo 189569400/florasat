@@ -27,7 +27,7 @@ namespace flora
         {
             updateIntervalPos = par("updateIntervalPos");
         }
-        else if (stage == inet::INITSTAGE_APPLICATION_LAYER)
+        else if (stage == inet::INITSTAGE_ROUTING_PROTOCOLS)
         {
             updatePos = new cMessage(POSITION, 1);
             updatePositions();

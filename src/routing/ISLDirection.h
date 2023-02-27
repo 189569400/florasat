@@ -13,13 +13,23 @@
 namespace flora
 {
 
-    enum ISLDirection
+    enum Direction
     {
         ISL_LEFT,
         ISL_UP,
         ISL_RIGHT,
         ISL_DOWN,
         ISL_DOWNLINK
+    };
+
+    struct ISLDirection
+    {
+        Direction direction;
+        int gateIndex;
+
+        ISLDirection(Direction direction, int gateIndex)
+            : direction(direction),
+              gateIndex(gateIndex){};
     };
 
 } // flora
