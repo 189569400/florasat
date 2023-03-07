@@ -114,9 +114,9 @@ namespace flora
 
         GroundstationInfo *TopologyControl::getGroundstationInfo(int gsId)
         {
-            if (gsId < 0 || gsId >= satelliteCount)
+            if (gsId < 0 || gsId >= groundstationCount)
             {
-                error("Error in TopologyControl::getGroundStationInfo: '%d' must be in range [0, %d)", gsId, satelliteCount);
+                error("Error in TopologyControl::getGroundStationInfo: '%d' must be in range [0, %d)", gsId, groundstationCount);
             }
             return &groundstationInfos.at(gsId);
         }
@@ -322,79 +322,7 @@ namespace flora
                 }
 
                 EV << gsInfo->to_string() << endl;
-
-                // // no nearest satellite and has old connection
-                // if (nearestSatellite == nullptr)
-                // {
-                //     if (gsInfo->satelliteId != -1)
-                //     {
-                //         SatelliteInfo *oldSatellite = &satelliteInfos.at(gsInfo->satelliteId);
-                //         cGate *uplink = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT);
-                //         cGate *downlink = oldSatellite->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT);
-                //         deleteChannel(uplink);
-                //         deleteChannel(downlink);
-                //         gsInfo->satelliteId = -1;
-                //         topologyChanged = true;
-                //     }
-                //     else
-                //     {
-                //         error("Found no satellite for groundstation %d.", gsInfo->groundStationId);
-                //     }
-                // }
-                // else
-                // {
-                //     EV << "Attempt to connect " << gsInfo->groundStationId << " and " << nearestSatellite->satelliteId << "." << endl;
-                //     // get the gates
-                //     cGate *uplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT);
-                //     cGate *uplinkI = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::INPUT);
-                //     cGate *downlinkO = nearestSatellite->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT);
-                //     cGate *downlinkI = nearestSatellite->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::INPUT);
-
-                //     // distance between nearest satellite and groundstation (km)
-                //     double distance = nearestSatellite->noradModule->getDistance(gsInfo->mobility->getLUTPositionY(), gsInfo->mobility->getLUTPositionX(), 0);
-                //     // delay of the channel between nearest satellite and groundstation (ms)
-                //     double delay = distance * groundlinkDelay;
-
-                //     // has nearest satellite and is the old one
-                //     if (gsInfo->satelliteId == nearestSatellite->satelliteId)
-                //     {
-                //         // update the channel
-                //         updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
-                //         updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
-                //     }
-                //     // has nearest satellite and is not the old one
-                //     else
-                //     {
-                //         // remove connection between previous nearest satellite and groundstation
-                //         if (gsInfo->satelliteId != -1)
-                //         {
-                //             SatelliteInfo *prevSat = &satelliteInfos.at(gsInfo->satelliteId);
-                //             cGate *prevGroundlinkO = prevSat->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT);
-                //             deleteChannel(prevGroundlinkO);
-                //             deleteChannel(uplinkO);
-                //         }
-
-                //         // disconnect new nearest satellite with its previous groundstation if there was a connection
-                //         if (nearestSatellite->groundStationId != -1)
-                //         {
-                //             GroundstationInfo *oldGs = &groundstationInfos.at(nearestSatellite->groundStationId);
-                //             cGate *oldGsUplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT);
-                //             deleteChannel(oldGsUplinkO);
-                //             deleteChannel(downlinkO);
-                //         }
-
-                //         // connect groundstation and nearest satellite
-                //         updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
-                //         updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
-                //         gsInfo->satelliteId = nearestSatellite->satelliteId;
-                //         topologyChanged = true;
-                //     }
-                // }
-
-                // EV << gsInfo->to_string() << endl;
             }
-
-            // TODO: Support N satellites to M groundstations connections
         }
 
         void TopologyControl::updateInterSatelliteLinks()
