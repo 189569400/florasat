@@ -42,6 +42,7 @@ namespace flora
             TopologyControl();
             void UpdateTopology();
             GroundstationInfo *getGroundstationInfo(int gsId);
+            GsSatConnection *getGroundstationSatConnection(int gsId, int satId);
             int calculateSatellitePlane(int id);
 
         protected:

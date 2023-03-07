@@ -121,6 +121,11 @@ namespace flora
             return &groundstationInfos.at(gsId);
         }
 
+        GsSatConnection *TopologyControl::getGroundstationSatConnection(int gsId, int satId)
+        {
+            return &gsSatConnections.at(std::pair<int, int>(gsId, satId));
+        }
+
         void TopologyControl::loadGroundstations()
         {
             groundstationInfos.clear();

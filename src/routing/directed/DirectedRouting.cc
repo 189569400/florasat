@@ -32,6 +32,8 @@ namespace flora
         int routingSatIndex = callerSat->getIndex();
 
         int destSatIndex = -1;
+
+        // forward to which satellite? Here is a point to introduce shortest path etc.
         for (int number : topologyControl->getGroundstationInfo(destGroundstationId)->satellites)
         {
             destSatIndex = number;
@@ -41,10 +43,11 @@ namespace flora
             error("DestSatIndex was not set!");
         }
 
+        // forward to which groundstation gate?
         if (routingSatIndex == destSatIndex)
         {
-            // EV << "END SAT REACHED. SEND TO GROUND" << endl;
-            return ISLDirection(Direction::ISL_DOWNLINK, 0);
+            flora::topologycontrol::GsSatConnection *gsSatConnection = topologyControl->getGroundstationSatConnection(destGroundstationId, destSatIndex);
+            return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection->satGateIndex);
         }
 
         int myPlane = topologyControl->calculateSatellitePlane(routingSatIndex);
