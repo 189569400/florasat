@@ -16,6 +16,8 @@ class RoutingFrame extends inet::FieldsChunk {
 
     // timestamp of message creation
     simtime_t originTime;
+    // timestamp of message reception
+    simtime_t receptionTime;
 
     // satellite ids in route + timestamps when packet arrived at satellites
     int route[];

@@ -96,6 +96,7 @@ namespace flora
         int destination = frame->getDestinationGroundstation();
         int hops = frame->getNumHop();
         simtime_t latency = simTime() - frame->getOriginTime();
+        frame->setReceptionTime(simTime());
 
         std::stringstream ss;
         ss << "GS[" << destination << "]: Received msg from " << source << endl
