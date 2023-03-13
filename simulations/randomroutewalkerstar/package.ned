@@ -18,12 +18,13 @@ import flora.topologycontrol.TopologyControl;
 import flora.routing.random.RandomRouting;
 import flora.routing.directed.DirectedRouting;
 import flora.mobility.FasterSatMobility;
+import flora.metrics.MetricsCollector;
 
 @license(LGPL);
 network RandomRoute
 {
     parameters:
-        int nrOfGS = default(7);
+        int nrOfGS = default(9);
         int nrOfGW = default(66);
         @display("bgb=2160,1080;bgi=background_earth,s");
 
@@ -41,7 +42,7 @@ network RandomRoute
         // }
 
         routing: DirectedRouting {
-            @display("p=-128,673.375");
+            @display("p=-128,373.375");
         }
 
         constellationCreator: ConstellationCreator {
@@ -54,6 +55,10 @@ network RandomRoute
 
         fasterSatMobility: FasterSatMobility {
             @display("p=-128,673.375");
+        }
+
+        metricsCollector: MetricsCollector {
+            @display("p=-128,773.375");
         }
 
         // LoRaMedium: LoRaMedium {
@@ -87,7 +92,7 @@ network RandomRoute
         // }
 
         visualizer: IntegratedVisualizer {
-            @display("p=-128,675.0");
+            @display("p=-128,875.0");
         }
 
     connections allowunconnected:

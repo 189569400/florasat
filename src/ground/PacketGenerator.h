@@ -10,6 +10,7 @@
 
 #include <omnetpp.h>
 #include "routing/RoutingFrame_m.h"
+#include "metrics/MetricsCollector.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/packet/Packet.h"
 #include "inet/common/ModuleAccess.h"
@@ -24,8 +25,9 @@ namespace flora
         protected:
             virtual void initialize(int stage) override;
             virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-            
 
+            metrics::MetricsCollector* metricsCollector;
+            
             int groundStationId;
             int sentPackets = 0;
             int receivedPackets = 0;

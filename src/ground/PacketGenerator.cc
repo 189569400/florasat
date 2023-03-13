@@ -18,6 +18,12 @@ namespace flora
             groundStationId = getParentModule()->par("groundStationId");
             updateInterval = par("updateInterval");
             numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
+
+            metricsCollector = check_and_cast<metrics::MetricsCollector *>(getSystemModule()->getSubmodule("metricsCollector"));
+            if (metricsCollector == nullptr)
+            {
+                error("PacketGenerator::initialize(0): metricsCollector mullptr");
+            }
         }
         else if (stage == inet::INITSTAGE_APPLICATION_LAYER)
         {
@@ -92,24 +98,17 @@ namespace flora
         auto pkt = check_and_cast<inet::Packet *>(msg);
         auto frame = pkt->removeAtFront<RoutingFrame>();
 
-        int source = frame->getSourceGroundstation();
         int destination = frame->getDestinationGroundstation();
-        int hops = frame->getNumHop();
-        simtime_t latency = simTime() - frame->getOriginTime();
         frame->setReceptionTime(simTime());
 
-        std::stringstream ss;
-        ss << "GS[" << destination << "]: Received msg from " << source << endl
-           << " -> Hops:" << hops << " | Latency: " << latency * 1000 << "ms | Route: {";
-        for (size_t i = 0; i < frame->getRouteArraySize(); i++)
+        if (groundStationId != destination)
         {
-            int pathSat = frame->getRoute(i);
-            ss << pathSat << ",";
+            metricsCollector->record_packet(metrics::PacketState::WRONG_DELIVERED, *frame.get());
         }
-        ss << "}.";
-        EV << ss.str() << endl;
-
-        receivedPackets = receivedPackets + 1;
+        else
+        {
+            metricsCollector->record_packet(metrics::PacketState::DELIVERED, *frame.get());
+        }
         delete msg;
     }
 

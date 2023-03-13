@@ -18,6 +18,7 @@ import flora.topologycontrol.TopologyControl;
 import flora.routing.random.RandomRouting;
 import flora.routing.directed.DirectedRouting;
 import flora.mobility.FasterSatMobility;
+import flora.metrics.MetricsCollector;
 
 @license(LGPL);
 network WalkerDelta
@@ -37,7 +38,7 @@ network WalkerDelta
         }
 
         routing: DirectedRouting {
-            @display("p=-128,673.375");
+            @display("p=-128,373.375");
         }
 
         constellationCreator: ConstellationCreator {
@@ -52,8 +53,12 @@ network WalkerDelta
             @display("p=-128,673.375");
         }
 
+        metricsCollector: MetricsCollector {
+            @display("p=-128,773.375");
+        }
+
         visualizer: IntegratedVisualizer {
-            @display("p=-128,675.0");
+            @display("p=-128,875.0");
         }
 
     connections allowunconnected:
