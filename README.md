@@ -19,25 +19,13 @@ Please consider the the simulator is under active development, and it should **n
 
 - Add INETv4.3 to the environment by executing setinet.sh passing the absolute path to the INET root directory, eg. `sh setinet.sh $HOME/omnetprojects/inet4.3`
 
-- Clone `https://github.com/diegomm6/os3` repo where INET is located and checkout to `framework` branch
+- Clone `https://gitlab.inria.fr/jfraire/florasat.git` repo where INET is located and checkout to `dev_repomerge` branch
 
-- Edit the Makefile in the os3 repo root directory, in line 13 add the correct path for the curl library (eg. `/usr/include/x86_64-linux-gnu/curl`)
+- Launch OMNeT++ IDE from the terminal with `omnetpp`. Add inet4.3 and florasat projects to the workspace
 
-- Clone `https://github.com/diegomm6/leosatellites` repo where INET is located and checkout to `framework` branch
+- Go to florasat project Properties under Project References and select inet4.3
 
-- Edit the Makefile in the leosatellites repo root directory, in line 13 add the correct path to the curl library and the path to the os3 src directory
-
-- Clone `https://gitlab.inria.fr/jfraire/florasat.git` repo where INET is located and checkout to `framework` branch
-
-- Launch OMNeT++ IDE from the terminal with `omnetpp`. Add inet4.3, os3, leosatellites and florasat projects to the workspace
-
-- Go to os3 project Properties, under OMNeT++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the curl library (eg. `/usr/include/x86_64-linux-gnu/curl`). Also in os3 Properties, under Project References select inet4.3
-
-- Go to leosatellites project Properties, under OMNeT++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the os3 library (eg. `$HOME/omnetprojects/os3/src`). Also in leosatellites Properties, under Project References select inet4.3 and os3
-
-- Go to florasat project Properties, under OMNET++/Makemake (panel to the left) select Build/Makemake/Options... for src folder (panel to the right), then in Compile include the path to the os3 and leosatellites libraries. Also in florasat Properties, under Project References select inet4.3, os3 and leosatellite
-
-- Finally, Build Project in order: os3, leosatellites, florasat
+- Finally, Build Project florasat
 
 
 **IMPORTANT** FLoRaSat will not with OMNeT++5 due to source code path inconsistency with version OMNeT++6
