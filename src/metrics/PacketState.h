@@ -24,9 +24,10 @@ namespace flora
                 WRONG_DELIVERED,
                 DROPPED,
                 UNROUTABLE,
+                EXPIRED,
             };
 
-            static const Type All[] = { DELIVERED, WRONG_DELIVERED, DROPPED, UNROUTABLE };
+            static const Type All[] = { DELIVERED, WRONG_DELIVERED, DROPPED, UNROUTABLE, EXPIRED };
 
             std::string to_string(PacketState::Type state);
 

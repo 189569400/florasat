@@ -24,6 +24,8 @@ namespace flora
                     return "DROPPED";
                 case UNROUTABLE:
                     return "UNROUTABLE";
+                case EXPIRED:
+                    return "EXPIRED";
                 default:
                     throw omnetpp::cRuntimeError("Unhandled packet state");
                 }

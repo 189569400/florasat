@@ -42,7 +42,7 @@ namespace flora
                 groundlinkDelay = par("groundlinkDelay");
                 groundlinkDatarate = par("groundlinkDatarate");
                 minimumElevation = par("minimumElevation");
-                EV << "Load parameters: "
+                EV << "Loaded parameters: "
                    << "updateInterval: " << updateInterval << "; "
                    << "isClosedConstellation: " << isClosedConstellation << "; "
                    << "lowerLatitudeBound: " << lowerLatitudeBound << "; "

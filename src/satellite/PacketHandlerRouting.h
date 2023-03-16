@@ -15,6 +15,7 @@
 #include "routing/RoutingFrame_m.h"
 #include "mobility/NoradA.h"
 #include "mobility/INorad.h"
+#include "metrics/MetricsCollector.h"
 
 using namespace omnetpp;
 
@@ -22,19 +23,25 @@ namespace flora
 {
     class PacketHandlerRouting : public cSimpleModule
     {
-        protected:
-            int satIndex = -1;
-            int maxHops = -1;
+    protected:
+        int satIndex = -1;
+        int maxHops = -1;
+        simtime_t processingDelay;
 
-            DirectedRouting* routing = nullptr;
-            cMessage* selfMsg = nullptr;
+        DirectedRouting *routing = nullptr;
+        metrics::MetricsCollector *metricsCollector = nullptr;
+        cMessage *selfMsg = nullptr;
 
-        protected:
-            virtual void initialize(int stage) override;
-            virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-            virtual void handleMessage(cMessage *msg) override;
-            void insertSatinRoute(Packet *pkt);
-            bool isExpired(Packet *pkt);
+    protected:
+        virtual void initialize(int stage) override;
+        virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+        virtual void handleMessage(cMessage *msg) override;
+        void handleSelfMessage(cMessage *msg);
+        void receiveMessage(cMessage *msg);
+        void routeMessage(cGate *gate, cMessage *msg);
+
+        void insertSatinRoute(Packet *pkt);
+        bool isExpired(Packet *pkt);
     };
 
 } // flora

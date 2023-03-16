@@ -19,10 +19,13 @@ namespace flora
 
         void MetricsCollector::finish()
         {
-            simtime_t average_delivery_latency = calculate_average_latency(&recordedPackets.at(PacketState::DELIVERED));
-
-            EV << "Mean latency: " << average_delivery_latency << "ms." << endl;
-            recordScalar("#mean-latency", average_delivery_latency);
+            auto delivered_packets = &recordedPackets.at(PacketState::DELIVERED);
+            if (delivered_packets != nullptr && delivered_packets->size() != 0)
+            {
+                double average_delivery_latency = calculate_average_latency(delivered_packets);
+                EV << "Mean latency: " << average_delivery_latency << "ms." << endl;
+                recordScalar("#mean-latency", average_delivery_latency);
+            }
         }
 
         void MetricsCollector::initialize(int stage)
@@ -69,6 +72,8 @@ namespace flora
 
         double MetricsCollector::calculate_average_latency(std::vector<RoutingFrame> *frames)
         {
+            if (frames->size() == 0)
+                throw omnetpp::cRuntimeError("Error in MetricsCollector::calculate_average_latency(): Was called with empty vector.");
             double sum = 0.0;
             for (auto &element : *frames)
             {

@@ -17,36 +17,56 @@ namespace flora
         if (stage == 0)
         {
             maxHops = par("maxHops");
+            processingDelay = par("processingDelay");
         }
 
         else if (stage == inet::INITSTAGE_APPLICATION_LAYER)
         {
             routing = check_and_cast<DirectedRouting *>(getSystemModule()->getSubmodule("routing"));
-            if (routing == nullptr) {
+            if (routing == nullptr)
+            {
                 error("Error in PacketHandlerRouting::initialize(): Routing is nullptr.");
             }
 
-            INorad* noradModule = check_and_cast<INorad *>(getParentModule()->getSubmodule("NoradModule"));
+            INorad *noradModule = check_and_cast<INorad *>(getParentModule()->getSubmodule("NoradModule"));
             if (NoradA *noradAModule = dynamic_cast<NoradA *>(noradModule))
             {
                 satIndex = noradAModule->getSatelliteNumber();
+            }
+
+            metricsCollector = check_and_cast<metrics::MetricsCollector *>(getSystemModule()->getSubmodule("metricsCollector"));
+            if (metricsCollector == nullptr)
+            {
+                error("PacketGenerator::initialize(0): metricsCollector mullptr");
             }
         }
     }
 
     void PacketHandlerRouting::handleMessage(cMessage *msg)
     {
-        auto pkt = check_and_cast<inet::Packet*>(msg);
+        if (msg->isSelfMessage())
+        {
+            handleSelfMessage(msg);
+        }
+        else
+        {
+            receiveMessage(msg);
+        }
+    }
 
+    void PacketHandlerRouting::handleSelfMessage(cMessage *msg)
+    {
+        auto pkt = check_and_cast<inet::Packet *>(msg);
 
         auto frame = pkt->removeAtFront<RoutingFrame>();
         int hops = frame->getNumHop();
         int sequenceNumber = frame->getSequenceNumber();
         pkt->insertAtFront(frame);
 
-        if(hops > maxHops)
+        if (hops > maxHops)
         {
             EV << "SAT [" << satIndex << "]: MSG expired. Delete." << endl;
+            metricsCollector->record_packet(metrics::PacketState::EXPIRED, *frame.get());
             bubble("MSG expired.");
             delete msg;
             return;
@@ -54,88 +74,49 @@ namespace flora
 
         insertSatinRoute(pkt);
 
-        auto outputGate = routing->RoutePacket(pkt, getParentModule());
-
-        switch (outputGate.direction)
+        cGate *outputGate = nullptr;
+        auto routeInformation = routing->RoutePacket(pkt, getParentModule());
+        switch (routeInformation.direction)
         {
-        case ISL_DOWN:
-        {
-            cGate *downGate = gate("down1$o");
-            if (downGate->getTransmissionChannel()->isBusy())
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down is busy." << endl;
-                scheduleAt(downGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
-            }
-            else
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down." << endl;
-                send(pkt->dup(), downGate);
-            }
+        case Direction::ISL_DOWN:
+            outputGate = gate("down1$o");
             break;
-        }
-        case ISL_UP:
-        {
-            cGate *upGate = gate("up1$o");
-            if (upGate->getTransmissionChannel()->isBusy())
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send up is busy." << endl;
-                scheduleAt(upGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
-            }
-            else
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send up." << endl;
-                send(pkt->dup(), upGate);
-            }
+        case Direction::ISL_UP:
+            outputGate = gate("up1$o");
             break;
-        }
-
-        case ISL_LEFT:
-        {
-            cGate *leftGate = gate("left1$o");
-            if (leftGate->getTransmissionChannel()->isBusy())
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send left is busy." << endl;
-                scheduleAt(leftGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
-            }
-            else
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send left." << endl;
-                send(pkt->dup(), leftGate);
-            }
+        case Direction::ISL_LEFT:
+            outputGate = gate("left1$o");
             break;
-        }
-        case ISL_RIGHT:
-        {
-            cGate *rightGate = gate("right1$o");
-            if (rightGate->getTransmissionChannel()->isBusy())
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send right is busy." << endl;
-                scheduleAt(rightGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
-            }
-            else
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send right." << endl;
-                send(pkt->dup(), rightGate);
-            }
+        case Direction::ISL_RIGHT:
+            outputGate = gate("right1$o");
             break;
-        }
-        case ISL_DOWNLINK:
-        {
-            cGate *downGate = gate("groundLink1$o", outputGate.gateIndex);
-            if (downGate->getTransmissionChannel()->isBusy())
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send ground is busy." << endl;
-                scheduleAt(downGate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
-            }
-            else
-            {
-                // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send ground." << endl;
-                send(pkt->dup(), downGate);
-            }
+        case Direction::ISL_DOWNLINK:
+            outputGate = gate("groundLink1$o", routeInformation.gateIndex);
             break;
-        }
         default:
             error("Unexpected gate");
+        }
+        routeMessage(outputGate, msg);
+    }
+
+    void PacketHandlerRouting::receiveMessage(cMessage *msg)
+    {
+        // TODO: Buffer msg if still processing other
+        // add processing delay
+        scheduleAfter(processingDelay, msg);
+    }
+
+    void PacketHandlerRouting::routeMessage(cGate *gate, cMessage *msg)
+    {
+        if (gate->getTransmissionChannel()->isBusy())
+        {
+            // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down is busy." << endl;
+            scheduleAt(gate->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+        }
+        else
+        {
+            // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down." << endl;
+            send(msg->dup(), gate);
         }
     }
 

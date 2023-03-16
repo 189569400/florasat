@@ -19,7 +19,7 @@ simple PacketHandlerRouting
 {
     parameters:
         @display("i=block/app");
-        
+        double processingDelay @unit(ms) = default(1ms);
         int maxHops = default(50);
 
     gates:        

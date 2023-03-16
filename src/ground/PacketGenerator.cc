@@ -63,7 +63,7 @@ namespace flora
         int destination = getRandomNumber();
         payload->setDestinationGroundstation(destination);
         payload->setOriginTime(simTime());
-
+        
         newPacket->insertAtFront(payload);
 
         std::stringstream ss;
