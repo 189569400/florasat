@@ -26,7 +26,6 @@ namespace flora
     protected:
         int satIndex = -1;
         int maxHops = -1;
-        simtime_t processingDelay;
 
         DirectedRouting *routing = nullptr;
         metrics::MetricsCollector *metricsCollector = nullptr;
@@ -36,7 +35,7 @@ namespace flora
         virtual void initialize(int stage) override;
         virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
         virtual void handleMessage(cMessage *msg) override;
-        void handleSelfMessage(cMessage *msg);
+        void processMessage(cMessage *msg);
         void receiveMessage(cMessage *msg);
         void routeMessage(cGate *gate, cMessage *msg);
 

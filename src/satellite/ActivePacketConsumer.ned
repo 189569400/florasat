@@ -15,22 +15,12 @@
 
 package flora.satellite;
 
-simple PacketHandlerRouting
+import inet.queueing.sink.ActivePacketSink;
+
+simple ActivePacketConsumer extends ActivePacketSink
 {
     parameters:
-        @display("i=block/app");
-        int maxHops = default(50);
-
-    gates:        
-        // ISL gates
-        inout left1;
-        inout right1;
-        inout up1;
-        inout down1;
-        
-        input queueIn;
-        output queueOut;
-
-        // GroundStation gates
-        inout groundLink1[20] @labels(GroundStationGate);
+        @class(ActivePacketConsumer);
+    gates:
+        output out;
 }

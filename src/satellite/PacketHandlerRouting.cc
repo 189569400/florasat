@@ -17,7 +17,6 @@ namespace flora
         if (stage == 0)
         {
             maxHops = par("maxHops");
-            processingDelay = par("processingDelay");
         }
 
         else if (stage == inet::INITSTAGE_APPLICATION_LAYER)
@@ -44,9 +43,9 @@ namespace flora
 
     void PacketHandlerRouting::handleMessage(cMessage *msg)
     {
-        if (msg->isSelfMessage())
+        if(msg->arrivedOn("queueIn"))
         {
-            handleSelfMessage(msg);
+            processMessage(msg);
         }
         else
         {
@@ -54,7 +53,7 @@ namespace flora
         }
     }
 
-    void PacketHandlerRouting::handleSelfMessage(cMessage *msg)
+    void PacketHandlerRouting::processMessage(cMessage *msg)
     {
         auto pkt = check_and_cast<inet::Packet *>(msg);
 
@@ -101,9 +100,7 @@ namespace flora
 
     void PacketHandlerRouting::receiveMessage(cMessage *msg)
     {
-        // TODO: Buffer msg if still processing other
-        // add processing delay
-        scheduleAfter(processingDelay, msg);
+        send(msg, "queueOut");
     }
 
     void PacketHandlerRouting::routeMessage(cGate *gate, cMessage *msg)

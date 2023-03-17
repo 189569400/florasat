@@ -19,6 +19,8 @@ import leosatellites.mobility.NoradA;
 import leosatellites.mobility.SatelliteMobility;
 
 import flora.satellite.PacketHandlerRouting;
+import flora.satellite.ActivePacketConsumer;
+import inet.queueing.queue.DropTailQueue;
 
 module SatelliteRouting
 {
@@ -33,24 +35,38 @@ module SatelliteRouting
 
     submodules:
         mobility: SatelliteMobility {
-            @display("p=54,56");
+            @display("p=100,100");
         }
 
         NoradModule: NoradA {
-            @display("p=153,56");
+            @display("p=300,100");
         }
 
         packetHandler: PacketHandlerRouting {
-            @display("p=181,161");
+            @display("p=700,100");
         }
+        
+		queue: DropTailQueue {
+			@display("p=900,100");
+		}
 
+        queueConsumer: ActivePacketConsumer {
+            @display("p=1100,100");
+        }
+		
     connections allowunconnected:
+        
+        // queueing
+        packetHandler.queueOut --> queue.in;
+        queue.out --> queueConsumer.in;
+        queueConsumer.out --> packetHandler.queueIn;
 
         // internal connections
         packetHandler.down1  <--> down;
         packetHandler.right1  <--> right;
         packetHandler.left1  <--> left;
         packetHandler.up1  <--> up;
+
         packetHandler.groundLink1[0]  <--> groundLink[0];
         packetHandler.groundLink1[1]  <--> groundLink[1];
         packetHandler.groundLink1[2]  <--> groundLink[2];
