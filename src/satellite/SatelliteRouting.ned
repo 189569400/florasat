@@ -25,7 +25,7 @@ import inet.queueing.queue.DropTailQueue;
 module SatelliteRouting
 {
     parameters:
-
+        @class(satellite::SatelliteRouting);
     gates:
         inout groundLink[20];
         inout left;
