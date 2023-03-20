@@ -9,24 +9,32 @@
 
 namespace flora
 {
-    Define_Module(ActivePacketConsumer);
-
-    void ActivePacketConsumer::collectPacket()
+    namespace satellite
     {
-        auto packet = provider->pullPacket(inputGate->getPathStartGate());
-        take(packet);
-        EV_INFO << "Collecting packet" << EV_FIELD(packet) << EV_ENDL;
-        numProcessedPackets++;
-        processedTotalLength += packet->getDataLength();
-        send(packet, "out");
-    }
-
-    void ActivePacketConsumer::handleCanPullPacketChanged(cGate *gate)
-    {
-        Enter_Method("handleCanPullPacketChanged");
-        if (!collectionTimer->isScheduled() && provider->canPullSomePacket(inputGate->getPathStartGate()))
+        namespace queue
         {
-            scheduleCollectionTimer();
-        }
-    }
-}
+            Define_Module(ActivePacketConsumer);
+
+            void ActivePacketConsumer::collectPacket()
+            {
+                auto packet = provider->pullPacket(inputGate->getPathStartGate());
+                take(packet);
+                EV_INFO << "Collecting packet" << EV_FIELD(packet) << EV_ENDL;
+                numProcessedPackets++;
+                processedTotalLength += packet->getDataLength();
+                send(packet, "out");
+            }
+
+            void ActivePacketConsumer::handleCanPullPacketChanged(cGate *gate)
+            {
+                Enter_Method("handleCanPullPacketChanged");
+                if (!collectionTimer->isScheduled() && provider->canPullSomePacket(inputGate->getPathStartGate()))
+                {
+                    scheduleCollectionTimer();
+                }
+            }
+        } // namespace queue
+
+    } // namespace satellite
+
+} // namespace flora

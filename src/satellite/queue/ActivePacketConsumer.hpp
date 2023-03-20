@@ -5,8 +5,8 @@
  *      Author: Robin Ohs
  */
 
-#ifndef SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_
-#define SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_
+#ifndef __FLORA_SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_
+#define __FLORA_SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_
 
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "inet/queueing/sink/ActivePacketSink.h"
@@ -16,15 +16,24 @@ using namespace inet::queueing;
 
 namespace flora
 {
-    class INET_API ActivePacketConsumer : public ActivePacketSink
+    namespace satellite
     {
-    protected:
-        virtual void collectPacket();
+        namespace queue
+        {
+            class INET_API ActivePacketConsumer : public ActivePacketSink
+            {
+            protected:
+                virtual void collectPacket();
 
-    public:
-        virtual ~ActivePacketConsumer() { cancelAndDeleteClockEvent(collectionTimer); }
+            public:
+                virtual ~ActivePacketConsumer() { cancelAndDeleteClockEvent(collectionTimer); }
 
-        virtual void handleCanPullPacketChanged(cGate *gate) override;
-    };
+                virtual void handleCanPullPacketChanged(cGate *gate) override;
+            };
+        } // namespace queue
+
+    } // namespace satellite
+
 } // namespace flora
-#endif SATELLITE_ACTIVEPACKETCONSUMER_H_
+
+#endif // __FLORA_SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_

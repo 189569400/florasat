@@ -20,7 +20,7 @@ import inet.queueing.sink.ActivePacketSink;
 simple ActivePacketConsumer extends ActivePacketSink
 {
     parameters:
-        @class(ActivePacketConsumer);
+        @class(satellite::queue::ActivePacketConsumer);
     gates:
         output out;
 }
