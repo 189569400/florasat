@@ -5,7 +5,7 @@
  *      Author: Robin Ohs
  */
 
-#include "satellite/ActivePacketConsumer.hpp"
+#include "satellite/queue/ActivePacketConsumer.hpp"
 
 namespace flora
 {

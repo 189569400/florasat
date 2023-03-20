@@ -5,8 +5,8 @@
  *      Author: Robin Ohs
  */
 
-#ifndef SATELLITE_ACTIVEPACKETCONSUMER_H_
-#define SATELLITE_ACTIVEPACKETCONSUMER_H_
+#ifndef SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_
+#define SATELLITE_QUEUE_ACTIVEPACKETCONSUMER_H_
 
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "inet/queueing/sink/ActivePacketSink.h"

@@ -19,7 +19,7 @@ import leosatellites.mobility.NoradA;
 import leosatellites.mobility.SatelliteMobility;
 
 import flora.satellite.PacketHandlerRouting;
-import flora.satellite.ActivePacketConsumer;
+import flora.satellite.queue.ActivePacketConsumer;
 import inet.queueing.queue.DropTailQueue;
 
 module SatelliteRouting
