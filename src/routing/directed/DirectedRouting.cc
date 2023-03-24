@@ -7,137 +7,99 @@
 
 #include "DirectedRouting.h"
 
-namespace flora
-{
-    Define_Module(DirectedRouting);
+namespace flora {
 
-    void DirectedRouting::initialize(int stage)
-    {
-        if (stage == inet::INITSTAGE_APPLICATION_LAYER)
-        {
-            topologyControl = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
-            if (topologyControl == nullptr)
-            {
-                error("Error in DirectedRouting::initialize(): topologyControl is nullptr.");
-            }
+Define_Module(DirectedRouting);
+
+void DirectedRouting::initialize(int stage) {
+    if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
+        topologyControl = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
+        if (topologyControl == nullptr) {
+            error("Error in DirectedRouting::initialize(): topologyControl is nullptr.");
         }
     }
+}
 
-    ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat)
-    {
-        auto frame = pkt->removeAtFront<RoutingFrame>();
-        int destGroundstationId = frame->getDestinationGroundstation();
-        pkt->insertAtFront(frame);
+ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
+    auto frame = pkt->removeAtFront<RoutingFrame>();
+    int destGroundstationId = frame->getDestinationGroundstation();
+    pkt->insertAtFront(frame);
 
-        int routingSatIndex = callerSat->getIndex();
+    int routingSatIndex = callerSat->getIndex();
 
-        int destSatIndex = -1;
+    int destSatIndex = -1;
 
-        // forward to which satellite? Here is a point to introduce shortest path etc.
-        for (int number : topologyControl->getGroundstationInfo(destGroundstationId)->satellites)
-        {
-            destSatIndex = number;
-            break;
-        }
-        if(destSatIndex == - 1) {
-            error("DestSatIndex was not set!");
-        }
+    // forward to which satellite? Here is a point to introduce shortest path etc.
+    for (int number : topologyControl->getGroundstationInfo(destGroundstationId)->satellites) {
+        destSatIndex = number;
+        break;
+    }
+    if (destSatIndex == -1) {
+        error("DestSatIndex was not set!");
+    }
 
-        // forward to which groundstation gate?
-        if (routingSatIndex == destSatIndex)
-        {
-            flora::topologycontrol::GsSatConnection *gsSatConnection = topologyControl->getGroundstationSatConnection(destGroundstationId, destSatIndex);
-            return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection->satGateIndex);
-        }
+    // forward to which groundstation gate?
+    if (routingSatIndex == destSatIndex) {
+        flora::topologycontrol::GsSatConnection *gsSatConnection = topologyControl->getGroundstationSatConnection(destGroundstationId, destSatIndex);
+        return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection->satGateIndex);
+    }
 
-        int myPlane = topologyControl->calculateSatellitePlane(routingSatIndex);
-        int destPlane = topologyControl->calculateSatellitePlane(destSatIndex);
-        bool isAscending = IsSatelliteAscending(callerSat);
+    int myPlane = topologyControl->calculateSatellitePlane(routingSatIndex);
+    int destPlane = topologyControl->calculateSatellitePlane(destSatIndex);
+    bool isAscending = IsSatelliteAscending(callerSat);
 
-        // destination is on same plane
-        if (myPlane < destPlane)
-        {
-            if (isAscending)
-            {
-                if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1)))
-                {
-                    return ISLDirection(Direction::ISL_RIGHT, -1);
-                }
-                else
-                {
-                    return ISLDirection(Direction::ISL_DOWN, -1);
-                }
-            }
-            else
-            {
-                if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1)))
-                {
-                    return ISLDirection(Direction::ISL_LEFT, -1);
-                }
-                else
-                {
-                    return ISLDirection(Direction::ISL_UP, -1);
-                }
-            }
-        }
-        else if (myPlane > destPlane)
-        {
-            if (isAscending)
-            {
-                if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1)))
-                {
-                    return ISLDirection(Direction::ISL_LEFT, -1);
-                }
-                else
-                {
-                    return ISLDirection(Direction::ISL_DOWN, -1);
-                }
-            }
-            else
-            {
-                if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1)))
-                {
-                    return ISLDirection(Direction::ISL_RIGHT, -1);
-                }
-                else
-                {
-                    return ISLDirection(Direction::ISL_UP, -1);
-                }
-            }
-        }
-        else if (myPlane == destPlane)
-        {
-            if (routingSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1)))
-            {
-                return ISLDirection(Direction::ISL_UP, -1);
-            }
-            else if (routingSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1)))
-            {
+    // destination is on same plane
+    if (myPlane < destPlane) {
+        if (isAscending) {
+            if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
+                return ISLDirection(Direction::ISL_RIGHT, -1);
+            } else {
                 return ISLDirection(Direction::ISL_DOWN, -1);
             }
-            else
-            {
-                error("Error in PacketHandlerDirected::handleMessage: choosen gate should be connected!");
+        } else {
+            if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
+                return ISLDirection(Direction::ISL_LEFT, -1);
+            } else {
+                return ISLDirection(Direction::ISL_UP, -1);
             }
         }
-    }
-
-    bool DirectedRouting::IsSatelliteAscending(cModule *satellite)
-    {
-        NoradA *noradA = check_and_cast<NoradA *>(satellite->getSubmodule("NoradModule"));
-        if (noradA == nullptr)
-        {
-            error("Error in TopologyControl::getSatellites(): noradA module of loRaGW with index %zu is nullptr. Make sure a module with name `NoradModule` exists.", satellite->getIndex());
+    } else if (myPlane > destPlane) {
+        if (isAscending) {
+            if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
+                return ISLDirection(Direction::ISL_LEFT, -1);
+            } else {
+                return ISLDirection(Direction::ISL_DOWN, -1);
+            }
+        } else {
+            if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
+                return ISLDirection(Direction::ISL_RIGHT, -1);
+            } else {
+                return ISLDirection(Direction::ISL_UP, -1);
+            }
         }
-        return noradA->isAscending();
+    } else if (myPlane == destPlane) {
+        if (routingSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {
+            return ISLDirection(Direction::ISL_UP, -1);
+        } else if (routingSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
+            return ISLDirection(Direction::ISL_DOWN, -1);
+        } else {
+            error("Error in PacketHandlerDirected::handleMessage: choosen gate should be connected!");
+        }
     }
+}
 
-    bool DirectedRouting::HasConnection(cModule *satellite, ISLDirection side)
-    {
-        if (satellite == nullptr)
-            error("DirectedRouting::HasConnection(): satellite mullptr");
-        switch (side.direction)
-        {
+bool DirectedRouting::IsSatelliteAscending(cModule *satellite) {
+    NoradA *noradA = check_and_cast<NoradA *>(satellite->getSubmodule("NoradModule"));
+    if (noradA == nullptr) {
+        error("Error in TopologyControl::getSatellites(): noradA module of loRaGW with index %zu is nullptr. Make sure a module with name `NoradModule` exists.", satellite->getIndex());
+    }
+    return noradA->isAscending();
+}
+
+bool DirectedRouting::HasConnection(cModule *satellite, ISLDirection side) {
+    if (satellite == nullptr)
+        error("DirectedRouting::HasConnection(): satellite mullptr");
+    switch (side.direction) {
         case ISL_UP:
             return satellite->gateHalf("up", cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_DOWN:
@@ -150,7 +112,8 @@ namespace flora
             return satellite->gateHalf("groundLink", cGate::Type::OUTPUT, side.gateIndex)->isConnectedOutside();
         default:
             error("HasConnection is not implemented for this side.");
-        }
-        return false;
     }
+    return false;
 }
+
+}  // namespace flora

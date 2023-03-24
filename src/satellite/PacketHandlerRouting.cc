@@ -7,76 +7,62 @@
 
 #include "PacketHandlerRouting.h"
 
-namespace flora
-{
+namespace flora {
 
-    Define_Module(PacketHandlerRouting);
+Define_Module(PacketHandlerRouting);
 
-    void PacketHandlerRouting::initialize(int stage)
-    {
-        if (stage == 0)
-        {
-            maxHops = par("maxHops");
-        }
-
-        else if (stage == inet::INITSTAGE_APPLICATION_LAYER)
-        {
-            routing = check_and_cast<DirectedRouting *>(getSystemModule()->getSubmodule("routing"));
-            if (routing == nullptr)
-            {
-                error("Error in PacketHandlerRouting::initialize(): Routing is nullptr.");
-            }
-
-            INorad *noradModule = check_and_cast<INorad *>(getParentModule()->getSubmodule("NoradModule"));
-            if (NoradA *noradAModule = dynamic_cast<NoradA *>(noradModule))
-            {
-                satIndex = noradAModule->getSatelliteNumber();
-            }
-
-            metricsCollector = check_and_cast<metrics::MetricsCollector *>(getSystemModule()->getSubmodule("metricsCollector"));
-            if (metricsCollector == nullptr)
-            {
-                error("PacketGenerator::initialize(0): metricsCollector mullptr");
-            }
-        }
+void PacketHandlerRouting::initialize(int stage) {
+    if (stage == 0) {
+        maxHops = par("maxHops");
     }
 
-    void PacketHandlerRouting::handleMessage(cMessage *msg)
-    {
-        if(msg->arrivedOn("queueIn"))
-        {
-            processMessage(msg);
+    else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
+        routing = check_and_cast<DirectedRouting *>(getSystemModule()->getSubmodule("routing"));
+        if (routing == nullptr) {
+            error("Error in PacketHandlerRouting::initialize(): Routing is nullptr.");
         }
-        else
-        {
-            receiveMessage(msg);
+
+        INorad *noradModule = check_and_cast<INorad *>(getParentModule()->getSubmodule("NoradModule"));
+        if (NoradA *noradAModule = dynamic_cast<NoradA *>(noradModule)) {
+            satIndex = noradAModule->getSatelliteNumber();
+        }
+
+        metricsCollector = check_and_cast<metrics::MetricsCollector *>(getSystemModule()->getSubmodule("metricsCollector"));
+        if (metricsCollector == nullptr) {
+            error("PacketGenerator::initialize(0): metricsCollector mullptr");
         }
     }
+}
 
-    void PacketHandlerRouting::processMessage(cMessage *msg)
-    {
-        auto pkt = check_and_cast<inet::Packet *>(msg);
+void PacketHandlerRouting::handleMessage(cMessage *msg) {
+    if (msg->arrivedOn("queueIn")) {
+        processMessage(msg);
+    } else {
+        receiveMessage(msg);
+    }
+}
 
-        auto frame = pkt->removeAtFront<RoutingFrame>();
-        int hops = frame->getNumHop();
-        int sequenceNumber = frame->getSequenceNumber();
-        pkt->insertAtFront(frame);
+void PacketHandlerRouting::processMessage(cMessage *msg) {
+    auto pkt = check_and_cast<inet::Packet *>(msg);
 
-        if (hops > maxHops)
-        {
-            EV << "SAT [" << satIndex << "]: MSG expired. Delete." << endl;
-            metricsCollector->record_packet(metrics::PacketState::EXPIRED, *frame.get());
-            bubble("MSG expired.");
-            delete msg;
-            return;
-        }
+    auto frame = pkt->removeAtFront<RoutingFrame>();
+    int hops = frame->getNumHop();
+    int sequenceNumber = frame->getSequenceNumber();
+    pkt->insertAtFront(frame);
 
-        insertSatinRoute(pkt);
+    if (hops > maxHops) {
+        EV << "SAT [" << satIndex << "]: MSG expired. Delete." << endl;
+        metricsCollector->record_packet(metrics::PacketState::EXPIRED, *frame.get());
+        bubble("MSG expired.");
+        delete msg;
+        return;
+    }
 
-        cGate *outputGate = nullptr;
-        auto routeInformation = routing->RoutePacket(pkt, getParentModule());
-        switch (routeInformation.direction)
-        {
+    insertSatinRoute(pkt);
+
+    cGate *outputGate = nullptr;
+    auto routeInformation = routing->RoutePacket(pkt, getParentModule());
+    switch (routeInformation.direction) {
         case Direction::ISL_DOWN:
             outputGate = gate("down1$o");
             break;
@@ -94,45 +80,38 @@ namespace flora
             break;
         default:
             error("Unexpected gate");
-        }
-        routeMessage(outputGate, msg);
     }
-
-    void PacketHandlerRouting::receiveMessage(cMessage *msg)
-    {
-        send(msg, "queueOut");
-    }
-
-    void PacketHandlerRouting::routeMessage(cGate *gate, cMessage *msg)
-    {
-        if (gate->getTransmissionChannel()->isBusy())
-        {
-            // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down is busy." << endl;
-            scheduleAt(gate->getTransmissionChannel()->getTransmissionFinishTime(), msg);
-        }
-        else
-        {
-            // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down." << endl;
-            send(msg->dup(), gate);
-        }
-    }
-
-    bool PacketHandlerRouting::isExpired(Packet *pkt)
-    {
-        auto frame = pkt->removeAtFront<RoutingFrame>();
-        int hops = frame->getNumHop();
-        pkt->insertAtFront(frame);
-        return hops > maxHops;
-    }
-
-    void PacketHandlerRouting::insertSatinRoute(Packet *pkt)
-    {
-        auto frame = pkt->removeAtFront<RoutingFrame>();
-        int numHops = frame->getNumHop();
-        frame->setNumHop(numHops + 1);
-        frame->appendRoute(satIndex);
-        frame->appendTimestamps(simTime());
-        pkt->insertAtFront(frame);
-    }
-
+    routeMessage(outputGate, msg);
 }
+
+void PacketHandlerRouting::receiveMessage(cMessage *msg) {
+    send(msg, "queueOut");
+}
+
+void PacketHandlerRouting::routeMessage(cGate *gate, cMessage *msg) {
+    if (gate->getTransmissionChannel()->isBusy()) {
+        // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down is busy." << endl;
+        scheduleAt(gate->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+    } else {
+        // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down." << endl;
+        send(msg->dup(), gate);
+    }
+}
+
+bool PacketHandlerRouting::isExpired(Packet *pkt) {
+    auto frame = pkt->removeAtFront<RoutingFrame>();
+    int hops = frame->getNumHop();
+    pkt->insertAtFront(frame);
+    return hops > maxHops;
+}
+
+void PacketHandlerRouting::insertSatinRoute(Packet *pkt) {
+    auto frame = pkt->removeAtFront<RoutingFrame>();
+    int numHops = frame->getNumHop();
+    frame->setNumHop(numHops + 1);
+    frame->appendRoute(satIndex);
+    frame->appendTimestamps(simTime());
+    pkt->insertAtFront(frame);
+}
+
+}  // namespace flora

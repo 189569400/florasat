@@ -5,7 +5,7 @@
  *      Author: Robin Ohs
  */
 
-#include "satellite/SatelliteRouting.hpp"
+#include "satellite/SatelliteRouting.h"
 
 namespace flora
 {

@@ -5,44 +5,44 @@
  *      Author: Robin Ohs
  */
 
-#ifndef SATELLITE_PACKETHANDLERROUTING_H_
-#define SATELLITE_PACKETHANDLERROUTING_H_
+#ifndef __FLORA_SATELLITE_PACKETHANDLERROUTING_H_
+#define __FLORA_SATELLITE_PACKETHANDLERROUTING_H_
 
 #include <omnetpp.h>
-#include "routing/random/RandomRouting.h"
-#include "routing/directed/DirectedRouting.h"
+
 #include "inet/common/INETDefs.h"
-#include "routing/RoutingFrame_m.h"
-#include "mobility/NoradA.h"
-#include "mobility/INorad.h"
 #include "metrics/MetricsCollector.h"
+#include "mobility/INorad.h"
+#include "mobility/NoradA.h"
+#include "routing/RoutingFrame_m.h"
+#include "routing/directed/DirectedRouting.h"
+#include "routing/random/RandomRouting.h"
 
 using namespace omnetpp;
 
-namespace flora
-{
-    class PacketHandlerRouting : public cSimpleModule
-    {
-    protected:
-        int satIndex = -1;
-        int maxHops = -1;
+namespace flora {
 
-        DirectedRouting *routing = nullptr;
-        metrics::MetricsCollector *metricsCollector = nullptr;
-        cMessage *selfMsg = nullptr;
+class PacketHandlerRouting : public cSimpleModule {
+   protected:
+    int satIndex = -1;
+    int maxHops = -1;
 
-    protected:
-        virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-        virtual void handleMessage(cMessage *msg) override;
-        void processMessage(cMessage *msg);
-        void receiveMessage(cMessage *msg);
-        void routeMessage(cGate *gate, cMessage *msg);
+    DirectedRouting *routing = nullptr;
+    metrics::MetricsCollector *metricsCollector = nullptr;
+    cMessage *selfMsg = nullptr;
 
-        void insertSatinRoute(Packet *pkt);
-        bool isExpired(Packet *pkt);
-    };
+   protected:
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override;
+    void processMessage(cMessage *msg);
+    void receiveMessage(cMessage *msg);
+    void routeMessage(cGate *gate, cMessage *msg);
 
-} // flora
+    void insertSatinRoute(Packet *pkt);
+    bool isExpired(Packet *pkt);
+};
 
-#endif
+}  // namespace flora
+
+#endif  // __FLORA_SATELLITE_PACKETHANDLERROUTING_H_

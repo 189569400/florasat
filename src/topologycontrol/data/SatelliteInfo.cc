@@ -7,21 +7,20 @@
 
 #include "SatelliteInfo.h"
 
-namespace flora
-{
-    namespace topologycontrol
-    {
-        std::string SatelliteInfo::to_string()
-        {
-            std::stringstream ss;
-            ss << "{";
-            ss << "\"satelliteId\": " << satelliteId << ",";
-            ss << "\"up\": " << upSatellite << ",";
-            ss << "\"down\": " << downSatellite << ",";
-            ss << "\"left\": " << leftSatellite << ",";
-            ss << "\"right\": " << rightSatellite << ",";
-            ss << "}";
-            return ss.str();
-        }
-    } // topologycontrol
-} // flora
+namespace flora {
+namespace topologycontrol {
+
+std::string SatelliteInfo::to_string() {
+    std::stringstream ss;
+    ss << "{";
+    ss << "\"satelliteId\": " << satelliteId << ",";
+    ss << "\"up\": " << upSatellite << ",";
+    ss << "\"down\": " << downSatellite << ",";
+    ss << "\"left\": " << leftSatellite << ",";
+    ss << "\"right\": " << rightSatellite << ",";
+    ss << "}";
+    return ss.str();
+}
+
+}  // namespace topologycontrol
+}  // namespace flora

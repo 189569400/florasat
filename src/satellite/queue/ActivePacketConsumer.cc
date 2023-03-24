@@ -5,36 +5,30 @@
  *      Author: Robin Ohs
  */
 
-#include "satellite/queue/ActivePacketConsumer.hpp"
+#include "satellite/queue/ActivePacketConsumer.h"
 
-namespace flora
-{
-    namespace satellite
-    {
-        namespace queue
-        {
-            Define_Module(ActivePacketConsumer);
+namespace flora {
+namespace satellite {
+namespace queue {
 
-            void ActivePacketConsumer::collectPacket()
-            {
-                auto packet = provider->pullPacket(inputGate->getPathStartGate());
-                take(packet);
-                EV_INFO << "Collecting packet" << EV_FIELD(packet) << EV_ENDL;
-                numProcessedPackets++;
-                processedTotalLength += packet->getDataLength();
-                send(packet, "out");
-            }
+Define_Module(ActivePacketConsumer);
 
-            void ActivePacketConsumer::handleCanPullPacketChanged(cGate *gate)
-            {
-                Enter_Method("handleCanPullPacketChanged");
-                if (!collectionTimer->isScheduled() && provider->canPullSomePacket(inputGate->getPathStartGate()))
-                {
-                    scheduleCollectionTimer();
-                }
-            }
-        } // namespace queue
+void ActivePacketConsumer::collectPacket() {
+    auto packet = provider->pullPacket(inputGate->getPathStartGate());
+    take(packet);
+    EV_INFO << "Collecting packet" << EV_FIELD(packet) << EV_ENDL;
+    numProcessedPackets++;
+    processedTotalLength += packet->getDataLength();
+    send(packet, "out");
+}
 
-    } // namespace satellite
+void ActivePacketConsumer::handleCanPullPacketChanged(cGate *gate) {
+    Enter_Method("handleCanPullPacketChanged");
+    if (!collectionTimer->isScheduled() && provider->canPullSomePacket(inputGate->getPathStartGate())) {
+        scheduleCollectionTimer();
+    }
+}
 
-} // namespace flora
+}  // namespace queue
+}  // namespace satellite
+}  // namespace flora
