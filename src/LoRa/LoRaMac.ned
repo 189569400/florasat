@@ -45,6 +45,10 @@ module LoRaMac extends CsmaCaMac
         double maxToA = default(1.8);
         double clockThreshold = default(0.010);
         
+        // FSA Game parameters
+        bool FSAGame = default(false);
+        int realNodeNumber = default(0);
+        
         bitrate = 250bps;
         @class(LoRaMac);
         
