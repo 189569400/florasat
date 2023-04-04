@@ -19,5 +19,6 @@ package flora.mobility;
 simple FasterSatMobility 
 {
     parameters:
-        double updateIntervalPos @unit(s) = default(1s);
+        @class(mobility::FasterSatMobility);
+        double updateInterval @unit(s) = default(1s);
 }

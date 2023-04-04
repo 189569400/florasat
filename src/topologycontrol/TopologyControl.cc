@@ -70,7 +70,7 @@ void TopologyControl::handleMessage(cMessage *msg) {
         UpdateTopology();
         scheduleUpdate();
     } else
-        throw cRuntimeError("TopologyControl: Unknown message.");
+        error("TopologyControl: Unknown message.");
 }
 
 void TopologyControl::scheduleUpdate() {
@@ -149,7 +149,7 @@ void TopologyControl::updateIntraSatelliteLinks() {
 
             // if its only a "slice" of a constellation, no connection between the first and the last sat
             if (isLastSatInPlane && !isClosedConstellation) {
-                EV << "Should continue?" << (isLastSatInPlane && !isClosedConstellation) << endl;
+                EV_DEBUG << "Should continue?" << (isLastSatInPlane && !isClosedConstellation) << endl;
                 continue;
             }
 
@@ -188,7 +188,7 @@ void TopologyControl::updateGroundstationLinks() {
     // iterate over groundstations
     for (size_t i = 0; i < groundstationCount; i++) {
         GroundstationInfo *gsInfo = &groundstationInfos.at(i);
-        EV << gsInfo->to_string() << endl;
+        EV_DEBUG << gsInfo->to_string() << endl;
 
         // find satellites with elevation >= minElevation
         std::set<SatelliteInfo *> satellites;
@@ -275,7 +275,7 @@ void TopologyControl::updateGroundstationLinks() {
             gsInfo->satellites.emplace(sat->satelliteId);
         }
 
-        EV << gsInfo->to_string() << endl;
+        EV_DEBUG << gsInfo->to_string() << endl;
     }
 }
 

@@ -7,67 +7,62 @@
 
 #include "FasterSatMobility.h"
 
-namespace flora
-{
-    Define_Module(FasterSatMobility);
+namespace flora {
+namespace mobility {
 
-    FasterSatMobility::FasterSatMobility() : updatePos(nullptr),
-                                             updateIntervalPos(0)
-    {
-    }
+Define_Module(FasterSatMobility);
 
-    FasterSatMobility::~FasterSatMobility()
-    {
-        cancelAndDelete(updatePos);
-    }
+FasterSatMobility::FasterSatMobility() : updateTimer(nullptr),
+                                         updateIntervalParameter(0) {
+}
 
-    void FasterSatMobility::initialize(int stage)
-    {
-        if (stage == 0)
-        {
-            updateIntervalPos = par("updateIntervalPos");
-        }
-        else if (stage == inet::INITSTAGE_ROUTING_PROTOCOLS)
-        {
-            updatePos = new cMessage(POSITION, 1);
-            updatePositions();
+FasterSatMobility::~FasterSatMobility() {
+    cancelAndDeleteClockEvent(updateTimer);
+}
+
+void FasterSatMobility::initialize(int stage) {
+    if (stage == inet::INITSTAGE_LOCAL) {
+        updateIntervalParameter = &par("updateInterval");
+        updateTimer = new inet::ClockEvent("UpdateTimer");
+    } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
+        updatePositions();
+        if (!updateTimer->isScheduled()) {
+            scheduleUpdate();
         }
     }
+}
 
-    void FasterSatMobility::handleMessage(cMessage *msg)
-    {
-        if (msg->getKind() == 1)
-            updatePositions();
-    }
+void FasterSatMobility::handleMessage(cMessage *msg) {
+    if (msg == updateTimer) {
+        updatePositions();
+        scheduleUpdate();
+    } else
+        error("FasterSatMobility: Unknown message.");
+}
 
-    void FasterSatMobility::updatePositions()
-    {
-        EV << "Update satellite positions" << endl;
-        cModule *parent = getParentModule();
-        if (parent == nullptr)
-        {
-            error("Error in FasterSatMobility::updatePositions: Could not find parent.");
-        }
-        int numSats = parent->getSubmoduleVectorSize("loRaGW");
-        for (size_t i = 0; i < numSats; i++)
-        {
-            cModule *sat = parent->getSubmodule("loRaGW", i);
-            if (sat == nullptr)
-            {
-                error("Error in FasterSatMobility::updateSat: Could not find sat with id %d.", i);
-            }
-            inet::SatelliteMobility *satMobility = check_and_cast<inet::SatelliteMobility *>(sat->getSubmodule("mobility"));
-            if (satMobility == nullptr)
-            {
-                error("Error in FasterSatMobility::updateSat: Could not find sat mobility for sat %d.", i);
-            }
-            satMobility->updatePosition();
-        }
-        cancelEvent(updatePos);
-        if (updateIntervalPos != 0)
-        {
-            simtime_t nextUpdate = simTime() + updateIntervalPos;
-            scheduleAt(nextUpdate, updatePos);
-        }
+void FasterSatMobility::updatePositions() {
+    EV_DEBUG << "Update satellite positions" << endl;
+    cModule *parent = getParentModule();
+    if (parent == nullptr) {
+        error("Error in FasterSatMobility::updatePositions: Could not find parent.");
     }
-} // namespace flora
+    int numSats = parent->getSubmoduleVectorSize("loRaGW");
+    for (size_t i = 0; i < numSats; i++) {
+        cModule *sat = parent->getSubmodule("loRaGW", i);
+        if (sat == nullptr) {
+            error("Error in FasterSatMobility::updateSat: Could not find sat with id %d.", i);
+        }
+        inet::SatelliteMobility *satMobility = check_and_cast<inet::SatelliteMobility *>(sat->getSubmodule("mobility"));
+        if (satMobility == nullptr) {
+            error("Error in FasterSatMobility::updateSat: Could not find sat mobility for sat %d.", i);
+        }
+        satMobility->updatePosition();
+    }
+}
+
+void FasterSatMobility::scheduleUpdate() {
+    scheduleClockEventAfter(updateIntervalParameter->doubleValue(), updateTimer);
+}
+
+}  // namespace mobility
+}  // namespace flora

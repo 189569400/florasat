@@ -5,39 +5,46 @@
  *      Author: Robin Ohs
  */
 
-#ifndef MOBILITY_FASTERSATMOBILITY_H_
-#define MOBILITY_FASTERSATMOBILITY_H_
+#ifndef __FLORA_MOBILITY_FASTERSATMOBILITY_H_
+#define __FLORA_MOBILITY_FASTERSATMOBILITY_H_
 
 #include <omnetpp.h>
+
 #include <future>
+
+#include "inet/common/clock/ClockUserModuleMixin.h"
 #include "mobility/SatelliteMobility.h"
 
-namespace flora
-{
+namespace flora {
+namespace mobility {
 
-    using namespace omnetpp;
+class FasterSatMobility : public inet::ClockUserModuleMixin<omnetpp::cSimpleModule> {
+   public:
+    FasterSatMobility();
 
-    class FasterSatMobility : public cSimpleModule
-    {
-    public:
-        FasterSatMobility();
+   protected:
+    virtual ~FasterSatMobility();
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override;
+    void updatePositions();
+    /** @brief Schedules the update timer that will update the topology state.*/
+    void scheduleUpdate();
 
-    protected:
-        virtual ~FasterSatMobility();
-        virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-        virtual void handleMessage(cMessage *msg) override;
-        void updatePositions();
+   protected:
+    /**
+     * @brief The simulation time interval used to regularly signal mobility state changes.
+     *
+     * The 0 value turns off the signal.
+     */
+    cPar *updateIntervalParameter = nullptr;
+    inet::ClockEvent *updateTimer = nullptr;
 
-    protected:
-        /** @brief The message used for schedule mobility updates. */
-        cMessage *updatePos;
-        double updateIntervalPos;
+   private:
+    const char *POSITION = "POSITION";
+};
 
-    private:
-        const char *POSITION = "POSITION";
-    };
+}  // namespace mobility
+}  // namespace flora
 
-} // namespace flora
-
-#endif /* MOBILITY_FASTERSATMOBILITY_H_ */
+#endif /* __FLORA_MOBILITY_FASTERSATMOBILITY_H_ */

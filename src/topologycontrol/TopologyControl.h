@@ -15,9 +15,9 @@
 #include <set>
 #include <string>
 
+#include "inet/common/clock/ClockUserModuleMixin.h"
 #include "mobility/GroundStationMobility.h"
 #include "mobility/NoradA.h"
-#include "inet/common/clock/ClockUserModuleMixin.h"
 #include "topologycontrol/data/GroundstationInfo.h"
 #include "topologycontrol/data/GsSatConnection.h"
 #include "topologycontrol/data/SatelliteInfo.h"
