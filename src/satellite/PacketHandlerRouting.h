@@ -15,7 +15,7 @@
 #include "mobility/INorad.h"
 #include "mobility/NoradA.h"
 #include "routing/RoutingFrame_m.h"
-#include "routing/directed/DirectedRouting.h"
+#include "routing/RoutingBase.h"
 #include "routing/random/RandomRouting.h"
 
 using namespace omnetpp;
@@ -27,7 +27,7 @@ class PacketHandlerRouting : public cSimpleModule {
     int satIndex = -1;
     int maxHops = -1;
 
-    DirectedRouting *routing = nullptr;
+    routing::RoutingBase *routing = nullptr;
     metrics::MetricsCollector *metricsCollector = nullptr;
     cMessage *selfMsg = nullptr;
 

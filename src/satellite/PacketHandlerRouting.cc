@@ -12,16 +12,13 @@ namespace flora {
 Define_Module(PacketHandlerRouting);
 
 void PacketHandlerRouting::initialize(int stage) {
-    if (stage == 0) {
+    if (stage == inet::INITSTAGE_LOCAL) {
         maxHops = par("maxHops");
-    }
-
-    else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
-        routing = check_and_cast<DirectedRouting *>(getSystemModule()->getSubmodule("routing"));
+    } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
+        routing = check_and_cast<routing::RoutingBase *>(getSystemModule()->getSubmodule("routing"));
         if (routing == nullptr) {
             error("Error in PacketHandlerRouting::initialize(): Routing is nullptr.");
         }
-
         INorad *noradModule = check_and_cast<INorad *>(getParentModule()->getSubmodule("NoradModule"));
         if (NoradA *noradAModule = dynamic_cast<NoradA *>(noradModule)) {
             satIndex = noradAModule->getSatelliteNumber();
@@ -63,19 +60,19 @@ void PacketHandlerRouting::processMessage(cMessage *msg) {
     cGate *outputGate = nullptr;
     auto routeInformation = routing->RoutePacket(pkt, getParentModule());
     switch (routeInformation.direction) {
-        case Direction::ISL_DOWN:
+        case routing::Direction::ISL_DOWN:
             outputGate = gate("down1$o");
             break;
-        case Direction::ISL_UP:
+        case routing::Direction::ISL_UP:
             outputGate = gate("up1$o");
             break;
-        case Direction::ISL_LEFT:
+        case routing::Direction::ISL_LEFT:
             outputGate = gate("left1$o");
             break;
-        case Direction::ISL_RIGHT:
+        case routing::Direction::ISL_RIGHT:
             outputGate = gate("right1$o");
             break;
-        case Direction::ISL_DOWNLINK:
+        case routing::Direction::ISL_DOWNLINK:
             outputGate = gate("groundLink1$o", routeInformation.gateIndex);
             break;
         default:

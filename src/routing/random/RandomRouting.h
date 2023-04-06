@@ -10,19 +10,20 @@
 
 #include <omnetpp.h>
 
+#include "core/Utils.h"
 #include "inet/common/packet/Packet.h"
 #include "routing/ISLDirection.h"
-
-using namespace omnetpp;
+#include "routing/RoutingBase.h"
 
 namespace flora {
+namespace routing {
 
-class RandomRouting : public cSimpleModule {
+class RandomRouting : public RoutingBase, public omnetpp::cSimpleModule {
    public:
     ISLDirection RoutePacket(inet::Packet *pkt, cModule *callerSat);
-    bool HasConnection(cModule *satellite, ISLDirection side);
 };
 
+}  // namespace routing
 }  // namespace flora
 
 #endif  // __FLORA_ROUTING_RANDOMROUTING_H_

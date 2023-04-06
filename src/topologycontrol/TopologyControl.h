@@ -15,6 +15,7 @@
 #include <set>
 #include <string>
 
+#include "core/Timer.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "mobility/GroundStationMobility.h"
 #include "mobility/NoradA.h"
@@ -24,7 +25,6 @@
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
 #include "topologycontrol/utilities/WalkerType.h"
-#include "core/Timer.h"
 
 using namespace omnetpp;
 

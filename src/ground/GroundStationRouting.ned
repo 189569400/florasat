@@ -15,6 +15,9 @@
 
 package flora.ground;
 
+import inet.applications.tcpapp.TcpBasicClientApp;
+import inet.applications.tcpapp.TcpGenericServerApp;
+
 import leosatellites.mobility.GroundStationMobility;
 
 module GroundStationRouting
@@ -27,14 +30,28 @@ module GroundStationRouting
 
     submodules:
         mobility: GroundStationMobility {
-            @display("p=71,158");
+            @display("p=100,100");
         }
 
         packetGenerator: PacketGenerator {
-            @display("p=71,158");
+            @display("p=300,100");
+        }
+        
+        app: TcpBasicClientApp {
+            @display("p=500,100"); 
+        }
+
+        server: TcpGenericServerApp {
+            @display("p=700,100"); 
         }
 
     connections allowunconnected:
+        app.socketOut --> packetGenerator.app$i;
+        packetGenerator.app$o --> app.socketIn;
+
+        server.socketOut --> packetGenerator.server$i;
+        packetGenerator.server$o --> server.socketIn;
+
         satelliteLink[0] <--> packetGenerator.satelliteLink[0];
         satelliteLink[1] <--> packetGenerator.satelliteLink[1];
         satelliteLink[2] <--> packetGenerator.satelliteLink[2];

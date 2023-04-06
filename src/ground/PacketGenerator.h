@@ -5,46 +5,34 @@
  *      Author: Robin Ohs
  */
 
-#ifndef GROUND_PACKETGENERATOR_H_
-#define GROUND_PACKETGENERATOR_H_
+#ifndef __FLORA_GROUND_PACKETGENERATOR_H_
+#define __FLORA_GROUND_PACKETGENERATOR_H_
 
 #include <omnetpp.h>
-#include "routing/RoutingFrame_m.h"
-#include "metrics/MetricsCollector.h"
+
+#include "core/Utils.h"
 #include "inet/common/INETDefs.h"
-#include "inet/common/packet/Packet.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/common/packet/Packet.h"
+#include "metrics/MetricsCollector.h"
+#include "routing/RoutingFrame_m.h"
 
-using namespace omnetpp;
+namespace flora {
 
-namespace flora
-{
+class PacketGenerator : public omnetpp::cSimpleModule {
+   protected:
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 
-    class PacketGenerator : public cSimpleModule
-    {
-        protected:
-            virtual void initialize(int stage) override;
-            virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+    int sentPackets;
+    int groundStationId;
+    int numGroundStations;
 
-            metrics::MetricsCollector* metricsCollector;
-            
-            int groundStationId;
-            int sentPackets = 0;
-            int receivedPackets = 0;
-            int numGroundStations;
+   protected:
+    virtual void handleMessage(cMessage* msg) override;
+    void sendMessage(inet::Packet* msg);
+};
 
-            simtime_t updateInterval;
+}  // namespace flora
 
-            cMessage *selfMsg = nullptr;
-
-        protected:
-            virtual void handleMessage(cMessage* msg) override;
-            void handleSelfMessage(cMessage* msg);
-            void receiveMessage(cMessage* pkt);
-            void scheduleUpdate();
-            int getRandomNumber();
-    };
-
-} // flora
-
-#endif // GROUND_PACKETGENERATOR_H_
+#endif  // __FLORA_GROUND_PACKETGENERATOR_H_

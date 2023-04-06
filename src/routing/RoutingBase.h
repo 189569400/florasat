@@ -13,18 +13,18 @@
 #include "ISLDirection.h"
 #include "inet/common/packet/Packet.h"
 
-using namespace omnetpp;
-
 namespace flora {
+namespace routing {
 
-class RoutingBase : public cSimpleModule {
+class RoutingBase {
    public:
-    virtual ISLDirection RoutePacket(inet::Packet *pkt, cModule *callerSat);
+    virtual ISLDirection RoutePacket(inet::Packet *pkt, omnetpp::cModule *callerSat) = 0;
 
    protected:
-    virtual bool HasConnection(cModule *satellite, ISLDirection side);
+    virtual bool HasConnection(omnetpp::cModule *satellite, ISLDirection side);
 };
 
+}  // namespace routing
 }  // namespace flora
 
 #endif  // __FLORA_ROUTING_ROUTINGBASE_H_

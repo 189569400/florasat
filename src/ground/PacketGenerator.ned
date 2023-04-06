@@ -24,4 +24,6 @@ simple PacketGenerator
 
     gates:
         inout satelliteLink[40] @labels(satelliteLink);
+        inout app;
+        inout server;
 }

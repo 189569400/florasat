@@ -11,6 +11,7 @@
 #include <omnetpp.h>
 
 namespace flora {
+namespace routing {
 
 enum Direction {
     ISL_LEFT,
@@ -29,6 +30,7 @@ struct ISLDirection {
           gateIndex(gateIndex){};
 };
 
+}  // namespace routing
 }  // namespace flora
 
 #endif  // __FLORA_ROUTING_ISLDIRECTION_H_
