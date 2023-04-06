@@ -3,6 +3,7 @@ package flora.constellation;
 simple ConstellationCreator
 {
     parameters:
+        @class(constellation::ConstellationCreator);
         // satCount gets defined by nrOfGW
         // int satCount;
         int planeCount;
