@@ -10,13 +10,15 @@
 
 #include <omnetpp.h>
 
-#include <future>
-
+#include "core/Timer.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
+#include "mobility/NoradA.h"
 #include "mobility/SatelliteMobility.h"
 
 namespace flora {
 namespace mobility {
+
+using SatMobVector = std::vector<inet::SatelliteMobility *>;
 
 class FasterSatMobility : public inet::ClockUserModuleMixin<omnetpp::cSimpleModule> {
    public:
@@ -30,18 +32,18 @@ class FasterSatMobility : public inet::ClockUserModuleMixin<omnetpp::cSimpleModu
     void updatePositions();
     /** @brief Schedules the update timer that will update the topology state.*/
     void scheduleUpdate();
+    /** @brief Loads the SatelliteMobility of all satellites. */
+    SatMobVector loadSatMobilities();
 
    protected:
-    /**
-     * @brief The simulation time interval used to regularly signal mobility state changes.
-     *
-     * The 0 value turns off the signal.
-     */
+    /** @brief The simulation time interval used to regularly signal mobility state changes. */
     cPar *updateIntervalParameter = nullptr;
     inet::ClockEvent *updateTimer = nullptr;
 
    private:
     const char *POSITION = "POSITION";
+    /** @brief Used to store sat mobilities. */
+    SatMobVector satMobVector;
 };
 
 }  // namespace mobility

@@ -82,12 +82,14 @@ void TopologyControl::UpdateTopology() {
         error("Error in TopologyControl::UpdateTopology(): No satellites found.");
         return;
     }
+    core::Timer timer = core::Timer();
     // update ISL links and groundlinks
     topologyChanged = false;
     updateIntraSatelliteLinks();
     updateInterSatelliteLinks();
     updateGroundstationLinks();
 
+    EV << "TC: Calculation took " << timer.getTime() / 1000 / 1000 << "ms" << endl;
     // if there was any change to the topology, track current contacts
     if (topologyChanged)
         trackTopologyChange();

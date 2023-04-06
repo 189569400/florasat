@@ -24,6 +24,7 @@
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
 #include "topologycontrol/utilities/WalkerType.h"
+#include "core/Timer.h"
 
 using namespace omnetpp;
 
