@@ -27,7 +27,7 @@ module SatelliteRouting
     parameters:
         @class(satellite::SatelliteRouting);
     gates:
-        inout groundLink[20];
+        inout groundLink[40];
         inout left;
         inout right;
         inout up;
@@ -87,5 +87,25 @@ module SatelliteRouting
         packetHandler.groundLink1[17]  <--> groundLink[17];
         packetHandler.groundLink1[18]  <--> groundLink[18];
         packetHandler.groundLink1[19]  <--> groundLink[19];
+        packetHandler.groundLink1[20] <--> groundLink[20];
+        packetHandler.groundLink1[21] <--> groundLink[21];
+        packetHandler.groundLink1[22] <--> groundLink[22];
+        packetHandler.groundLink1[23] <--> groundLink[23];
+        packetHandler.groundLink1[24] <--> groundLink[24];
+        packetHandler.groundLink1[25] <--> groundLink[25];
+        packetHandler.groundLink1[26] <--> groundLink[26];
+        packetHandler.groundLink1[27] <--> groundLink[27];
+        packetHandler.groundLink1[28] <--> groundLink[28];
+        packetHandler.groundLink1[29] <--> groundLink[29];
+        packetHandler.groundLink1[30] <--> groundLink[30];
+        packetHandler.groundLink1[31] <--> groundLink[31];
+        packetHandler.groundLink1[32] <--> groundLink[32];
+        packetHandler.groundLink1[33] <--> groundLink[33];
+        packetHandler.groundLink1[34] <--> groundLink[34];
+        packetHandler.groundLink1[35] <--> groundLink[35];
+        packetHandler.groundLink1[36] <--> groundLink[36];
+        packetHandler.groundLink1[37] <--> groundLink[37];
+        packetHandler.groundLink1[38] <--> groundLink[38];
+        packetHandler.groundLink1[39] <--> groundLink[39];
 
 }

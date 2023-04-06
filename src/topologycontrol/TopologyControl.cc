@@ -222,7 +222,7 @@ void TopologyControl::updateGroundstationLinks() {
                 EV << "Create channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
 
                 int freeIndexGs = -1;
-                for (size_t i = 0; i < 20; i++) {
+                for (size_t i = 0; i < 40; i++) {
                     cGate *gate = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexGs = i;
@@ -234,7 +234,7 @@ void TopologyControl::updateGroundstationLinks() {
                 }
 
                 int freeIndexSat = -1;
-                for (size_t i = 0; i < 20; i++) {
+                for (size_t i = 0; i < 40; i++) {
                     cGate *gate = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexSat = i;

@@ -32,5 +32,5 @@ simple PacketHandlerRouting
         output queueOut;
 
         // GroundStation gates
-        inout groundLink1[20] @labels(GroundStationGate);
+        inout groundLink1[40] @labels(GroundStationGate);
 }
