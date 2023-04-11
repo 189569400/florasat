@@ -7,37 +7,30 @@
 
 #include "satellite/SatelliteRouting.h"
 
-namespace flora
-{
-    namespace satellite
-    {
-        Define_Module(SatelliteRouting);
+namespace flora {
+namespace satellite {
 
-        void SatelliteRouting::initialize(int stage)
-        {
-            // subscribe to dropped packets
-            subscribe(packetDroppedSignal, this);
-        }
+Define_Module(SatelliteRouting);
 
-        void SatelliteRouting::finish()
-        {
-        }
+void SatelliteRouting::initialize() {
+    // subscribe to dropped packets
+    subscribe(packetDroppedSignal, this);
+}
 
-        void SatelliteRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
-        {
-            if (signalID == packetDroppedSignal)
-            {
-                auto packet = check_and_cast<inet::Packet*>(obj);
-                auto reason = check_and_cast<inet::PacketDropDetails*>(details);
-                handlePacketDropped(packet, reason);
-            }
-        }
+void SatelliteRouting::finish() {
+}
 
-        void SatelliteRouting::handlePacketDropped(inet::Packet* packet, inet::PacketDropDetails* reason)
-        {
-            EV_INFO << "Dropped: " << packet << EV_ENDL;
-        }
+void SatelliteRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) {
+    if (signalID == packetDroppedSignal) {
+        auto packet = check_and_cast<inet::Packet *>(obj);
+        auto reason = check_and_cast<inet::PacketDropDetails *>(details);
+        handlePacketDropped(packet, reason);
+    }
+}
 
-    } // namespace satellite
+void SatelliteRouting::handlePacketDropped(inet::Packet *packet, inet::PacketDropDetails *reason) {
+    EV_INFO << "Dropped: " << packet << EV_ENDL;
+}
 
-} // namespace flora
+}  // namespace satellite
+}  // namespace flora

@@ -11,7 +11,7 @@
 #include <omnetpp.h>
 
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 #include <set>
 #include <string>
 
@@ -81,12 +81,13 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     ClockEvent *updateTimer = nullptr;
 
     /** @brief Map of satellite ids and their correspinding SatelliteInfo data struct. */
-    std::map<int, SatelliteInfo> satelliteInfos;
-    int satelliteCount;
+    std::unordered_map<int, SatelliteInfo> satelliteInfos;
+    int numSatellites;
 
     /** @brief Structs that represent groundstations and all satellites in range. */
-    std::map<int, GroundstationInfo> groundstationInfos;
-    int groundstationCount;
+    std::unordered_map<int, GroundstationInfo> groundstationInfos;
+    int numGroundStations;
+    int numGroundLinks = 40;
 
     /** @brief Structs that represent connections between satellites and groundstations. */
     std::map<std::pair<int, int>, GsSatConnection> gsSatConnections;
@@ -102,13 +103,11 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
 
     /** @brief Delay of the isl channel, in microseconds/km. */
     double islDelay;
-
     /** @brief Datarate of the isl channel, in bit/second. */
     double islDatarate;
 
     /** @brief Delay of the groundlink channel, in microseconds/km. */
     double groundlinkDelay;
-
     /** @brief Datarate of the groundlink channel, in bit/second. */
     double groundlinkDatarate;
 

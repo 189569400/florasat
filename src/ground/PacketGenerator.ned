@@ -21,9 +21,10 @@ simple PacketGenerator
 {
     parameters:
         double updateInterval @unit(s) = default(0.5s);
+        int numGroundLinks = default(40);
 
     gates:
-        inout satelliteLink[40] @labels(satelliteLink);
-        inout app;
-        inout server;
+        inout satelliteLink[numGroundLinks] @labels(satelliteLink);
+        input transportIn;
+        output transportOut;
 }

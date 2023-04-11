@@ -29,7 +29,6 @@ void TopologyControl::initialize(int stage) {
     if (stage == inet::INITSTAGE_LOCAL) {
         updateIntervalParameter = &par("updateInterval");
         updateTimer = new ClockEvent("UpdateTimer");
-
         walkerType = WalkerType::parseWalkerType(par("walkerType"));
         isClosedConstellation = par("isClosedConstellation");
         lowerLatitudeBound = par("lowerLatitudeBound");
@@ -38,6 +37,7 @@ void TopologyControl::initialize(int stage) {
         islDatarate = par("islDatarate");
         groundlinkDelay = par("groundlinkDelay");
         groundlinkDatarate = par("groundlinkDatarate");
+        numGroundLinks = par("numGroundLinks");
         minimumElevation = par("minimumElevation");
         EV << "Loaded parameters: "
            << "updateInterval: " << updateIntervalParameter << "; "
@@ -46,9 +46,10 @@ void TopologyControl::initialize(int stage) {
            << "upperLatitudeBound: " << upperLatitudeBound << "; "
            << "islDelay: " << islDelay << "; "
            << "islDatarate: " << islDatarate << "; "
+           << "numGroundLinks: " << numGroundLinks << "; "
            << "minimumElevation: " << minimumElevation << endl;
     } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
-        EV << "initialize TopologyControl" << endl;
+        EV << "Initialize TopologyControl" << endl;
 
         loadSatellites();
         loadGroundstations();
@@ -96,8 +97,8 @@ void TopologyControl::UpdateTopology() {
 }
 
 GroundstationInfo *TopologyControl::getGroundstationInfo(int gsId) {
-    if (gsId < 0 || gsId >= groundstationCount) {
-        error("Error in TopologyControl::getGroundStationInfo: '%d' must be in range [0, %d)", gsId, groundstationCount);
+    if (gsId < 0 || gsId >= numGroundStations) {
+        error("Error in TopologyControl::getGroundStationInfo: '%d' must be in range [0, %d)", gsId, numGroundStations);
     }
     return &groundstationInfos.at(gsId);
 }
@@ -108,15 +109,15 @@ GsSatConnection *TopologyControl::getGroundstationSatConnection(int gsId, int sa
 
 void TopologyControl::loadGroundstations() {
     groundstationInfos.clear();
-    groundstationCount = getSystemModule()->getSubmoduleVectorSize("groundStation");
-    for (size_t i = 0; i < groundstationCount; i++) {
+    numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
+    for (size_t i = 0; i < numGroundStations; i++) {
         cModule *groundstation = getSystemModule()->getSubmodule("groundStation", i);
         if (groundstation == nullptr) {
             error("Error in TopologyControl::getGroundstations(): groundStation with index %zu is nullptr. Make sure the module exists.", i);
         }
-        GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundstation->getSubmodule("mobility"));
+        GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundstation->getSubmodule("gsMobility"));
         if (mobility == nullptr) {
-            error("Error in TopologyControl::getGroundstations(): mobility module of Groundstation is nullptr. Make sure a module with name `mobility` exists.");
+            error("Error in TopologyControl::getGroundstations(): mobility module of Groundstation is nullptr. Make sure a module with name `gsMobility` exists.");
         }
         GroundstationInfo created = GroundstationInfo(groundstation->par("groundStationId"), groundstation, mobility);
         groundstationInfos.emplace(i, created);
@@ -126,8 +127,8 @@ void TopologyControl::loadGroundstations() {
 
 void TopologyControl::loadSatellites() {
     satelliteInfos.clear();
-    satelliteCount = getParentModule()->getSubmoduleVectorSize("loRaGW");
-    for (size_t i = 0; i < satelliteCount; i++) {
+    numSatellites = getSystemModule()->getSubmoduleVectorSize("loRaGW");
+    for (size_t i = 0; i < numSatellites; i++) {
         cModule *sat = getParentModule()->getSubmodule("loRaGW", i);
         if (sat == nullptr) {
             error("Error in TopologyControl::getSatellites(): loRaGW with index %zu is nullptr. Make sure the module exists.", i);
@@ -188,13 +189,13 @@ void TopologyControl::updateIntraSatelliteLinks() {
 
 void TopologyControl::updateGroundstationLinks() {
     // iterate over groundstations
-    for (size_t i = 0; i < groundstationCount; i++) {
+    for (size_t i = 0; i < numGroundStations; i++) {
         GroundstationInfo *gsInfo = &groundstationInfos.at(i);
         EV_DEBUG << gsInfo->to_string() << endl;
 
         // find satellites with elevation >= minElevation
         std::set<SatelliteInfo *> satellites;
-        for (size_t i = 0; i < satelliteCount; i++) {
+        for (size_t i = 0; i < numSatellites; i++) {
             SatelliteInfo *satInfo = &satelliteInfos.at(i);
             double elevation = ((INorad *)satInfo->noradModule)->getElevation(gsInfo->mobility->getLUTPositionY(), gsInfo->mobility->getLUTPositionX(), 0);
             if (elevation >= minimumElevation) {
@@ -223,8 +224,9 @@ void TopologyControl::updateGroundstationLinks() {
             } else {
                 EV << "Create channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
 
+                // TODO: IMPROVE CODE SECTION
                 int freeIndexGs = -1;
-                for (size_t i = 0; i < 40; i++) {
+                for (size_t i = 0; i < numGroundLinks; i++) {
                     cGate *gate = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexGs = i;
@@ -236,7 +238,7 @@ void TopologyControl::updateGroundstationLinks() {
                 }
 
                 int freeIndexSat = -1;
-                for (size_t i = 0; i < 40; i++) {
+                for (size_t i = 0; i < numGroundLinks; i++) {
                     cGate *gate = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexSat = i;
@@ -295,12 +297,12 @@ void TopologyControl::updateInterSatelliteLinks() {
 }
 
 void TopologyControl::updateISLInWalkerDelta() {
-    for (size_t index = 0; index < satelliteCount; index++) {
+    for (size_t index = 0; index < numSatellites; index++) {
         SatelliteInfo *curSat = &satelliteInfos.at(index);
         int satPlane = calculateSatellitePlane(index);
         int nextPlane = (satPlane + 1) % planeCount;
 
-        int nextPlaneSatIndex = (index + satsPerPlane) % satelliteCount;
+        int nextPlaneSatIndex = (index + satsPerPlane) % numSatellites;
         SatelliteInfo *expectedRightSat = &satelliteInfos.at(nextPlaneSatIndex);
 
         if (curSat->noradModule->isAscending()) {
@@ -415,7 +417,7 @@ void TopologyControl::updateISLInWalkerDelta() {
 }
 
 void TopologyControl::updateISLInWalkerStar() {
-    for (size_t index = 0; index < satelliteCount; index++) {
+    for (size_t index = 0; index < numSatellites; index++) {
         SatelliteInfo *curSat = &satelliteInfos.at(index);
         int satPlane = calculateSatellitePlane(index);
 
@@ -424,7 +426,7 @@ void TopologyControl::updateISLInWalkerStar() {
         // if is last plane stop because it is the seam
         if (isLastPlane)
             break;
-        int rightIndex = (index + satsPerPlane) % satelliteCount;
+        int rightIndex = (index + satsPerPlane) % numSatellites;
         SatelliteInfo *nextPlaneSat = &satelliteInfos.at(rightIndex);
 
         // calculate ISL channel params
@@ -531,7 +533,7 @@ int TopologyControl::calculateSatellitePlane(int id) {
 
 void TopologyControl::trackTopologyChange() {
     EV << "Topology was changed at " << simTime() << endl;
-    for (size_t i = 0; i < satelliteCount; i++) {
+    for (size_t i = 0; i < numSatellites; i++) {
         SatelliteInfo *satInfo = &satelliteInfos.at(i);
         EV << satInfo->to_string() << endl;
     }
