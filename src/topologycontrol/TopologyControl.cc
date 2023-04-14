@@ -13,7 +13,6 @@ namespace topologycontrol {
 Define_Module(TopologyControl);
 
 TopologyControl::TopologyControl() : updateTimer(nullptr),
-                                     isClosedConstellation(false),
                                      updateIntervalParameter(0),
                                      islDatarate(0.0),
                                      islDelay(0.0),
@@ -30,7 +29,6 @@ void TopologyControl::initialize(int stage) {
         updateIntervalParameter = &par("updateInterval");
         updateTimer = new ClockEvent("UpdateTimer");
         walkerType = WalkerType::parseWalkerType(par("walkerType"));
-        isClosedConstellation = par("isClosedConstellation");
         lowerLatitudeBound = par("lowerLatitudeBound");
         upperLatitudeBound = par("upperLatitudeBound");
         islDelay = par("islDelay");
@@ -41,14 +39,13 @@ void TopologyControl::initialize(int stage) {
         minimumElevation = par("minimumElevation");
         EV << "Loaded parameters: "
            << "updateInterval: " << updateIntervalParameter << "; "
-           << "isClosedConstellation: " << isClosedConstellation << "; "
            << "lowerLatitudeBound: " << lowerLatitudeBound << "; "
            << "upperLatitudeBound: " << upperLatitudeBound << "; "
            << "islDelay: " << islDelay << "; "
            << "islDatarate: " << islDatarate << "; "
            << "numGroundLinks: " << numGroundLinks << "; "
            << "minimumElevation: " << minimumElevation << endl;
-    } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
+    } else if (stage == inet::INITSTAGE_PHYSICAL_LAYER) {
         EV << "Initialize TopologyControl" << endl;
 
         loadSatellites();
@@ -149,12 +146,6 @@ void TopologyControl::updateIntraSatelliteLinks() {
         for (size_t planeSat = 0; planeSat < satsPerPlane; planeSat++) {
             int index = planeSat + plane * satsPerPlane;
             int isLastSatInPlane = index % satsPerPlane == satsPerPlane - 1;
-
-            // if its only a "slice" of a constellation, no connection between the first and the last sat
-            if (isLastSatInPlane && !isClosedConstellation) {
-                EV_DEBUG << "Should continue?" << (isLastSatInPlane && !isClosedConstellation) << endl;
-                continue;
-            }
 
             // get the two satellites we want to connect. If we have the last in plane, we connect it to the first of the plane
             SatelliteInfo *curSat = &satelliteInfos.at(index);

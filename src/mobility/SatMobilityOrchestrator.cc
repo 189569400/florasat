@@ -1,30 +1,30 @@
 /*
- * FasterSatMobility.cc
+ * SatMobilityOrchestrator.cc
  *
  *  Created on: Feb 16, 2023
  *      Author: Robin Ohs
  */
 
-#include "FasterSatMobility.h"
+#include "SatMobilityOrchestrator.h"
 
 namespace flora {
 namespace mobility {
 
-Define_Module(FasterSatMobility);
+Define_Module(SatMobilityOrchestrator);
 
-FasterSatMobility::FasterSatMobility() : updateTimer(nullptr),
+SatMobilityOrchestrator::SatMobilityOrchestrator() : updateTimer(nullptr),
                                          updateIntervalParameter(0) {
 }
 
-FasterSatMobility::~FasterSatMobility() {
+SatMobilityOrchestrator::~SatMobilityOrchestrator() {
     cancelAndDeleteClockEvent(updateTimer);
 }
 
-void FasterSatMobility::initialize(int stage) {
+void SatMobilityOrchestrator::initialize(int stage) {
     if (stage == inet::INITSTAGE_LOCAL) {
         updateIntervalParameter = &par("updateInterval");
         updateTimer = new inet::ClockEvent("UpdateTimer");
-    } else if (stage == inet::INITSTAGE_ROUTING_PROTOCOLS) {
+    } else if (stage == inet::INITSTAGE_GROUP_MOBILITY) {
         satMobVector = loadSatMobilities();
         updatePositions();
         if (!updateTimer->isScheduled()) {
@@ -33,32 +33,38 @@ void FasterSatMobility::initialize(int stage) {
     }
 }
 
-SatMobVector FasterSatMobility::loadSatMobilities() {
+SatMobVector SatMobilityOrchestrator::loadSatMobilities() {
     cModule *parent = getParentModule();
     if (parent == nullptr) {
-        error("Error in FasterSatMobility::loadSatellites: Could not find parent.");
+        error("Error in SatMobilityOrchestrator::loadSatellites: Could not find parent.");
     }
     int numSats = parent->getSubmoduleVectorSize("loRaGW");
     SatMobVector satellites;
     for (size_t i = 0; i < numSats; i++) {
         cModule *sat = parent->getSubmodule("loRaGW", i);
         if (sat == nullptr) {
-            error("Error in FasterSatMobility::loadSatellites: Could not find sat with id %d.", i);
+            error("Error in SatMobilityOrchestrator::loadSatellites: Could not find sat with id %d.", i);
         }
-        inet::SatelliteMobility *satMobility = check_and_cast<inet::SatelliteMobility *>(sat->getSubmodule("mobility"));
+        SatMobility *satMobility = check_and_cast<SatMobility *>(sat->getSubmodule("mobility"));
         if (satMobility == nullptr) {
-            error("Error in FasterSatMobility::loadSatellites: Could not find sat mobility for sat %d.", i);
+            error("Error in SatMobilityOrchestrator::loadSatellites: Could not find sat mobility for sat %d.", i);
         }
         satellites.emplace_back(satMobility);
+
+        INorad *noradModule = check_and_cast<INorad *>(sat->getSubmodule("NoradModule"));
+        if (satMobility == nullptr) {
+            error("Error in SatMobilityOrchestrator::loadSatellites: Could not find sat norad module for sat %d.", i);
+        }
+        noradModule->initializeMobility(simTime());
     }
     return satellites;
 }
 
-// int FasterSatMobility::calculateSliceCount(int satMobilityCount) {
+// int SatMobilityOrchestrator::calculateSliceCount(int satMobilityCount) {
 //     return 12;
 // }
 
-// void FasterSatMobility::createSatSlices(int sliceCount, Slice slice) {
+// void SatMobilityOrchestrator::createSatSlices(int sliceCount, Slice slice) {
 //     // fill the map with empty vectors to store the slices
 //     for (size_t i = 0; i < sliceCount; i++) {
 //         Slice t;
@@ -74,25 +80,25 @@ SatMobVector FasterSatMobility::loadSatMobilities() {
 //     }
 // }
 
-void FasterSatMobility::handleMessage(cMessage *msg) {
+void SatMobilityOrchestrator::handleMessage(cMessage *msg) {
     if (msg == updateTimer) {
         updatePositions();
         scheduleUpdate();
     } else
-        error("FasterSatMobility: Unknown message.");
+        error("SatMobilityOrchestrator: Unknown message.");
 }
 
-void FasterSatMobility::updatePositions() {
+void SatMobilityOrchestrator::updatePositions() {
     EV << "Update satellite positions." << endl;
-    simtime_t currentTime = simTime();
     core::Timer timer = core::Timer();
+    SimTime currentTime = simTime();
     for (auto sm : satMobVector) {
-        sm->updatePosition();
+        sm->updatePosition(currentTime);
     }
     EV << "FSM: Calculation took " << timer.getTime() / 1000 / 1000 << "ms" << endl;
 }
 
-void FasterSatMobility::scheduleUpdate() {
+void SatMobilityOrchestrator::scheduleUpdate() {
     scheduleClockEventAfter(updateIntervalParameter->doubleValue(), updateTimer);
 }
 

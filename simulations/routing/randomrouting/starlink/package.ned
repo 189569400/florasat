@@ -1,4 +1,4 @@
-package flora.simulations.routing.randomrouting.iridium;
+package flora.simulations.routing.randomrouting.starlink;
 
 import inet.node.inet.Router;
 import inet.node.inet.StandardHost;
@@ -19,12 +19,12 @@ import flora.mobility.SatMobilityOrchestrator;
 import flora.metrics.MetricsCollector;
 
 @license(LGPL);
-network RandomRouteIridium
+network RandomRouteStarLink
 {
     parameters:
         @display("bgb=2160,1080;bgi=background_earth,s");
         int nrOfGS = default(7);
-        int nrOfGW = default(66);
+        int nrOfGW = default(1920);
 
     submodules:
         groundStation[nrOfGS]: GroundStationRouting;

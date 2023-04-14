@@ -22,10 +22,9 @@ simple TopologyControl
         double updateInterval @unit(s) = default(1s);
         int numGroundLinks = default(40);
         // must be delta or star
-        string walkerType;
+        string walkerType @enum("STAR","DELTA");
         double upperLatitudeBound = default(70.0);
         double lowerLatitudeBound = default(-70.0);
-        bool isClosedConstellation = default(true);
         
         // speed of light (s/km)
         double islDelay = default(0.0000033356);

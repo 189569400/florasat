@@ -16,8 +16,9 @@
 package flora.satellite;
 
 import leosatellites.mobility.NoradA;
-import leosatellites.mobility.SatelliteMobility;
+// import leosatellites.mobility.SatelliteMobility;
 
+import flora.mobility.SatMobility;
 import flora.satellite.PacketHandlerRouting;
 import flora.satellite.queue.ActivePacketConsumer;
 import inet.queueing.queue.DropTailQueue;
@@ -37,7 +38,7 @@ module SatelliteRouting
         inout down;
 
     submodules:
-        mobility: SatelliteMobility {
+        mobility: SatMobility {
             @display("p=100,100");
         }
 
