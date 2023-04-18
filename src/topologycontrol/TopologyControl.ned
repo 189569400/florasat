@@ -30,10 +30,11 @@ simple TopologyControl
         double islDelay = default(0.0000033356);
         // 2.5 GBit/s
         double islDatarate = default(2500000000);
+
         // speed of light (s/km)
         double groundlinkDelay = default(0.0000033356);
-
         // 10 MBit/s
         double groundlinkDatarate = default(10000000);
+
         double minimumElevation = default(10.0);
 }

@@ -13,7 +13,7 @@
 #include "inet/common/INETDefs.h"
 #include "inet/common/Simsignals.h"
 #include "inet/common/packet/Packet.h"
-#include "routing/RoutingFrame_m.h"
+#include "routing/RoutingHeader_m.h"
 
 using namespace omnetpp;
 using namespace inet;

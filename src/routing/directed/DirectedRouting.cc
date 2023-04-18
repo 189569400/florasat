@@ -12,17 +12,8 @@ namespace routing {
 
 Define_Module(DirectedRouting);
 
-void DirectedRouting::initialize(int stage) {
-    if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
-        topologyControl = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
-        if (topologyControl == nullptr) {
-            error("Error in DirectedRouting::initialize(): topologyControl is nullptr.");
-        }
-    }
-}
-
 ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
-    auto frame = pkt->removeAtFront<RoutingFrame>();
+    auto frame = pkt->removeAtFront<RoutingHeader>();
     int destGroundstationId = frame->getDestinationGroundstation();
     pkt->insertAtFront(frame);
 
@@ -87,14 +78,7 @@ ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat)
             error("Error in PacketHandlerDirected::handleMessage: choosen gate should be connected!");
         }
     }
-}
-
-bool DirectedRouting::IsSatelliteAscending(cModule *satellite) {
-    NoradA *noradA = check_and_cast<NoradA *>(satellite->getSubmodule("NoradModule"));
-    if (noradA == nullptr) {
-        error("Error in TopologyControl::getSatellites(): noradA module of loRaGW with index %zu is nullptr. Make sure a module with name `NoradModule` exists.", satellite->getIndex());
-    }
-    return noradA->isAscending();
+    return ISLDirection(Direction::ISL_DOWN, -1);
 }
 
 }  // namespace routing

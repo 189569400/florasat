@@ -14,13 +14,14 @@
 #include "inet/common/packet/Packet.h"
 #include "routing/ISLDirection.h"
 #include "routing/RoutingBase.h"
+#include "routing/RoutingHeader_m.h"
 
 namespace flora {
 namespace routing {
 
-class RandomRouting : public RoutingBase, public omnetpp::cSimpleModule {
+class RandomRouting : public RoutingBase {
    public:
-    ISLDirection RoutePacket(inet::Packet *pkt, cModule *callerSat);
+    ISLDirection RoutePacket(inet::Packet *pkt, cModule *callerSat) override;
 };
 
 }  // namespace routing

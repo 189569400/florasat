@@ -6,7 +6,6 @@ namespace mobility {
 Define_Module(SatMobility);
 
 SatMobility::SatMobility() {
-    noradModule = nullptr;
     mapX = 0;
     mapY = 0;
 }
@@ -18,15 +17,10 @@ void SatMobility::initialize(int stage) {
         WATCH(lastPosition);
         WATCH(currentOrientation);
         WATCH(lastOrientation);
-        noradModule = check_and_cast<INorad*>(getParentModule()->getSubmodule("NoradModule"));
-        if (noradModule == nullptr) {
-            error("Error in SatMobility::initialize(): Cannot find module Norad.");
-        }
-
         mapX = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 0));
         mapY = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 1));
     } else if (stage == inet::INITSTAGE_GROUP_MOBILITY) {
-        noradModule->initializeMobility(simTime());
+        (check_and_cast<INorad*>(getParentModule()->getSubmodule("NoradModule")))->initializeMobility(SimTime::ZERO);
     }
 }
 
@@ -35,13 +29,14 @@ void SatMobility::handleSelfMessage(cMessage* message) {
 }
 
 void SatMobility::updatePosition(SimTime currentTime) {
-    noradModule->updateTime(currentTime);
+    INorad* norad = check_and_cast<INorad*>(getParentModule()->getSubmodule("NoradModule"));
+    norad->updateTime(currentTime);
     lastPosition.x = currentPosition.x;
     lastPosition.y = currentPosition.y;
     lastPosition.z = currentPosition.z;
-    currentPosition.x = getXCanvas(noradModule->getLongitude());  // x canvas position, longitude projection
-    currentPosition.y = getYCanvas(noradModule->getLatitude());   // y canvas position, latitude projection
-    currentPosition.z = noradModule->getAltitude();               // real satellite altitude in km
+    currentPosition.x = getXCanvas(norad->getLongitude());  // x canvas position, longitude projection
+    currentPosition.y = getYCanvas(norad->getLatitude());   // y canvas position, latitude projection
+    currentPosition.z = norad->getAltitude();               // real satellite altitude in km
 
     velocity = (currentPosition - lastPosition) / (currentTime - lastUpdate).dbl();
     orient();

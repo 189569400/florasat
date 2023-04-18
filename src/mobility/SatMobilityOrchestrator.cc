@@ -45,7 +45,7 @@ SatMobVector SatMobilityOrchestrator::loadSatMobilities() {
         if (sat == nullptr) {
             error("Error in SatMobilityOrchestrator::loadSatellites: Could not find sat with id %d.", i);
         }
-        SatMobility *satMobility = check_and_cast<SatMobility *>(sat->getSubmodule("mobility"));
+        SatMobility *satMobility = check_and_cast<SatMobility *>(sat->getSubmodule("satMobility"));
         if (satMobility == nullptr) {
             error("Error in SatMobilityOrchestrator::loadSatellites: Could not find sat mobility for sat %d.", i);
         }

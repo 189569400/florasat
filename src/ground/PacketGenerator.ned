@@ -20,9 +20,14 @@ import inet.applications.contract.IApp;
 simple PacketGenerator
 {
     parameters:
-        double updateInterval @unit(s) = default(0.5s);
+        @display("i=block/app");
         int numGroundLinks = default(40);
 
+        @signal[packetSent](type=inet::Packet);
+        @signal[packetReceived](type=inet::Packet);
+        @statistic[packetSent](title="packets sent"; source=packetSent; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[packetReceived](title="packets received"; source=packetReceived; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        
     gates:
         inout satelliteLink[numGroundLinks] @labels(satelliteLink);
         input transportIn;

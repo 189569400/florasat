@@ -16,12 +16,16 @@
 package flora.satellite;
 
 import leosatellites.mobility.NoradA;
-// import leosatellites.mobility.SatelliteMobility;
 
 import flora.mobility.SatMobility;
 import flora.satellite.PacketHandlerRouting;
+
 import flora.satellite.queue.ActivePacketConsumer;
 import inet.queueing.queue.DropTailQueue;
+
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ethernet.EthernetInterface;
+import inet.linklayer.ethernet.common.MacAddressTable;
 
 module SatelliteRouting
 {
@@ -31,14 +35,14 @@ module SatelliteRouting
         int numGroundLinks = default(40);
 
     gates:
-        inout groundLink[numGroundLinks];
         inout left;
         inout right;
         inout up;
         inout down;
+        inout groundLink[numGroundLinks];
 
     submodules:
-        mobility: SatMobility {
+        satMobility: SatMobility {
             @display("p=100,100");
         }
 

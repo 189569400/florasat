@@ -8,11 +8,12 @@ using namespace inet;
 
 namespace flora;
 
-class RoutingFrame extends inet::FieldsChunk {
+class RoutingHeader extends inet::FieldsChunk {
     int sequenceNumber;
     int numHop = 0;
     int sourceGroundstation;
     int destinationGroundstation;
+    inet::B length;
 
     // timestamp of message creation
     simtime_t originTime;

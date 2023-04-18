@@ -13,21 +13,14 @@
 #include "inet/common/packet/Packet.h"
 #include "routing/ISLDirection.h"
 #include "routing/RoutingBase.h"
-#include "routing/RoutingFrame_m.h"
-#include "topologycontrol/TopologyControl.h"
+#include "routing/RoutingHeader_m.h"
 
 namespace flora {
 namespace routing {
 
-class DirectedRouting : public RoutingBase, public omnetpp::cSimpleModule {
+class DirectedRouting : public RoutingBase {
    public:
-    virtual void initialize(int stage) override;
-    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-    ISLDirection RoutePacket(inet::Packet* pkt, cModule* callerSat);
-    bool IsSatelliteAscending(cModule* satellite);
-
-   protected:
-    topologycontrol::TopologyControl* topologyControl = nullptr;
+    ISLDirection RoutePacket(inet::Packet* pkt, cModule* callerSat) override;
 };
 
 }  // namespace routing

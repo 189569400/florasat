@@ -16,7 +16,7 @@ Define_Module(ActivePacketConsumer);
 void ActivePacketConsumer::collectPacket() {
     auto packet = provider->pullPacket(inputGate->getPathStartGate());
     take(packet);
-    EV_INFO << "Collecting packet" << EV_FIELD(packet) << EV_ENDL;
+    EV_INFO << "Collecting packet" << packet << EV_ENDL;
     numProcessedPackets++;
     processedTotalLength += packet->getDataLength();
     send(packet, "out");

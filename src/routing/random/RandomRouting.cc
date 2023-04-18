@@ -13,8 +13,23 @@ namespace routing {
 Define_Module(RandomRouting);
 
 ISLDirection RandomRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
-    int gate = core::utils::randomNumber(this, 0, 3, -1);
+    auto frame = pkt->removeAtFront<RoutingHeader>();
+    int destinationGroundStation = frame->getDestinationGroundstation();
+    pkt->insertAtFront(frame);
+    int callerSatIndex = callerSat->getIndex();
 
+    // check if connected to destination groundstation
+    int groundlinkIndex = RoutingBase::GetGroundlinkIndex(callerSatIndex, destinationGroundStation);
+    if (groundlinkIndex != -1) {
+        if (RoutingBase::HasConnection(callerSat, ISLDirection(Direction::ISL_DOWNLINK, groundlinkIndex))) {
+            return ISLDirection(Direction::ISL_DOWNLINK, groundlinkIndex);
+        } else {
+            error("Error in RandomRouting::RoutePacket: There should be a connection between groundstation and satellite but is not connected.");
+        }
+    }
+
+    // if not connected to destination find random
+    int gate = intrand(4);
     if (gate == 0 && RoutingBase::HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
         return ISLDirection(Direction::ISL_DOWN, -1);
     } else if (gate == 1 && RoutingBase::HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {

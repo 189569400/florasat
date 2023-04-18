@@ -27,17 +27,17 @@ void MetricsCollector::finish() {
 void MetricsCollector::initialize(int stage) {
     // init recordedPackets map
     for (const auto e : PacketState::All) {
-        std::vector<RoutingFrame> vector;
+        std::vector<RoutingHeader> vector;
         recordedPackets.emplace(e, vector);
     }
 }
 
-void MetricsCollector::record_packet(PacketState::Type state, RoutingFrame frame) {
+void MetricsCollector::record_packet(PacketState::Type state, RoutingHeader frame) {
     recordedPackets.at(state).emplace_back(frame);
     print_packet(&frame);
 }
 
-void MetricsCollector::print_packet(RoutingFrame *frame) {
+void MetricsCollector::print_packet(RoutingHeader *frame) {
     int source = frame->getSourceGroundstation();
     int destination = frame->getDestinationGroundstation();
     int hops = frame->getNumHop();
@@ -54,15 +54,15 @@ void MetricsCollector::print_packet(RoutingFrame *frame) {
     EV << ss.str() << endl;
 }
 
-double MetricsCollector::calculate_latency(RoutingFrame *frame) {
+double MetricsCollector::calculate_latency(RoutingHeader *frame) {
     simtime_t latency = frame->getReceptionTime() - frame->getOriginTime();
     // EV << "{Sent: " << frame->getOriginTime() << "| Received: " << frame->getReceptionTime() << "} => " << latency << "," << latency.dbl() * 1000 << endl;
     return latency.dbl() * 1000;
 }
 
-double MetricsCollector::calculate_average_latency(std::vector<RoutingFrame> *frames) {
+double MetricsCollector::calculate_average_latency(std::vector<RoutingHeader> *frames) {
     if (frames->size() == 0)
-        throw omnetpp::cRuntimeError("Error in MetricsCollector::calculate_average_latency(): Was called with empty vector.");
+        throw cRuntimeError("Error in MetricsCollector::calculate_average_latency(): Was called with empty vector.");
     double sum = 0.0;
     for (auto &element : *frames) {
         sum += calculate_latency(&element);

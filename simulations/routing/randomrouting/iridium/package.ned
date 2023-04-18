@@ -30,31 +30,23 @@ network RandomRouteIridium
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
         routing: RandomRouting {
-            @display("p=128,373.375;i=block/routing");
+            @display("p=-128,373.375;i=block/routing");
         }
 
         constellationCreator: ConstellationCreator {
-            @display("p=128,473.375;i=block/cogwheel");
+            @display("p=-128,473.375;i=block/cogwheel");
         }
 
         topologyControl: TopologyControl {
-            @display("p=128,573.375;i=block/network2");
+            @display("p=-128,573.375;i=block/network2");
         }
 
         satMobilityOrchestrator: SatMobilityOrchestrator {
-            @display("p=128,673.375;i=block/rightarrow");
-        }
-
-        metricsCollector: MetricsCollector {
-            @display("p=128,773.375;i=block/blackboard");
-        }
-
-        configurator: Ipv4NetworkConfigurator {
-            @display("p=128,873.375");
+            @display("p=-128,673.375;i=block/rightarrow");
         }
 
         visualizer: IntegratedVisualizer {
-            @display("p=126.926926,980.04236");
+            @display("p=-128,873.375");
         }
 
     connections allowunconnected:

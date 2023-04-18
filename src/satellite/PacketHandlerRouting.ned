@@ -18,6 +18,7 @@ package flora.satellite;
 simple PacketHandlerRouting
 {
     parameters:
+        @class(satellite::PacketHandlerRouting);
         @display("i=block/app");
         int maxHops = default(50);
 

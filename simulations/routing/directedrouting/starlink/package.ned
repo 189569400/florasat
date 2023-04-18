@@ -1,4 +1,4 @@
-package flora.simulations.routing.randomrouting.starlink;
+package flora.simulations.routing.directedrouting.starlink;
 
 import inet.visualizer.common.IntegratedVisualizer;
 
@@ -12,7 +12,7 @@ import flora.routing.random.RandomRouting;
 import flora.mobility.SatMobilityOrchestrator;
 
 @license(LGPL);
-network RandomRouteStarLink
+network DirectedRoutingStarLink
 {
     parameters:
         @display("bgb=2160,1080;bgi=background_earth,s");

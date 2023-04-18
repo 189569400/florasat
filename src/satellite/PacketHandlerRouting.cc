@@ -8,6 +8,7 @@
 #include "PacketHandlerRouting.h"
 
 namespace flora {
+namespace satellite {
 
 Define_Module(PacketHandlerRouting);
 
@@ -23,11 +24,6 @@ void PacketHandlerRouting::initialize(int stage) {
         if (NoradA *noradAModule = dynamic_cast<NoradA *>(noradModule)) {
             satIndex = noradAModule->getSatelliteNumber();
         }
-
-        metricsCollector = check_and_cast<metrics::MetricsCollector *>(getSystemModule()->getSubmodule("metricsCollector"));
-        if (metricsCollector == nullptr) {
-            error("PacketGenerator::initialize(0): metricsCollector mullptr");
-        }
     }
 }
 
@@ -42,14 +38,14 @@ void PacketHandlerRouting::handleMessage(cMessage *msg) {
 void PacketHandlerRouting::processMessage(cMessage *msg) {
     auto pkt = check_and_cast<inet::Packet *>(msg);
 
-    auto frame = pkt->removeAtFront<RoutingFrame>();
+    auto frame = pkt->removeAtFront<RoutingHeader>();
     int hops = frame->getNumHop();
     int sequenceNumber = frame->getSequenceNumber();
     pkt->insertAtFront(frame);
 
     if (hops > maxHops) {
         EV << "SAT [" << satIndex << "]: MSG expired. Delete." << endl;
-        metricsCollector->record_packet(metrics::PacketState::EXPIRED, *frame.get());
+        // TODO: EMIT PACKET DROP
         bubble("MSG expired.");
         delete msg;
         return;
@@ -96,14 +92,14 @@ void PacketHandlerRouting::routeMessage(cGate *gate, cMessage *msg) {
 }
 
 bool PacketHandlerRouting::isExpired(Packet *pkt) {
-    auto frame = pkt->removeAtFront<RoutingFrame>();
+    auto frame = pkt->removeAtFront<RoutingHeader>();
     int hops = frame->getNumHop();
     pkt->insertAtFront(frame);
     return hops > maxHops;
 }
 
 void PacketHandlerRouting::insertSatinRoute(Packet *pkt) {
-    auto frame = pkt->removeAtFront<RoutingFrame>();
+    auto frame = pkt->removeAtFront<RoutingHeader>();
     int numHops = frame->getNumHop();
     frame->setNumHop(numHops + 1);
     frame->appendRoute(satIndex);
@@ -111,4 +107,5 @@ void PacketHandlerRouting::insertSatinRoute(Packet *pkt) {
     pkt->insertAtFront(frame);
 }
 
+}  // namespace satellite
 }  // namespace flora

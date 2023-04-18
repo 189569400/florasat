@@ -14,13 +14,14 @@
 #include "metrics/MetricsCollector.h"
 #include "mobility/INorad.h"
 #include "mobility/NoradA.h"
-#include "routing/RoutingFrame_m.h"
+#include "routing/RoutingHeader_m.h"
 #include "routing/RoutingBase.h"
 #include "routing/random/RandomRouting.h"
 
 using namespace omnetpp;
 
 namespace flora {
+namespace satellite {
 
 class PacketHandlerRouting : public cSimpleModule {
    protected:
@@ -28,7 +29,6 @@ class PacketHandlerRouting : public cSimpleModule {
     int maxHops = -1;
 
     routing::RoutingBase *routing = nullptr;
-    metrics::MetricsCollector *metricsCollector = nullptr;
     cMessage *selfMsg = nullptr;
 
    protected:
@@ -43,6 +43,7 @@ class PacketHandlerRouting : public cSimpleModule {
     bool isExpired(Packet *pkt);
 };
 
+}  // namespace satellite
 }  // namespace flora
 
 #endif  // __FLORA_SATELLITE_PACKETHANDLERROUTING_H_

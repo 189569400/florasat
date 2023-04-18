@@ -1,5 +1,11 @@
-package flora.simulations.routing.randomrouting.starlink;
+package flora.simulations.routing.directedrouting.iridium;
 
+import inet.node.inet.Router;
+import inet.node.inet.StandardHost;
+import inet.node.ethernet.Eth1G;
+import inet.node.ethernet.Eth100M;
+import inet.node.ethernet.EthernetSwitch;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.visualizer.common.IntegratedVisualizer;
 
 import flora.LoRaPhy.LoRaMedium;
@@ -8,21 +14,22 @@ import flora.ground.GroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.TopologyControl;
-import flora.routing.random.RandomRouting;
+import flora.routing.directed.DirectedRouting;
 import flora.mobility.SatMobilityOrchestrator;
+import flora.metrics.MetricsCollector;
 
 @license(LGPL);
-network RandomRouteStarLink
+network DirectedRoutingIridium
 {
     parameters:
         @display("bgb=2160,1080;bgi=background_earth,s");
         int nrOfGS = default(7);
-        int nrOfGW = default(1584);
+        int nrOfGW = default(66);
 
     submodules:
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
-        routing: RandomRouting {
+        routing: DirectedRouting {
             @display("p=-128,373.375;i=block/routing");
         }
 

@@ -203,7 +203,7 @@ void TopologyControl::updateGroundstationLinks() {
 
             // connected before and remains -> update channel
             if (std::find(oldConnections.begin(), oldConnections.end(), satInfo->satelliteId) != oldConnections.end()) {
-                EV << "Update channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
+                // EV << "Update channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
 
                 GsSatConnection *connection = &gsSatConnections.at(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId));
                 cGate *uplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->gsGateIndex);
@@ -213,7 +213,7 @@ void TopologyControl::updateGroundstationLinks() {
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
                 updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
             } else {
-                EV << "Create channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
+                // EV << "Create channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
 
                 // TODO: IMPROVE CODE SECTION
                 int freeIndexGs = -1;
@@ -254,7 +254,7 @@ void TopologyControl::updateGroundstationLinks() {
         }
 
         for (int removeConnectionSatId : oldConnections) {
-            EV << "Delete channel between GS " << gsInfo->groundStationId << " and SAT " << removeConnectionSatId << endl;
+            // EV << "Delete channel between GS " << gsInfo->groundStationId << " and SAT " << removeConnectionSatId << endl;
 
             GsSatConnection *connection = &gsSatConnections.at(std::pair<int, int>(gsInfo->groundStationId, removeConnectionSatId));
             cGate *uplink = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->gsGateIndex);
@@ -270,7 +270,7 @@ void TopologyControl::updateGroundstationLinks() {
             gsInfo->satellites.emplace(sat->satelliteId);
         }
 
-        EV_DEBUG << gsInfo->to_string() << endl;
+        // EV_DEBUG << gsInfo->to_string() << endl;
     }
 }
 
@@ -524,10 +524,6 @@ int TopologyControl::calculateSatellitePlane(int id) {
 
 void TopologyControl::trackTopologyChange() {
     EV << "Topology was changed at " << simTime() << endl;
-    for (size_t i = 0; i < numSatellites; i++) {
-        SatelliteInfo *satInfo = &satelliteInfos.at(i);
-        EV << satInfo->to_string() << endl;
-    }
 }
 
 }  // namespace topologycontrol

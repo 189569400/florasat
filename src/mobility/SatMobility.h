@@ -35,7 +35,6 @@ namespace mobility {
 class SatMobility : public inet::MobilityBase {
    public:
    protected:
-    INorad* noradModule;
     int mapX, mapY;
     inet::Coord velocity;
     inet::Quaternion angularVelocity;

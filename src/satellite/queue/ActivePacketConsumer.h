@@ -20,11 +20,9 @@ namespace queue {
 
 class INET_API ActivePacketConsumer : public ActivePacketSink {
    protected:
-    virtual void collectPacket();
+    virtual void collectPacket() override;
 
    public:
-    virtual ~ActivePacketConsumer() { cancelAndDeleteClockEvent(collectionTimer); }
-
     virtual void handleCanPullPacketChanged(cGate *gate) override;
 };
 
