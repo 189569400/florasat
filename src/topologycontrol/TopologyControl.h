@@ -11,11 +11,13 @@
 #include <omnetpp.h>
 
 #include <algorithm>
-#include <unordered_map>
 #include <set>
 #include <string>
+#include <unordered_map>
 
+#include "core/Constants.h"
 #include "core/Timer.h"
+#include "core/utils/SetUtils.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "mobility/GroundStationMobility.h"
 #include "mobility/NoradA.h"
@@ -27,17 +29,10 @@
 #include "topologycontrol/utilities/WalkerType.h"
 
 using namespace omnetpp;
+using namespace flora::core;
 
 namespace flora {
 namespace topologycontrol {
-
-const std::string ISL_CHANNEL_NAME = "IslChannel";
-const std::string ISL_UP_NAME = "up";
-const std::string ISL_DOWN_NAME = "down";
-const std::string ISL_LEFT_NAME = "left";
-const std::string ISL_RIGHT_NAME = "right";
-const std::string SAT_GROUNDLINK_NAME = "groundLink";
-const std::string GS_SATLINK_NAME = "satelliteLink";
 
 class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
    public:
@@ -65,7 +60,9 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
-    bool isIslEnabled(double latitude);
+
+    bool isIslEnabled(PositionAwareBase &entity) const;
+
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
     /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/

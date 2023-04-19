@@ -21,17 +21,26 @@ namespace flora {
 namespace topologycontrol {
 
 struct GsSatConnection {
-    GroundstationInfo *gsInfo;
+    int gsId;
     int gsGateIndex = -1;
-    SatelliteInfo *satInfo;
+    int satId;
     int satGateIndex = -1;
 
-    GsSatConnection(GroundstationInfo *gInfo, SatelliteInfo *sInfo, int gGateIndex, int sGateIndex)
-        : gsInfo(gInfo),
-          gsGateIndex(gGateIndex),
-          satInfo(sInfo),
-          satGateIndex(sGateIndex){};
-    std::string to_string();
+    GsSatConnection(int gsId, int satId, int gsGateIndex, int satGateIndex)
+        : gsId(gsId),
+          satId(satId),
+          gsGateIndex(gsGateIndex),
+          satGateIndex(satGateIndex){};
+
+    friend std::ostream &operator<<(std::ostream &ss, const GsSatConnection &gs) {
+        ss << "{";
+        ss << "\"gsId\": " << gs.gsId << ",";
+        ss << "\"gsGateIndex\": " << gs.gsGateIndex << ",";
+        ss << "\"satId\": " << gs.satId << ",";
+        ss << "\"satGateIndex\": " << gs.satGateIndex << ",";
+        ss << "}";
+        return ss;
+    }
 };
 
 }  // namespace topologycontrol

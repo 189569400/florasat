@@ -12,15 +12,15 @@
 
 #include <vector>
 
-#include "ISLDirection.h"
 #include "inet/common/packet/Packet.h"
 #include "topologycontrol/TopologyControl.h"
 
-using namespace omnetpp;
-using namespace inet;
-
 namespace flora {
 namespace routing {
+
+using namespace omnetpp;
+using namespace inet;
+using namespace core::isldirection;
 
 class RoutingBase : public cSimpleModule {
    protected:

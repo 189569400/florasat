@@ -118,7 +118,6 @@ void TopologyControl::loadGroundstations() {
         }
         GroundstationInfo created = GroundstationInfo(groundstation->par("groundStationId"), groundstation, mobility);
         groundstationInfos.emplace(i, created);
-        EV << "Created GroundstationInfo" << created.to_string() << endl;
     }
 }
 
@@ -148,19 +147,18 @@ void TopologyControl::updateIntraSatelliteLinks() {
             int isLastSatInPlane = index % satsPerPlane == satsPerPlane - 1;
 
             // get the two satellites we want to connect. If we have the last in plane, we connect it to the first of the plane
-            SatelliteInfo *curSat = &satelliteInfos.at(index);
+            SatelliteInfo &curSat = satelliteInfos.at(index);
             int nextId = isLastSatInPlane ? plane * satsPerPlane : index + 1;
-            SatelliteInfo *otherSat = &satelliteInfos.at(nextId);
+            SatelliteInfo &otherSat = satelliteInfos.at(nextId);
 
             // get gates
-            cGate *fromGateIn = curSat->satelliteModule->gateHalf(ISL_UP_NAME.c_str(), cGate::Type::INPUT);
-            cGate *fromGateOut = curSat->satelliteModule->gateHalf(ISL_UP_NAME.c_str(), cGate::Type::OUTPUT);
-            cGate *toGateIn = otherSat->satelliteModule->gateHalf(ISL_DOWN_NAME.c_str(), cGate::Type::INPUT);
-            cGate *toGateOut = otherSat->satelliteModule->gateHalf(ISL_DOWN_NAME.c_str(), cGate::Type::OUTPUT);
+            cGate *fromGateIn = curSat.getInputGate(Direction::ISL_UP);
+            cGate *fromGateOut = curSat.getOutputGate(Direction::ISL_UP);
+            cGate *toGateIn = otherSat.getInputGate(Direction::ISL_DOWN);
+            cGate *toGateOut = otherSat.getOutputGate(Direction::ISL_DOWN);
 
             // calculate ISL channel params
-            double distance = curSat->noradModule->getDistance(otherSat->noradModule->getLatitude(), otherSat->noradModule->getLongitude(), otherSat->noradModule->getAltitude());
-            double delay = islDelay * distance;
+            double delay = islDelay * curSat.getDistance(otherSat);
 
             // generate or update ISL channel from lower to upper sat
             ChannelState state1 = updateOrCreateChannel(fromGateOut, toGateIn, delay, islDatarate);
@@ -171,8 +169,8 @@ void TopologyControl::updateIntraSatelliteLinks() {
                 topologyChanged = true;
                 // Assign satellites in SatelliteInfo.
                 // Important: Assumption that intra satellite links are not gonna change (in normal operation) after initial connect.
-                curSat->upSatellite = nextId;
-                otherSat->downSatellite = index;
+                curSat.upSatellite = nextId;
+                otherSat.downSatellite = index;
             }
         }
     }
@@ -180,45 +178,47 @@ void TopologyControl::updateIntraSatelliteLinks() {
 
 void TopologyControl::updateGroundstationLinks() {
     // iterate over groundstations
-    for (size_t i = 0; i < numGroundStations; i++) {
-        GroundstationInfo *gsInfo = &groundstationInfos.at(i);
-        EV_DEBUG << gsInfo->to_string() << endl;
+    for (size_t gsId = 0; gsId < numGroundStations; gsId++) {
+        GroundstationInfo &gsInfo = groundstationInfos.at(gsId);
+        for (size_t satId = 0; satId < numSatellites; satId++) {
+            SatelliteInfo &satInfo = satelliteInfos.at(satId);
 
-        // find satellites with elevation >= minElevation
-        std::set<SatelliteInfo *> satellites;
-        for (size_t i = 0; i < numSatellites; i++) {
-            SatelliteInfo *satInfo = &satelliteInfos.at(i);
-            double elevation = ((INorad *)satInfo->noradModule)->getElevation(gsInfo->mobility->getLUTPositionY(), gsInfo->mobility->getLUTPositionX(), 0);
-            if (elevation >= minimumElevation) {
-                satellites.emplace(satInfo);
+            bool isOldConnection = utils::set::contains<int>(gsInfo.satellites, satId);
+
+            // if is not in range continue with next sat
+            if (satInfo.getElevation(gsInfo) < minimumElevation) {
+                // if they were previous connected, delete that connection
+                if (isOldConnection) {
+                    GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
+                    cGate *uplink = gsInfo.getOutputGate(connection.gsGateIndex);
+                    cGate *downlink = satInfo.getOutputGate(Direction::ISL_DOWNLINK, connection.satGateIndex);
+                    deleteChannel(uplink);
+                    deleteChannel(downlink);
+                    gsSatConnections.erase(std::pair<int, int>(gsId, satId));
+                    gsInfo.satellites.erase(satId);
+                    topologyChanged = true;
+                }
+                // in all cases continue with next sat
+                continue;
             }
-        }
 
-        std::set<int> oldConnections = gsInfo->satellites;
+            double delay = satInfo.getDistance(gsInfo) * groundlinkDelay;
 
-        for (SatelliteInfo *satInfo : satellites) {
-            double distance = satInfo->noradModule->getDistance(gsInfo->mobility->getLUTPositionY(), gsInfo->mobility->getLUTPositionX(), 0);
-            // delay of the channel between nearest satellite and groundstation (ms)
-            double delay = distance * groundlinkDelay;
-
-            // connected before and remains -> update channel
-            if (std::find(oldConnections.begin(), oldConnections.end(), satInfo->satelliteId) != oldConnections.end()) {
-                // EV << "Update channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
-
-                GsSatConnection *connection = &gsSatConnections.at(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId));
-                cGate *uplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->gsGateIndex);
-                cGate *uplinkI = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::INPUT, connection->gsGateIndex);
-                cGate *downlinkO = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->satGateIndex);
-                cGate *downlinkI = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::INPUT, connection->satGateIndex);
+            // if they were previous connected, update channel with new delay
+            if (isOldConnection) {
+                GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
+                cGate *uplinkO = gsInfo.getOutputGate(connection.gsGateIndex);
+                cGate *uplinkI = gsInfo.getInputGate(connection.gsGateIndex);
+                cGate *downlinkO = satInfo.getOutputGate(Direction::ISL_DOWNLINK, connection.satGateIndex);
+                cGate *downlinkI = satInfo.getInputGate(Direction::ISL_DOWNLINK, connection.satGateIndex);
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
                 updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
-            } else {
-                // EV << "Create channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
-
-                // TODO: IMPROVE CODE SECTION
+            }
+            // they were not previous connected, create new channel between gs and sat
+            else {
                 int freeIndexGs = -1;
                 for (size_t i = 0; i < numGroundLinks; i++) {
-                    cGate *gate = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
+                    cGate *gate = gsInfo.getOutputGate(i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexGs = i;
                         break;
@@ -230,7 +230,7 @@ void TopologyControl::updateGroundstationLinks() {
 
                 int freeIndexSat = -1;
                 for (size_t i = 0; i < numGroundLinks; i++) {
-                    cGate *gate = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
+                    cGate *gate = satInfo.getOutputGate(Direction::ISL_DOWNLINK, i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexSat = i;
                         break;
@@ -240,37 +240,17 @@ void TopologyControl::updateGroundstationLinks() {
                     error("No free sat gate index found.");
                 }
 
-                cGate *uplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, freeIndexGs);
-                cGate *uplinkI = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::INPUT, freeIndexGs);
-                cGate *downlinkO = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, freeIndexSat);
-                cGate *downlinkI = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::INPUT, freeIndexSat);
+                cGate *uplinkO = gsInfo.getOutputGate(freeIndexGs);
+                cGate *uplinkI = gsInfo.getInputGate(freeIndexGs);
+                cGate *downlinkO = satInfo.getOutputGate(Direction::ISL_DOWNLINK, freeIndexSat);
+                cGate *downlinkI = satInfo.getInputGate(Direction::ISL_DOWNLINK, freeIndexSat);
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
                 updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
-                GsSatConnection connection = GsSatConnection(gsInfo, satInfo, freeIndexGs, freeIndexSat);
-                gsSatConnections.emplace(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId), connection);
+                gsSatConnections.emplace(std::pair<int, int>(gsId, satId), GsSatConnection(gsId, satId, freeIndexGs, freeIndexSat));
+                gsInfo.satellites.emplace(satId);
                 topologyChanged = true;
             }
-            oldConnections.erase(satInfo->satelliteId);
         }
-
-        for (int removeConnectionSatId : oldConnections) {
-            // EV << "Delete channel between GS " << gsInfo->groundStationId << " and SAT " << removeConnectionSatId << endl;
-
-            GsSatConnection *connection = &gsSatConnections.at(std::pair<int, int>(gsInfo->groundStationId, removeConnectionSatId));
-            cGate *uplink = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->gsGateIndex);
-            cGate *downlink = connection->satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->satGateIndex);
-            deleteChannel(uplink);
-            deleteChannel(downlink);
-            gsSatConnections.erase(std::pair<int, int>(gsInfo->groundStationId, removeConnectionSatId));
-            topologyChanged = true;
-        }
-
-        gsInfo->satellites.clear();
-        for (auto sat : satellites) {
-            gsInfo->satellites.emplace(sat->satelliteId);
-        }
-
-        // EV_DEBUG << gsInfo->to_string() << endl;
     }
 }
 
@@ -289,52 +269,49 @@ void TopologyControl::updateInterSatelliteLinks() {
 
 void TopologyControl::updateISLInWalkerDelta() {
     for (size_t index = 0; index < numSatellites; index++) {
-        SatelliteInfo *curSat = &satelliteInfos.at(index);
-        int satPlane = calculateSatellitePlane(index);
-        int nextPlane = (satPlane + 1) % planeCount;
-
+        SatelliteInfo &curSat = satelliteInfos.at(index);
         int nextPlaneSatIndex = (index + satsPerPlane) % numSatellites;
-        SatelliteInfo *expectedRightSat = &satelliteInfos.at(nextPlaneSatIndex);
+        SatelliteInfo &expectedRightSat = satelliteInfos.at(nextPlaneSatIndex);
 
-        if (curSat->noradModule->isAscending()) {
-            cGate *rightGateOut = curSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
-            cGate *leftGateOut = expectedRightSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
+        if (curSat.isAscending()) {
+            cGate *rightGateOut = curSat.getOutputGate(Direction::ISL_RIGHT);
+            cGate *leftGateOut = expectedRightSat.getOutputGate(Direction::ISL_LEFT);
 
-            // if next plane partner is not ascending, connection is not possible
-            if (!expectedRightSat->noradModule->isAscending()) {
+            // if next plane partner is descending, connection is not possible
+            if (expectedRightSat.isDescending()) {
                 // if we were connected to that satellite on right
-                if (curSat->rightSatellite == nextPlaneSatIndex) {
+                if (curSat.rightSatellite == nextPlaneSatIndex) {
                     deleteChannel(rightGateOut);
                     deleteChannel(leftGateOut);
-                    curSat->rightSatellite = -1;
-                    expectedRightSat->leftSatellite = -1;
+                    curSat.rightSatellite = -1;
+                    expectedRightSat.leftSatellite = -1;
                     topologyChanged = true;
                 }
                 // if we were connected to that satellite on left
-                else if (curSat->leftSatellite == nextPlaneSatIndex) {
-                    cGate *leftGateOutOther = curSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
-                    cGate *rightGateOutOther = expectedRightSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
+                else if (curSat.leftSatellite == nextPlaneSatIndex) {
+                    cGate *leftGateOutOther = curSat.getOutputGate(Direction::ISL_LEFT);
+                    cGate *rightGateOutOther = expectedRightSat.getOutputGate(Direction::ISL_RIGHT);
                     deleteChannel(leftGateOutOther);
                     deleteChannel(rightGateOutOther);
-                    curSat->leftSatellite = -1;
-                    expectedRightSat->rightSatellite = -1;
+                    curSat.leftSatellite = -1;
+                    expectedRightSat.rightSatellite = -1;
                     topologyChanged = true;
                 }
             } else {
-                cGate *rightGateIn = curSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::INPUT);
-                cGate *leftGateIn = expectedRightSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::INPUT);
+                cGate *rightGateIn = curSat.getInputGate(Direction::ISL_RIGHT);
+                cGate *leftGateIn = expectedRightSat.getInputGate(Direction::ISL_LEFT);
                 // disconnect the other satellite if has left satellite and it is not ours
-                if (expectedRightSat->leftSatellite != index && expectedRightSat->leftSatellite != -1) {
-                    SatelliteInfo *otherSatOldPartner = &satelliteInfos.at(expectedRightSat->leftSatellite);
-                    cGate *rightGateOutOld = otherSatOldPartner->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
+                if (expectedRightSat.leftSatellite != index && expectedRightSat.leftSatellite != -1) {
+                    SatelliteInfo &otherSatOldPartner = satelliteInfos.at(expectedRightSat.leftSatellite);
+                    cGate *rightGateOutOld = otherSatOldPartner.getOutputGate(Direction::ISL_RIGHT);
                     deleteChannel(leftGateOut);
                     deleteChannel(rightGateOutOld);
-                    expectedRightSat->leftSatellite = -1;
-                    otherSatOldPartner->rightSatellite = -1;
+                    expectedRightSat.leftSatellite = -1;
+                    otherSatOldPartner.rightSatellite = -1;
                     topologyChanged = true;
                 }
 
-                double distance = curSat->noradModule->getDistance(expectedRightSat->noradModule->getLatitude(), expectedRightSat->noradModule->getLongitude(), expectedRightSat->noradModule->getAltitude());
+                double distance = curSat.getDistance(expectedRightSat);
                 double delay = islDelay * distance;
 
                 // generate or update ISL channel from right to left sat
@@ -343,54 +320,53 @@ void TopologyControl::updateISLInWalkerDelta() {
 
                 // if any channel was created, we have a topologyupdate
                 if (state1 == ChannelState::CREATED || state2 == ChannelState::CREATED) {
-                    curSat->rightSatellite = nextPlaneSatIndex;
-                    expectedRightSat->leftSatellite = index;
+                    curSat.rightSatellite = nextPlaneSatIndex;
+                    expectedRightSat.leftSatellite = index;
                     topologyChanged = true;
                 }
             }
         }
         // sat ist descending
         else {
-            cGate *leftGateOut = curSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
-            cGate *rightGateOut = expectedRightSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
+            cGate *leftGateOut = curSat.getOutputGate(Direction::ISL_LEFT);
+            cGate *rightGateOut = expectedRightSat.getOutputGate(Direction::ISL_RIGHT);
 
             // if next plane partner is not descending, connection is not possible
-            if (expectedRightSat->noradModule->isAscending()) {
+            if (expectedRightSat.isAscending()) {
                 // if we were connected to that satellite on right
-                if (curSat->leftSatellite == nextPlaneSatIndex) {
+                if (curSat.leftSatellite == nextPlaneSatIndex) {
                     deleteChannel(leftGateOut);
                     deleteChannel(rightGateOut);
-                    curSat->leftSatellite = -1;
-                    expectedRightSat->rightSatellite = -1;
+                    curSat.leftSatellite = -1;
+                    expectedRightSat.rightSatellite = -1;
                     topologyChanged = true;
                 }
                 // if we were connected to that satellite on right
-                else if (curSat->rightSatellite == nextPlaneSatIndex) {
-                    cGate *rightGateOutOther = curSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
-                    cGate *leftGateOutOther = expectedRightSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
+                else if (curSat.rightSatellite == nextPlaneSatIndex) {
+                    cGate *rightGateOutOther = curSat.getOutputGate(Direction::ISL_RIGHT);
+                    cGate *leftGateOutOther = expectedRightSat.getOutputGate(Direction::ISL_LEFT);
                     deleteChannel(rightGateOutOther);
                     deleteChannel(leftGateOutOther);
-                    curSat->rightSatellite = -1;
-                    expectedRightSat->leftSatellite = -1;
+                    curSat.rightSatellite = -1;
+                    expectedRightSat.leftSatellite = -1;
                     topologyChanged = true;
                 }
             } else {
-                cGate *leftGateIn = curSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::INPUT);
-                cGate *rightGateIn = expectedRightSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::INPUT);
+                cGate *leftGateIn = curSat.getInputGate(Direction::ISL_LEFT);
+                cGate *rightGateIn = expectedRightSat.getInputGate(Direction::ISL_RIGHT);
 
                 // disconnect the other satellite if has right satellite and it is not ours
-                if (expectedRightSat->rightSatellite != index && expectedRightSat->rightSatellite != -1) {
-                    SatelliteInfo *otherSatOldPartner = &satelliteInfos.at(expectedRightSat->rightSatellite);
-                    cGate *leftGateOutOld = otherSatOldPartner->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
+                if (expectedRightSat.rightSatellite != index && expectedRightSat.rightSatellite != -1) {
+                    SatelliteInfo &otherSatOldPartner = satelliteInfos.at(expectedRightSat.rightSatellite);
+                    cGate *leftGateOutOld = otherSatOldPartner.getOutputGate(Direction::ISL_LEFT);
                     deleteChannel(rightGateOut);
                     deleteChannel(leftGateOutOld);
-                    expectedRightSat->rightSatellite = -1;
-                    otherSatOldPartner->leftSatellite = -1;
+                    expectedRightSat.rightSatellite = -1;
+                    otherSatOldPartner.leftSatellite = -1;
                     topologyChanged = true;
                 }
 
-                double distance = curSat->noradModule->getDistance(expectedRightSat->noradModule->getLatitude(), expectedRightSat->noradModule->getLongitude(), expectedRightSat->noradModule->getAltitude());
-                double delay = islDelay * distance;
+                double delay = islDelay * curSat.getDistance(expectedRightSat);
 
                 // generate or update ISL channel from right to left sat
                 ChannelState state1 = updateOrCreateChannel(rightGateOut, leftGateIn, delay, islDatarate);
@@ -398,8 +374,8 @@ void TopologyControl::updateISLInWalkerDelta() {
 
                 // if any channel was created, we have a topologyupdate
                 if (state1 == ChannelState::CREATED || state2 == ChannelState::CREATED) {
-                    curSat->leftSatellite = nextPlaneSatIndex;
-                    expectedRightSat->rightSatellite = index;
+                    curSat.leftSatellite = nextPlaneSatIndex;
+                    expectedRightSat.rightSatellite = index;
                     topologyChanged = true;
                 }
             }
@@ -409,7 +385,7 @@ void TopologyControl::updateISLInWalkerDelta() {
 
 void TopologyControl::updateISLInWalkerStar() {
     for (size_t index = 0; index < numSatellites; index++) {
-        SatelliteInfo *curSat = &satelliteInfos.at(index);
+        SatelliteInfo &curSat = satelliteInfos.at(index);
         int satPlane = calculateSatellitePlane(index);
 
         bool isLastPlane = satPlane == planeCount - 1;
@@ -418,19 +394,18 @@ void TopologyControl::updateISLInWalkerStar() {
         if (isLastPlane)
             break;
         int rightIndex = (index + satsPerPlane) % numSatellites;
-        SatelliteInfo *nextPlaneSat = &satelliteInfos.at(rightIndex);
+        SatelliteInfo &nextPlaneSat = satelliteInfos.at(rightIndex);
 
         // calculate ISL channel params
-        double distance = curSat->noradModule->getDistance(nextPlaneSat->noradModule->getLatitude(), nextPlaneSat->noradModule->getLongitude(), nextPlaneSat->noradModule->getAltitude());
-        double delay = islDelay * distance;
+        double delay = islDelay * curSat.getDistance(nextPlaneSat);
 
-        if (curSat->noradModule->isAscending()) {  // sat is moving up
-            cGate *rightGateOut = curSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
-            cGate *leftGateOut = nextPlaneSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
+        if (curSat.isAscending()) {  // sat is moving up
+            cGate *rightGateOut = curSat.getOutputGate(Direction::ISL_RIGHT);
+            cGate *leftGateOut = nextPlaneSat.getOutputGate(Direction::ISL_LEFT);
 
-            if (nextPlaneSat->noradModule->isAscending() && isIslEnabled(curSat->noradModule->getLatitude()) && isIslEnabled(nextPlaneSat->noradModule->getLatitude())) {  // they are allowed to connect
-                cGate *rightGateIn = curSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::INPUT);
-                cGate *leftGateIn = nextPlaneSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::INPUT);
+            if (nextPlaneSat.isAscending() && isIslEnabled(curSat) && isIslEnabled(nextPlaneSat)) {  // they are allowed to connect
+                cGate *rightGateIn = curSat.getInputGate(Direction::ISL_RIGHT);
+                cGate *leftGateIn = nextPlaneSat.getInputGate(Direction::ISL_LEFT);
 
                 // generate or update ISL channel from right to left sat
                 ChannelState state1 = updateOrCreateChannel(rightGateOut, leftGateIn, delay, islDatarate);
@@ -438,8 +413,8 @@ void TopologyControl::updateISLInWalkerStar() {
 
                 // if any channel was created, we have a topologyupdate
                 if (state1 == ChannelState::CREATED || state2 == ChannelState::CREATED) {
-                    curSat->rightSatellite = rightIndex;
-                    nextPlaneSat->leftSatellite = index;
+                    curSat.rightSatellite = rightIndex;
+                    nextPlaneSat.leftSatellite = index;
                     topologyChanged = true;
                 }
             } else {  // they are not allowed to have an connection
@@ -448,18 +423,18 @@ void TopologyControl::updateISLInWalkerStar() {
 
                 // if any channel was deleted, we have a topologyupdate
                 if (state1 == ChannelState::DELETED || state2 == ChannelState::DELETED) {
-                    curSat->rightSatellite = -1;
-                    nextPlaneSat->leftSatellite = -1;
+                    curSat.rightSatellite = -1;
+                    nextPlaneSat.leftSatellite = -1;
                     topologyChanged = true;
                 }
             }
         } else {  // sat is moving down
-            cGate *leftGateOut = curSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::OUTPUT);
-            cGate *rightGateOut = nextPlaneSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::OUTPUT);
+            cGate *leftGateOut = curSat.getOutputGate(Direction::ISL_LEFT);
+            cGate *rightGateOut = nextPlaneSat.getOutputGate(Direction::ISL_RIGHT);
 
-            if (!nextPlaneSat->noradModule->isAscending() && isIslEnabled(curSat->noradModule->getLatitude()) && isIslEnabled(nextPlaneSat->noradModule->getLatitude())) {  // they are allowed to connect
-                cGate *leftGateIn = curSat->satelliteModule->gateHalf(ISL_LEFT_NAME.c_str(), cGate::Type::INPUT);
-                cGate *rightGateIn = nextPlaneSat->satelliteModule->gateHalf(ISL_RIGHT_NAME.c_str(), cGate::Type::INPUT);
+            if (!nextPlaneSat.isAscending() && isIslEnabled(curSat) && isIslEnabled(nextPlaneSat)) {  // they are allowed to connect
+                cGate *leftGateIn = curSat.getInputGate(Direction::ISL_LEFT);
+                cGate *rightGateIn = nextPlaneSat.getInputGate(Direction::ISL_RIGHT);
 
                 // generate or update ISL channel from right to left sat
                 ChannelState state1 = updateOrCreateChannel(leftGateOut, rightGateIn, delay, islDatarate);
@@ -467,8 +442,8 @@ void TopologyControl::updateISLInWalkerStar() {
 
                 // if any channel was created, we have a topologyupdate
                 if (state1 == ChannelState::CREATED || state2 == ChannelState::CREATED) {
-                    curSat->leftSatellite = rightIndex;
-                    nextPlaneSat->rightSatellite = index;
+                    curSat.leftSatellite = rightIndex;
+                    nextPlaneSat.rightSatellite = index;
                     topologyChanged = true;
                 }
             } else {  // they are not allowed to have an connection
@@ -477,8 +452,8 @@ void TopologyControl::updateISLInWalkerStar() {
 
                 // if any channel was deleted, we have a topologyupdate
                 if (state1 == ChannelState::DELETED || state2 == ChannelState::DELETED) {
-                    curSat->leftSatellite = -1;
-                    nextPlaneSat->rightSatellite = -1;
+                    curSat.leftSatellite = -1;
+                    nextPlaneSat.rightSatellite = -1;
                     topologyChanged = true;
                 }
             }
@@ -486,7 +461,8 @@ void TopologyControl::updateISLInWalkerStar() {
     }
 }
 
-bool TopologyControl::isIslEnabled(double latitude) {
+bool TopologyControl::isIslEnabled(PositionAwareBase &entity) const {
+    double latitude = entity.getLatitude();
     return latitude <= upperLatitudeBound && latitude >= lowerLatitudeBound;
 }
 
@@ -497,7 +473,7 @@ ChannelState TopologyControl::updateOrCreateChannel(cGate *outGate, cGate *inGat
         channel->setDatarate(datarate);
         return ChannelState::UPDATED;
     } else {
-        cDatarateChannel *channel = cDatarateChannel::create(ISL_CHANNEL_NAME.c_str());
+        cDatarateChannel *channel = cDatarateChannel::create(Constants::ISL_CHANNEL_NAME);
         channel->setDelay(delay);
         channel->setDatarate(datarate);
         outGate->connectTo(inGate, channel);

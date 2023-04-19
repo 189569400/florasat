@@ -1,17 +1,18 @@
 /*
- * Direction.h
+ * ISLDirection.h
  *
  * Created on: Feb 04, 2023
  *     Author: Robin Ohs
  */
 
-#ifndef __FLORA_ROUTING_ISLDIRECTION_H_
-#define __FLORA_ROUTING_ISLDIRECTION_H_
+#ifndef __FLORA_CORE_ISLDIRECTION_ISLDIRECTION_H_
+#define __FLORA_CORE_ISLDIRECTION_ISLDIRECTION_H_
 
 #include <omnetpp.h>
 
 namespace flora {
-namespace routing {
+namespace core {
+namespace isldirection {
 
 enum Direction {
     ISL_LEFT,
@@ -30,7 +31,8 @@ struct ISLDirection {
           gateIndex(gateIndex){};
 };
 
-}  // namespace routing
+}  // namespace isldirection
+}  // namespace core
 }  // namespace flora
 
-#endif  // __FLORA_ROUTING_ISLDIRECTION_H_
+#endif  // __FLORA_CORE_ISLDIRECTION_ISLDIRECTION_H_

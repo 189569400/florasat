@@ -56,7 +56,7 @@ std::set<int> RoutingBase::GetConnectedSatellites(int groundStationId) {
 bool RoutingBase::IsSatelliteAscending(cModule *satellite) {
     NoradA *noradA = dynamic_cast<NoradA *>(satellite->getSubmodule("NoradModule"));
     if (noradA == nullptr) {
-        error("Error in RoutingBase::IsSatelliteAscending(): noradA module of loRaGW with index %zu is nullptr. Make sure a module with name `NoradModule` exists.", satellite->getIndex());
+        error("Error in RoutingBase::IsSatelliteAscending(): noradA module of loRaGW with index %d is nullptr. Make sure a module with name `NoradModule` exists.", satellite->getIndex());
     }
     return noradA->isAscending();
 }

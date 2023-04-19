@@ -11,12 +11,10 @@
 #include <omnetpp.h>
 
 #include "inet/common/INETDefs.h"
-#include "metrics/MetricsCollector.h"
 #include "mobility/INorad.h"
 #include "mobility/NoradA.h"
 #include "routing/RoutingHeader_m.h"
 #include "routing/RoutingBase.h"
-#include "routing/random/RandomRouting.h"
 
 using namespace omnetpp;
 
