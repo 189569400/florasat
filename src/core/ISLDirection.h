@@ -10,6 +10,8 @@
 
 #include <omnetpp.h>
 
+#include "core/Constants.h"
+
 namespace flora {
 namespace core {
 namespace isldirection {
@@ -21,6 +23,12 @@ enum Direction {
     ISL_DOWN,
     ISL_DOWNLINK
 };
+
+Direction getCounterDirection(Direction dir);
+
+std::ostream &operator<<(std::ostream &ss, const Direction &direction);
+
+std::string to_string(const Direction &dir);
 
 struct ISLDirection {
     Direction direction;

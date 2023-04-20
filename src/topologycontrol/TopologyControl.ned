@@ -20,21 +20,21 @@ simple TopologyControl
     parameters:
         @class(topologycontrol::TopologyControl);
         double updateInterval @unit(s) = default(1s);
-        int numGroundLinks = default(40);
+        
         // must be delta or star
         string walkerType @enum("STAR","DELTA");
+
+        // ISL SETTINGS
+        int interPlaneSpacing;
+        bool interPlaneIslDisabled = default(false);
         double upperLatitudeBound = default(70.0);
         double lowerLatitudeBound = default(-70.0);
+        double islDelay = default(0.0000033356); // speed of light (s/km)
+        double islDatarate = default(2500000000); // 2.5 GBit/s
         
-        // speed of light (s/km)
-        double islDelay = default(0.0000033356);
-        // 2.5 GBit/s
-        double islDatarate = default(2500000000);
-
-        // speed of light (s/km)
-        double groundlinkDelay = default(0.0000033356);
-        // 10 MBit/s
-        double groundlinkDatarate = default(10000000);
-
+        // GROUNDLINK SETTINGS
+        double groundlinkDelay = default(0.0000033356); // speed of light (s/km)
+        double groundlinkDatarate = default(10000000); // 10 MBit/s
         double minimumElevation = default(10.0);
+        int numGroundLinks = default(40);
 }

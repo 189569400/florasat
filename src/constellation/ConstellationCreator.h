@@ -12,11 +12,14 @@
 #include <string.h>
 
 #include "mobility/NoradA.h"
+#include "core/Utils.h"
+
+using namespace omnetpp;
 
 namespace flora {
 namespace constellation {
 
-class ConstellationCreator : public omnetpp::cSimpleModule {
+class ConstellationCreator : public cSimpleModule {
    public:
     ConstellationCreator();
 

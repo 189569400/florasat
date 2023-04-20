@@ -35,7 +35,6 @@ class RoutingBase : public cSimpleModule {
     bool HasConnection(cModule *satellite, ISLDirection side);
     std::set<int> GetConnectedSatellites(int groundStationId);
     int GetGroundlinkIndex(int satelliteId, int groundstationId);
-    bool IsSatelliteAscending(cModule *satellite);
 };
 
 }  // namespace routing

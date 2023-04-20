@@ -56,19 +56,19 @@ void PacketHandlerRouting::processMessage(cMessage *msg) {
     cGate *outputGate = nullptr;
     auto routeInformation = routing->RoutePacket(pkt, getParentModule());
     switch (routeInformation.direction) {
-        case Direction::ISL_DOWN:
+        case isldirection::Direction::ISL_DOWN:
             outputGate = gate("down1$o");
             break;
-        case Direction::ISL_UP:
+        case isldirection::Direction::ISL_UP:
             outputGate = gate("up1$o");
             break;
-        case Direction::ISL_LEFT:
+        case isldirection::Direction::ISL_LEFT:
             outputGate = gate("left1$o");
             break;
-        case Direction::ISL_RIGHT:
+        case isldirection::Direction::ISL_RIGHT:
             outputGate = gate("right1$o");
             break;
-        case Direction::ISL_DOWNLINK:
+        case isldirection::Direction::ISL_DOWNLINK:
             outputGate = gate("groundLink1$o", routeInformation.gateIndex);
             break;
         default:

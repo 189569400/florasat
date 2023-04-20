@@ -43,22 +43,14 @@ bool RoutingBase::HasConnection(cModule *satellite, ISLDirection side) {
 int RoutingBase::GetGroundlinkIndex(int satelliteId, int groundstationId) {
     std::set<int> gsSatellites = GetConnectedSatellites(groundstationId);
     if (gsSatellites.find(satelliteId) != gsSatellites.end()) {
-        return topologyControl->getGroundstationSatConnection(groundstationId, satelliteId)->satGateIndex;
+        return topologyControl->getGroundstationSatConnection(groundstationId, satelliteId).satGateIndex;
     }
     return -1;
 }
 
 std::set<int> RoutingBase::GetConnectedSatellites(int groundStationId) {
     if (topologyControl == nullptr) error("Error in RoutingBase::GetGroundStationConnections(): topologyControl is nullptr. Did you call initialize on RoutingBase?");
-    return topologyControl->getGroundstationInfo(groundStationId)->satellites;
-}
-
-bool RoutingBase::IsSatelliteAscending(cModule *satellite) {
-    NoradA *noradA = dynamic_cast<NoradA *>(satellite->getSubmodule("NoradModule"));
-    if (noradA == nullptr) {
-        error("Error in RoutingBase::IsSatelliteAscending(): noradA module of loRaGW with index %d is nullptr. Make sure a module with name `NoradModule` exists.", satellite->getIndex());
-    }
-    return noradA->isAscending();
+    return topologyControl->getGroundstationInfo(groundStationId).satellites;
 }
 
 }  // namespace routing

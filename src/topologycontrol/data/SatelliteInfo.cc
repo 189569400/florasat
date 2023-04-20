@@ -10,34 +10,50 @@
 namespace flora {
 namespace topologycontrol {
 
-cGate* SatelliteInfo::getInputGate(Direction direction, int index) const {
+cGate* SatelliteInfo::getInputGate(isldirection::Direction direction, int index) const {
     switch (direction) {
-        case Direction::ISL_LEFT:
+        case isldirection::Direction::ISL_LEFT:
             return satelliteModule->gateHalf(Constants::ISL_LEFT_NAME, cGate::Type::INPUT, -1);
-        case Direction::ISL_UP:
+        case isldirection::Direction::ISL_UP:
             return satelliteModule->gateHalf(Constants::ISL_UP_NAME, cGate::Type::INPUT, -1);
-        case Direction::ISL_RIGHT:
+        case isldirection::Direction::ISL_RIGHT:
             return satelliteModule->gateHalf(Constants::ISL_RIGHT_NAME, cGate::Type::INPUT, -1);
-        case Direction::ISL_DOWN:
+        case isldirection::Direction::ISL_DOWN:
             return satelliteModule->gateHalf(Constants::ISL_DOWN_NAME, cGate::Type::INPUT, -1);
-        case Direction::ISL_DOWNLINK:
+        case isldirection::Direction::ISL_DOWNLINK:
             return satelliteModule->gateHalf(Constants::SAT_GROUNDLINK_NAME, cGate::Type::INPUT, index);
     }
 }
 
-cGate* SatelliteInfo::getOutputGate(Direction direction, int index) const {
+cGate* SatelliteInfo::getOutputGate(isldirection::Direction direction, int index) const {
     switch (direction) {
-        case Direction::ISL_LEFT:
+        case isldirection::Direction::ISL_LEFT:
             return satelliteModule->gateHalf(Constants::ISL_LEFT_NAME, cGate::Type::OUTPUT, -1);
-        case Direction::ISL_UP:
+        case isldirection::Direction::ISL_UP:
             return satelliteModule->gateHalf(Constants::ISL_UP_NAME, cGate::Type::OUTPUT, -1);
-        case Direction::ISL_RIGHT:
+        case isldirection::Direction::ISL_RIGHT:
             return satelliteModule->gateHalf(Constants::ISL_RIGHT_NAME, cGate::Type::OUTPUT, -1);
-        case Direction::ISL_DOWN:
+        case isldirection::Direction::ISL_DOWN:
             return satelliteModule->gateHalf(Constants::ISL_DOWN_NAME, cGate::Type::OUTPUT, -1);
-        case Direction::ISL_DOWNLINK:
+        case isldirection::Direction::ISL_DOWNLINK:
             return satelliteModule->gateHalf(Constants::SAT_GROUNDLINK_NAME, cGate::Type::OUTPUT, index);
     }
+}
+
+int SatelliteInfo::getPlane() const {
+    int satsPerPlane = noradModule->getSatellitesPerPlane();
+    int satPlane = (satelliteId - (satelliteId % satsPerPlane)) / satsPerPlane;
+    ASSERT(satPlane < noradModule->getNumberOfPlanes());
+    ASSERT(satPlane >= 0);
+    return satPlane;
+}
+
+int SatelliteInfo::getNumberInPlane() const {
+    int satsPerPlane = noradModule->getSatellitesPerPlane();
+    int numberInPlane = satelliteId % satsPerPlane;
+    ASSERT(numberInPlane >= 0);
+    ASSERT(numberInPlane < satsPerPlane);
+    return numberInPlane;
 }
 
 double SatelliteInfo::getLongitude() const {

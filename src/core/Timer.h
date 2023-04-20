@@ -23,7 +23,7 @@ class Timer {
 
     float getTime() {
         time_point<high_resolution_clock> now = high_resolution_clock::now();
-        return duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count();
+        return duration_cast<std::chrono::nanoseconds>(now - start).count();
     }
 
     void reset() {

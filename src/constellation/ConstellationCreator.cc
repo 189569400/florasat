@@ -27,8 +27,6 @@ ConstellationCreator::ConstellationCreator() : planeCount(0),
 }
 
 void ConstellationCreator::initialize() {
-    EV << "Create Constellation" << endl;
-
     planeCount = par("planeCount");
     inclination = par("inclination");
     altitude = par("altitude");
@@ -40,27 +38,17 @@ void ConstellationCreator::initialize() {
     eccentricity = par("eccentricity");
     raanSpread = par("raanSpread");
 
+    // Validate DATA
+    VALIDATE(interPlaneSpacing <= planeCount - 1);
+    VALIDATE(interPlaneSpacing >= 0);
+    VALIDATE(altitude > 0);
+
     // get satellite number and compute sats_per_plane
     satCount = getParentModule()->getSubmoduleVectorSize("loRaGW");
     if (satCount % planeCount != 0) {
         error("Error in ConstellationCreator::initialize(): Sat count (%d) must be divisble by plane count (%d).", satCount, planeCount);
     }
     satsPerPlane = satCount / planeCount;
-
-    EV << "Orbital params: "
-       << "satCount: " << satCount << "; "
-       << "planeCount: " << planeCount << "; "
-       << "inclination: " << inclination << "; "
-       << "altitude: " << altitude << "; "
-       << "interPlaneSpacing: " << interPlaneSpacing << "; "
-       << "baseYear: " << baseYear << "; "
-       << "baseDay: " << baseDay << "; "
-       << "epochYear: " << epochYear << "; "
-       << "epochDay: " << epochDay << "; "
-       << "eccentricity: " << eccentricity << "; "
-       << "raanSpread: " << raanSpread << "; "
-       << endl;
-
     createSatellites();
 }
 
@@ -100,7 +88,7 @@ void ConstellationCreator::createSatellite(int index, double raan, double meanAn
 
     oldNoradModule->deleteModule();
 
-    cModule *noradModule = omnetpp::cModuleType::get("leosatellites.mobility.NoradA")->create("NoradModule", sat);
+    cModule *noradModule = cModuleType::get("leosatellites.mobility.NoradA")->create("NoradModule", sat);
     if (noradModule == nullptr) {
         error("Error in ConstellationCreator::CreateSatellite(): Cannot create \"leosatellites.mobility.NoradA\".");
     }

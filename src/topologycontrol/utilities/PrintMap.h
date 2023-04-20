@@ -9,6 +9,7 @@
 #define __FLORA_TOPOLOGYCONTROL_UTILITIES_PRINT_MAP_H_
 
 #include <string>
+#include <map>
 
 namespace flora {
 namespace topologycontrol {

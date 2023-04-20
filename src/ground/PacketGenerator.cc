@@ -65,12 +65,12 @@ void PacketGenerator::decapsulate(inet::Packet *packet) {
     auto lengthField = header->getLength();
     auto rcvdBytes = header->getChunkLength() + lengthField;
 
-    assert(packet->getDataLength() == lengthField);  // if the packet is correct
+    VALIDATE(packet->getDataLength() == lengthField);  // if the packet is correct
 
     numReceived++;
     receivedBytes += rcvdBytes;
     emit(packetReceivedSignal, packet);
-    //EV << "RCVD(" << rcvdBytes << "):" << header->getSourceGroundstation() << " -> " << header->getDestinationGroundstation() << endl;
+    // EV << "RCVD(" << rcvdBytes << "):" << header->getSourceGroundstation() << " -> " << header->getDestinationGroundstation() << endl;
 }
 
 // int PacketGenerator::getRandomNumber()

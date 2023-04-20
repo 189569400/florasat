@@ -17,12 +17,12 @@ ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat)
     int destGroundstationId = frame->getDestinationGroundstation();
     pkt->insertAtFront(frame);
 
-    int routingSatIndex = callerSat->getIndex();
+    int routerSatIndex = callerSat->getIndex();
 
     int destSatIndex = -1;
 
     // forward to which satellite? Here is a point to introduce shortest path etc.
-    for (int number : topologyControl->getGroundstationInfo(destGroundstationId)->satellites) {
+    for (int number : topologyControl->getGroundstationInfo(destGroundstationId).satellites) {
         destSatIndex = number;
         break;
     }
@@ -31,14 +31,15 @@ ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat)
     }
 
     // forward to which groundstation gate?
-    if (routingSatIndex == destSatIndex) {
-        flora::topologycontrol::GsSatConnection *gsSatConnection = topologyControl->getGroundstationSatConnection(destGroundstationId, destSatIndex);
-        return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection->satGateIndex);
+    if (routerSatIndex == destSatIndex) {
+        flora::topologycontrol::GsSatConnection gsSatConnection = topologyControl->getGroundstationSatConnection(destGroundstationId, destSatIndex);
+        return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection.satGateIndex);
     }
 
-    int myPlane = topologyControl->calculateSatellitePlane(routingSatIndex);
-    int destPlane = topologyControl->calculateSatellitePlane(destSatIndex);
-    bool isAscending = IsSatelliteAscending(callerSat);
+    topologycontrol::SatelliteInfo routerSat = topologyControl->getSatelliteInfo(routerSatIndex);
+    int myPlane = routerSat.getPlane();
+    bool isAscending = routerSat.isAscending();
+    int destPlane = topologyControl->getSatelliteInfo(destSatIndex).getPlane();
 
     // destination is on same plane
     if (myPlane < destPlane) {
@@ -70,9 +71,9 @@ ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat)
             }
         }
     } else if (myPlane == destPlane) {
-        if (routingSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {
+        if (routerSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {
             return ISLDirection(Direction::ISL_UP, -1);
-        } else if (routingSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
+        } else if (routerSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
             return ISLDirection(Direction::ISL_DOWN, -1);
         } else {
             error("Error in PacketHandlerDirected::handleMessage: choosen gate should be connected!");

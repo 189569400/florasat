@@ -28,8 +28,8 @@ struct GsSatConnection {
 
     GsSatConnection(int gsId, int satId, int gsGateIndex, int satGateIndex)
         : gsId(gsId),
-          satId(satId),
           gsGateIndex(gsGateIndex),
+          satId(satId),
           satGateIndex(satGateIndex){};
 
     friend std::ostream &operator<<(std::ostream &ss, const GsSatConnection &gs) {
