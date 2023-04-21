@@ -7,6 +7,8 @@
 
 #include "SatelliteInfo.h"
 
+#define NOT_SET -1;
+
 namespace flora {
 namespace topologycontrol {
 
@@ -38,6 +40,87 @@ cGate* SatelliteInfo::getOutputGate(isldirection::Direction direction, int index
         case isldirection::Direction::ISL_DOWNLINK:
             return satelliteModule->gateHalf(Constants::SAT_GROUNDLINK_NAME, cGate::Type::OUTPUT, index);
     }
+}
+
+void SatelliteInfo::setLeftSat(const SatelliteInfo& newLeft) {
+    leftSatellite = newLeft.getSatelliteId();
+    leftDistance = getDistance(newLeft);
+}
+void SatelliteInfo::setUpSat(const SatelliteInfo& newUp) {
+    upSatellite = newUp.getSatelliteId();
+    upDistance = getDistance(newUp);
+}
+void SatelliteInfo::setRightSat(const SatelliteInfo& newRight) {
+    rightSatellite = newRight.getSatelliteId();
+    rightDistance = getDistance(newRight);
+}
+void SatelliteInfo::setDownSat(const SatelliteInfo& newDown) {
+    downSatellite = newDown.getSatelliteId();
+    downDistance = getDistance(newDown);
+}
+
+void SatelliteInfo::removeLeftSat() {
+    leftSatellite = NOT_SET;
+    leftDistance = NOT_SET;
+}
+void SatelliteInfo::removeUpSat() {
+    upSatellite = NOT_SET;
+    upDistance = NOT_SET;
+}
+void SatelliteInfo::removeRightSat() {
+    rightSatellite = NOT_SET;
+    rightDistance = NOT_SET;
+}
+void SatelliteInfo::removeDownSat() {
+    downSatellite = NOT_SET;
+    downDistance = NOT_SET;
+}
+
+bool SatelliteInfo::hasLeftSat() const {
+    return leftSatellite != NOT_SET;
+}
+bool SatelliteInfo::hasUpSat() const {
+    return upSatellite != NOT_SET;
+}
+bool SatelliteInfo::hasRightSat() const {
+    return rightSatellite != NOT_SET;
+}
+bool SatelliteInfo::hasDownSat() const {
+    return downSatellite != NOT_SET;
+}
+
+int SatelliteInfo::getLeftSat() const {
+    VALIDATE_SET(leftSatellite);
+    return leftSatellite;
+}
+int SatelliteInfo::getUpSat() const {
+    VALIDATE_SET(upSatellite);
+    return upSatellite;
+}
+int SatelliteInfo::getRightSat() const {
+    VALIDATE_SET(rightSatellite);
+    return rightSatellite;
+}
+int SatelliteInfo::getDownSat() const {
+    VALIDATE_SET(downSatellite);
+    return downSatellite;
+}
+
+double SatelliteInfo::getLeftSatDistance() const {
+    VALIDATE_SET(leftDistance);
+    return leftDistance;
+}
+double SatelliteInfo::getUpSatDistance() const {
+    VALIDATE_SET(upSatellite);
+    return upDistance;
+}
+double SatelliteInfo::getRightSatDistance() const {
+    VALIDATE_SET(rightDistance);
+    return rightDistance;
+}
+double SatelliteInfo::getDownSatDistance() const {
+    VALIDATE_SET(downDistance);
+    return downDistance;
 }
 
 int SatelliteInfo::getPlane() const {

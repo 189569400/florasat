@@ -38,6 +38,7 @@ TopologyControl::~TopologyControl() {
 
 void TopologyControl::initialize(int stage) {
     if (stage == inet::INITSTAGE_LOCAL) {
+        // loaded properties
         updateIntervalParameter = &par("updateInterval");
         updateTimer = new ClockEvent("UpdateTimer");
         walkerType = WalkerType::parseWalkerType(par("walkerType"));
@@ -51,20 +52,26 @@ void TopologyControl::initialize(int stage) {
         numGroundLinks = par("numGroundLinks");
         minimumElevation = par("minimumElevation");
         interPlaneSpacing = par("interPlaneSpacing");
+        planeCount = par("planeCount");
+        numSatellites = getSystemModule()->getSubmoduleVectorSize("loRaGW");
+        numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
+
+        // calculated properties
+        satsPerPlane = numSatellites / planeCount;
+
+        // validate state
+        VALIDATE(walkerType != WalkerType::UNINITIALIZED);
+        VALIDATE(numGroundLinks > 0);
+        VALIDATE(interPlaneSpacing <= planeCount - 1 && interPlaneSpacing >= 0);
+        VALIDATE(numSatellites > 0);
+        VALIDATE(planeCount > 0);
+        VALIDATE(satsPerPlane > 0);
+        VALIDATE(satsPerPlane * planeCount == numSatellites);
+        VALIDATE(numGroundStations > 0);
+
     } else if (stage == inet::INITSTAGE_PHYSICAL_LAYER) {
         loadSatellites();
         loadGroundstations();
-
-        // take first satellite and read number of planes + satellitesPerPlane
-        planeCount = satelliteInfos.at(0).noradModule->getNumberOfPlanes();
-        satsPerPlane = satelliteInfos.at(0).noradModule->getSatellitesPerPlane();
-        // validate state
-        VALIDATE(walkerType != WalkerType::UNINITIALIZED);
-        VALIDATE(planeCount > 0);
-        VALIDATE(satsPerPlane > 0);
-        VALIDATE(numSatellites > 0);
-        VALIDATE(satsPerPlane * planeCount == numSatellites);
-        VALIDATE(numGroundStations > 0);
 
         updateTopology();
 
@@ -120,7 +127,6 @@ GsSatConnection const &TopologyControl::getGroundstationSatConnection(int gsId, 
 
 void TopologyControl::loadGroundstations() {
     groundstationInfos.clear();
-    numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
     for (size_t i = 0; i < numGroundStations; i++) {
         cModule *groundstation = getSystemModule()->getSubmodule("groundStation", i);
         if (groundstation == nullptr) {
@@ -137,7 +143,6 @@ void TopologyControl::loadGroundstations() {
 
 void TopologyControl::loadSatellites() {
     satelliteInfos.clear();
-    numSatellites = getSystemModule()->getSubmoduleVectorSize("loRaGW");
     for (size_t i = 0; i < numSatellites; i++) {
         cModule *sat = getParentModule()->getSubmodule("loRaGW", i);
         if (sat == nullptr) {
@@ -285,11 +290,11 @@ void TopologyControl::updateISLInWalkerDelta() {
             // if next plane partner is descending, connection is not possible
             if (rightSat.isDescending()) {
                 // if we were connected to that satellite on right
-                if (curSat.rightSatellite == rightSat.getSatelliteId()) {
+                if (curSat.getRightSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
                 }
                 // if we were connected to that satellite on left
-                else if (curSat.leftSatellite == rightSat.getSatelliteId()) {
+                else if (curSat.getLeftSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
                 }
             } else {
@@ -301,11 +306,11 @@ void TopologyControl::updateISLInWalkerDelta() {
             // if next plane partner is not descending, connection is not possible
             if (rightSat.isAscending()) {
                 // if we were connected to that satellite on right
-                if (curSat.leftSatellite == rightSat.getSatelliteId()) {
+                if (curSat.getLeftSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
                 }
                 // if we were connected to that satellite on right
-                else if (curSat.rightSatellite == rightSat.getSatelliteId()) {
+                else if (curSat.getRightSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
                 }
             } else {
@@ -364,37 +369,37 @@ void TopologyControl::connectSatellites(SatelliteInfo &first, SatelliteInfo &sec
     ASSERT(secondOut != nullptr);
     ASSERT(secondIn != nullptr);
 
-    // disconnect old connections if not wanted ones
+    // disconnect old connections if not the desired connections
     removeOldConnections(first, second, firstOutDir);
-    removeOldConnections(second, first, secondOutDir);
 
     double delay = islDelay * first.getDistance(second);
 
     ChannelState cs1 = updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
     ChannelState cs2 = updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
 
+    switch (firstOutDir) {
+        case isldirection::Direction::ISL_LEFT:
+            first.setLeftSat(second);
+            second.setRightSat(first);
+            break;
+        case isldirection::Direction::ISL_UP:
+            first.setUpSat(second);
+            second.setDownSat(first);
+            break;
+        case isldirection::Direction::ISL_RIGHT:
+            first.setRightSat(second);
+            second.setLeftSat(first);
+            break;
+        case isldirection::Direction::ISL_DOWN:
+            first.setDownSat(second);
+            second.setUpSat(first);
+            break;
+        default:
+            error("Error in TopologyControl::connectSatellites: Should not reach default branch of switch.");
+            break;
+    }
+
     if (cs1 == ChannelState::CREATED || cs2 == ChannelState::CREATED) {
-        switch (firstOutDir) {
-            case isldirection::Direction::ISL_LEFT:
-                first.leftSatellite = second.getSatelliteId();
-                second.rightSatellite = first.getSatelliteId();
-                break;
-            case isldirection::Direction::ISL_UP:
-                first.upSatellite = second.getSatelliteId();
-                second.downSatellite = first.getSatelliteId();
-                break;
-            case isldirection::Direction::ISL_RIGHT:
-                first.rightSatellite = second.getSatelliteId();
-                second.leftSatellite = first.getSatelliteId();
-                break;
-            case isldirection::Direction::ISL_DOWN:
-                first.downSatellite = second.getSatelliteId();
-                second.upSatellite = first.getSatelliteId();
-                break;
-            default:
-                error("Error in TopologyControl::connectSatellites: Should not reach default branch of switch.");
-                break;
-        }
         topologyChanged = true;
     }
 }
@@ -402,23 +407,23 @@ void TopologyControl::connectSatellites(SatelliteInfo &first, SatelliteInfo &sec
 void TopologyControl::removeOldConnections(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction direction) {
     switch (direction) {
         case isldirection::Direction::ISL_LEFT:
-            if (first.leftSatellite != -1 && first.leftSatellite != second.getSatelliteId()) {
-                disconnectSatellites(first, satelliteInfos.at(first.leftSatellite), direction);
+            if (first.hasLeftSat() && first.getLeftSat() != second.getSatelliteId()) {
+                disconnectSatellites(first, satelliteInfos.at(first.getLeftSat()), direction);
             }
             break;
         case isldirection::Direction::ISL_UP:
-            if (first.upSatellite != -1 && first.upSatellite != second.getSatelliteId()) {
-                disconnectSatellites(first, satelliteInfos.at(first.upSatellite), direction);
+            if (first.hasUpSat() && first.getUpSat() != second.getSatelliteId()) {
+                disconnectSatellites(first, satelliteInfos.at(first.getUpSat()), direction);
             }
             break;
         case isldirection::Direction::ISL_RIGHT:
-            if (first.rightSatellite != -1 && first.rightSatellite != second.getSatelliteId()) {
-                disconnectSatellites(first, satelliteInfos.at(first.rightSatellite), direction);
+            if (first.hasRightSat() && first.getRightSat() != second.getSatelliteId()) {
+                disconnectSatellites(first, satelliteInfos.at(first.getRightSat()), direction);
             }
             break;
         case isldirection::Direction::ISL_DOWN:
-            if (first.downSatellite != -1 && first.downSatellite != second.getSatelliteId()) {
-                disconnectSatellites(first, satelliteInfos.at(first.downSatellite), direction);
+            if (first.hasDownSat() && first.getDownSat() != second.getSatelliteId()) {
+                disconnectSatellites(first, satelliteInfos.at(first.getDownSat()), direction);
             }
             break;
         default:
@@ -441,20 +446,20 @@ void TopologyControl::disconnectSatellites(SatelliteInfo &first, SatelliteInfo &
     if (cs1 == ChannelState::DELETED || cs2 == ChannelState::DELETED) {
         switch (firstOutDir) {
             case isldirection::Direction::ISL_LEFT:
-                first.leftSatellite = -1;
-                second.rightSatellite = -1;
+                first.removeLeftSat();
+                second.removeRightSat();
                 break;
             case isldirection::Direction::ISL_UP:
-                first.upSatellite = -1;
-                second.downSatellite = -1;
+                first.removeUpSat();
+                second.removeDownSat();
                 break;
             case isldirection::Direction::ISL_RIGHT:
-                first.rightSatellite = -1;
-                second.leftSatellite = -1;
+                first.removeRightSat();
+                second.removeLeftSat();
                 break;
             case isldirection::Direction::ISL_DOWN:
-                first.downSatellite = -1;
-                second.upSatellite = -1;
+                first.removeDownSat();
+                second.removeUpSat();
                 break;
             default:
                 error("Error in TopologyControl::connectSatellites: Should not reach default branch of switch.");

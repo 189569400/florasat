@@ -38,17 +38,19 @@ void ConstellationCreator::initialize() {
     eccentricity = par("eccentricity");
     raanSpread = par("raanSpread");
 
+    // get satellite number and compute sats_per_plane
+    satCount = getParentModule()->getSubmoduleVectorSize("loRaGW");
+    satsPerPlane = satCount / planeCount;
+
     // Validate DATA
     VALIDATE(interPlaneSpacing <= planeCount - 1 && interPlaneSpacing >= 0);
     VALIDATE(altitude > 0);
     VALIDATE(raanSpread == 180 || raanSpread == 360);
-
-    // get satellite number and compute sats_per_plane
-    satCount = getParentModule()->getSubmoduleVectorSize("loRaGW");
-    if (satCount % planeCount != 0) {
-        error("Error in ConstellationCreator::initialize(): Sat count (%d) must be divisble by plane count (%d).", satCount, planeCount);
-    }
-    satsPerPlane = satCount / planeCount;
+    VALIDATE(satCount > 0);
+    VALIDATE(planeCount > 0);
+    VALIDATE(satsPerPlane > 0);
+    VALIDATE(satsPerPlane * planeCount == satCount);
+    
     createSatellites();
 }
 

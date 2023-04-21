@@ -24,6 +24,9 @@ int randomNumber(omnetpp::cModule* mod, int start, int end, int excluded);
 #define VALIDATE(expr) \
     ((void)((expr) ? 0 : (throw omnetpp::cRuntimeError("VALIDATE: Condition '%s' does not hold in function '%s' at %s:%d", #expr, __FUNCTION__, __FILE__, __LINE__), 0)))
 
+#define VALIDATE_SET(expr) \
+    ((void)((expr != -1) ? 0 : (throw omnetpp::cRuntimeError("VALIDATE_IS_SET: Condition '%s' does not hold in function '%s' at %s:%d", #expr, __FUNCTION__, __FILE__, __LINE__), 0)))
+
 }  // namespace utils
 }  // namespace core
 }  // namespace flora

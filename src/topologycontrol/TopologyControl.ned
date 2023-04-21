@@ -23,9 +23,10 @@ simple TopologyControl
         
         // must be delta or star
         string walkerType @enum("STAR","DELTA");
+        int planeCount;
+        int interPlaneSpacing;
 
         // ISL SETTINGS
-        int interPlaneSpacing;
         bool interPlaneIslDisabled = default(false);
         double upperLatitudeBound = default(70.0);
         double lowerLatitudeBound = default(-70.0);

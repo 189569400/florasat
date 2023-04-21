@@ -16,6 +16,7 @@
 #include "PositionAwareBase.h"
 #include "core/Constants.h"
 #include "core/ISLDirection.h"
+#include "core/Utils.h"
 #include "mobility/NoradA.h"
 
 using namespace omnetpp;
@@ -29,9 +30,11 @@ class SatelliteInfo : public PositionAwareBase {
    private:
     int satelliteId;
     cModule *satelliteModule;
-
-   public:
     NoradA *noradModule;
+    double leftDistance = -1;
+    double rightDistance = -1;
+    double upDistance = -1;
+    double downDistance = -1;
     int leftSatellite = -1;
     int rightSatellite = -1;
     int upSatellite = -1;
@@ -46,6 +49,31 @@ class SatelliteInfo : public PositionAwareBase {
 
     cGate *getInputGate(isldirection::Direction direction, int index = -1) const;
     cGate *getOutputGate(isldirection::Direction direction, int index = -1) const;
+
+    void setLeftSat(const SatelliteInfo &newLeft);
+    void setUpSat(const SatelliteInfo &newUp);
+    void setRightSat(const SatelliteInfo &newRight);
+    void setDownSat(const SatelliteInfo &newDown);
+
+    void removeLeftSat();
+    void removeUpSat();
+    void removeRightSat();
+    void removeDownSat();
+
+    bool hasLeftSat() const;
+    bool hasUpSat() const;
+    bool hasRightSat() const;
+    bool hasDownSat() const;
+
+    int getLeftSat() const;
+    int getUpSat() const;
+    int getRightSat() const;
+    int getDownSat() const;
+
+    double getLeftSatDistance() const;
+    double getUpSatDistance() const;
+    double getRightSatDistance() const;
+    double getDownSatDistance() const;
 
     double getLatitude() const override;
     double getLongitude() const override;

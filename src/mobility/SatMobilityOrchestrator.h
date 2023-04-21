@@ -42,7 +42,6 @@ class SatMobilityOrchestrator : public inet::ClockUserModuleMixin<omnetpp::cSimp
     inet::ClockEvent *updateTimer = nullptr;
 
    private:
-    const char *POSITION = "POSITION";
     /** @brief Used to store sat mobilities. */
     SatMobVector satMobVector;
 };
