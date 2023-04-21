@@ -12,7 +12,7 @@ namespace routing {
 
 Define_Module(DirectedRouting);
 
-ISLDirection DirectedRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
+ISLDirection DirectedRouting::routePacket(inet::Packet *pkt, cModule *callerSat) {
     auto frame = pkt->removeAtFront<RoutingHeader>();
     int destGroundstationId = frame->getDestinationGroundstation();
     pkt->insertAtFront(frame);

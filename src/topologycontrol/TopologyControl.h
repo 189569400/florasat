@@ -41,6 +41,7 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateTopology();
     GroundstationInfo const &getGroundstationInfo(int gsId) const;
     SatelliteInfo const &getSatelliteInfo(int satId) const;
+    std::unordered_map<int, SatelliteInfo> const &getSatelliteInfos() const;
     GsSatConnection const &getGroundstationSatConnection(int gsId, int satId) const;
 
    protected:
@@ -61,12 +62,13 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
+    bool isIslEnabled(const PositionAwareBase &entity) const;
     SatelliteInfo &findSatByPlaneAndNumberInPlane(int plane, int numberInPlane);
-    bool isIslEnabled(PositionAwareBase &entity) const;
 
     void connectSatellites(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction firstOutDirection);
     void disconnectSatellites(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction firstOutDirection);
     void removeOldConnections(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction direction);
+
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
     /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/

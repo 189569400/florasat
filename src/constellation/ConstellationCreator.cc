@@ -59,19 +59,13 @@ void ConstellationCreator::createSatellites() {
     double phaseDifference = 360.0 / satsPerPlane;                // ΔΦ = 2𝜋/Q in [0,2𝜋]
     double phaseOffset = (360.0 * interPlaneSpacing) / satCount;  // Δ𝑓 = 2𝜋𝐹/𝑃𝑄 in [0,2𝜋[
 
-    EV << "raanDelta:" << raanDelta << endl;
-    EV << "phaseDifference:" << phaseDifference << endl;
-    EV << "phaseOffset:" << phaseOffset << endl;
-
     // iterate over planes
     for (size_t plane = 0; plane < planeCount; plane++) {
         // create plane satellites
         double raan = raanDelta * plane;
-        EV << "raan:" << raan << endl;
         for (size_t planeSat = 0; planeSat < satsPerPlane; planeSat++) {
             int index = planeSat + plane * satsPerPlane;
             double meanAnomaly = std::fmod(plane * phaseOffset + planeSat * phaseDifference, 360.0);
-            EV << "meanAnomaly:" << meanAnomaly << endl;
             createSatellite(index, raan, meanAnomaly, plane);
         }
     }

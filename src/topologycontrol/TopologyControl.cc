@@ -73,6 +73,11 @@ void TopologyControl::initialize(int stage) {
         loadSatellites();
         loadGroundstations();
 
+        if (satelliteInfos.size() == 0) {
+            error("Error in TopologyControl::initialize(): No satellites found.");
+            return;
+        }
+
         updateTopology();
 
         if (!updateTimer->isScheduled()) {
@@ -94,10 +99,6 @@ void TopologyControl::scheduleUpdate() {
 }
 
 void TopologyControl::updateTopology() {
-    if (satelliteInfos.size() == 0) {
-        error("Error in TopologyControl::updateTopology(): No satellites found.");
-        return;
-    }
     core::Timer timer = core::Timer();
     // update ISL links and groundlinks
     topologyChanged = false;
@@ -119,6 +120,10 @@ GroundstationInfo const &TopologyControl::getGroundstationInfo(int gsId) const {
 SatelliteInfo const &TopologyControl::getSatelliteInfo(int satId) const {
     ASSERT(satId >= 0 && satId < numSatellites);
     return satelliteInfos.at(satId);
+}
+
+std::unordered_map<int, SatelliteInfo> const &TopologyControl::getSatelliteInfos() const {
+    return satelliteInfos;
 }
 
 GsSatConnection const &TopologyControl::getGroundstationSatConnection(int gsId, int satId) const {
@@ -290,11 +295,11 @@ void TopologyControl::updateISLInWalkerDelta() {
             // if next plane partner is descending, connection is not possible
             if (rightSat.isDescending()) {
                 // if we were connected to that satellite on right
-                if (curSat.getRightSat() == rightSat.getSatelliteId()) {
+                if (curSat.hasRightSat() && curSat.getRightSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
                 }
                 // if we were connected to that satellite on left
-                else if (curSat.getLeftSat() == rightSat.getSatelliteId()) {
+                else if (curSat.hasLeftSat() && curSat.getLeftSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
                 }
             } else {
@@ -306,11 +311,11 @@ void TopologyControl::updateISLInWalkerDelta() {
             // if next plane partner is not descending, connection is not possible
             if (rightSat.isAscending()) {
                 // if we were connected to that satellite on right
-                if (curSat.getLeftSat() == rightSat.getSatelliteId()) {
+                if (curSat.hasLeftSat() && curSat.getLeftSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
                 }
                 // if we were connected to that satellite on right
-                else if (curSat.getRightSat() == rightSat.getSatelliteId()) {
+                else if (curSat.hasRightSat() && curSat.getRightSat() == rightSat.getSatelliteId()) {
                     disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
                 }
             } else {
@@ -349,7 +354,7 @@ void TopologyControl::updateISLInWalkerStar() {
     }
 }
 
-bool TopologyControl::isIslEnabled(PositionAwareBase &entity) const {
+bool TopologyControl::isIslEnabled(const PositionAwareBase &entity) const {
     double latitude = entity.getLatitude();
     return latitude <= upperLatitudeBound && latitude >= lowerLatitudeBound;
 }
@@ -372,7 +377,8 @@ void TopologyControl::connectSatellites(SatelliteInfo &first, SatelliteInfo &sec
     // disconnect old connections if not the desired connections
     removeOldConnections(first, second, firstOutDir);
 
-    double delay = islDelay * first.getDistance(second);
+    double distance = first.getDistance(second);
+    double delay = islDelay * distance;
 
     ChannelState cs1 = updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
     ChannelState cs2 = updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);

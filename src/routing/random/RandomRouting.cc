@@ -12,7 +12,7 @@ namespace routing {
 
 Define_Module(RandomRouting);
 
-ISLDirection RandomRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
+ISLDirection RandomRouting::routePacket(inet::Packet *pkt, cModule *callerSat) {
     auto frame = pkt->removeAtFront<RoutingHeader>();
     int destinationGroundStation = frame->getDestinationGroundstation();
     pkt->insertAtFront(frame);
@@ -39,7 +39,7 @@ ISLDirection RandomRouting::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
     } else if (gate == 3 && RoutingBase::HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
         return ISLDirection(Direction::ISL_RIGHT, -1);
     }
-    return RoutePacket(pkt, callerSat);
+    return routePacket(pkt, callerSat);
 }
 
 }  // namespace routing

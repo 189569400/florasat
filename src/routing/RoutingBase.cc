@@ -19,6 +19,8 @@ void RoutingBase::initialize(int stage) {
     }
 }
 
+void RoutingBase::initRouting(Packet *pkt, cModule *callerSat) {}
+
 bool RoutingBase::HasConnection(cModule *satellite, ISLDirection side) {
     if (satellite == nullptr)
         throw new cRuntimeError("RandomRouting::HasConnection(): satellite mullptr");

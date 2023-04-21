@@ -20,14 +20,15 @@ namespace routing {
 
 using namespace omnetpp;
 using namespace inet;
-using namespace core::isldirection;
+using namespace isldirection;
 
 class RoutingBase : public cSimpleModule {
    protected:
     topologycontrol::TopologyControl *topologyControl = nullptr;
 
    public:
-    virtual ISLDirection RoutePacket(Packet *pkt, cModule *callerSat) = 0;
+    virtual void initRouting(Packet *pkt, cModule *callerSat);
+    virtual ISLDirection routePacket(Packet *pkt, cModule *callerSat) = 0;
 
    protected:
     virtual void initialize(int stage) override;

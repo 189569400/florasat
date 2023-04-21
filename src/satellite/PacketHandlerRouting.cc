@@ -28,9 +28,13 @@ void PacketHandlerRouting::initialize(int stage) {
 }
 
 void PacketHandlerRouting::handleMessage(cMessage *msg) {
-    if (msg->arrivedOn("queueIn")) {
+    if (msg->arrivedOn("queueIn") || msg->isSelfMessage()) {
         processMessage(msg);
     } else {
+        if (msg->arrivedOn("groundLink1$i")) {
+            auto pkt = check_and_cast<inet::Packet *>(msg);
+            routing->initRouting(pkt, this);
+        }
         receiveMessage(msg);
     }
 }
@@ -54,7 +58,7 @@ void PacketHandlerRouting::processMessage(cMessage *msg) {
     insertSatinRoute(pkt);
 
     cGate *outputGate = nullptr;
-    auto routeInformation = routing->RoutePacket(pkt, getParentModule());
+    auto routeInformation = routing->routePacket(pkt, getParentModule());
     switch (routeInformation.direction) {
         case isldirection::Direction::ISL_DOWN:
             outputGate = gate("down1$o");

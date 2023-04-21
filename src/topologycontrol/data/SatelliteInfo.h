@@ -55,6 +55,11 @@ class SatelliteInfo : public PositionAwareBase {
     void setRightSat(const SatelliteInfo &newRight);
     void setDownSat(const SatelliteInfo &newDown);
 
+    void setLeftSat(int id, double distance);
+    void setUpSat(int id, double distance);
+    void setRightSat(int id, double distance);
+    void setDownSat(int id, double distance);
+
     void removeLeftSat();
     void removeUpSat();
     void removeRightSat();
