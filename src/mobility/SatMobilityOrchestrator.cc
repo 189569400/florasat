@@ -55,7 +55,7 @@ SatMobVector SatMobilityOrchestrator::loadSatMobilities() {
         if (satMobility == nullptr) {
             error("Error in SatMobilityOrchestrator::loadSatellites: Could not find sat norad module for sat %d.", i);
         }
-        noradModule->initializeMobility(simTime());
+        // noradModule->initializeMobility(simTime());
     }
     return satellites;
 }

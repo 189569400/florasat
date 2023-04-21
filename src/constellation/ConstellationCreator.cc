@@ -39,9 +39,9 @@ void ConstellationCreator::initialize() {
     raanSpread = par("raanSpread");
 
     // Validate DATA
-    VALIDATE(interPlaneSpacing <= planeCount - 1);
-    VALIDATE(interPlaneSpacing >= 0);
+    VALIDATE(interPlaneSpacing <= planeCount - 1 && interPlaneSpacing >= 0);
     VALIDATE(altitude > 0);
+    VALIDATE(raanSpread == 180 || raanSpread == 360);
 
     // get satellite number and compute sats_per_plane
     satCount = getParentModule()->getSubmoduleVectorSize("loRaGW");
@@ -53,22 +53,45 @@ void ConstellationCreator::initialize() {
 }
 
 void ConstellationCreator::createSatellites() {
-    double meanAnomalyDelta = 360.0 / satsPerPlane;
-    // double angularMeasurePerSlot = (360.0 / satCount) - eccentricity * sin(angularMeasurePerSlot);
-    double angularMeasurePerSlot = (360.0 / satCount);
-    double raanDelta = raanSpread / planeCount;
+    double raanDelta = raanSpread / planeCount;                   // ΔΩ = 2𝜋/𝑃 in [0,2𝜋]
+    double phaseDifference = 360.0 / satsPerPlane;                // ΔΦ = 2𝜋/Q in [0,2𝜋]
+    double phaseOffset = (360.0 * interPlaneSpacing) / satCount;  // Δ𝑓 = 2𝜋𝐹/𝑃𝑄 in [0,2𝜋[
+
+    EV << "raanDelta:" << raanDelta << endl;
+    EV << "phaseDifference:" << phaseDifference << endl;
+    EV << "phaseOffset:" << phaseOffset << endl;
 
     // iterate over planes
     for (size_t plane = 0; plane < planeCount; plane++) {
         // create plane satellites
         double raan = raanDelta * plane;
+        EV << "raan:" << raan << endl;
         for (size_t planeSat = 0; planeSat < satsPerPlane; planeSat++) {
             int index = planeSat + plane * satsPerPlane;
-            double meanAnomaly = std::fmod(planeSat * meanAnomalyDelta + plane * angularMeasurePerSlot * interPlaneSpacing, 360.0);
+            double meanAnomaly = std::fmod(plane * phaseOffset + planeSat * phaseDifference, 360.0);
+            EV << "meanAnomaly:" << meanAnomaly << endl;
             createSatellite(index, raan, meanAnomaly, plane);
         }
     }
 }
+
+// void ConstellationCreator::createSatellites() {
+//     double meanAnomalyDelta = 360.0 / satsPerPlane;
+//     // double angularMeasurePerSlot = (360.0 / satCount) - eccentricity * sin(angularMeasurePerSlot);
+//     double angularMeasurePerSlot = (360.0 / satCount);
+//     double raanDelta = raanSpread / planeCount ;
+
+//     // iterate over planes
+//     for (size_t plane = 0; plane < planeCount; plane++) {
+//         // create plane satellites
+//         double raan = raanDelta * plane;
+//         for (size_t planeSat = 0; planeSat < satsPerPlane; planeSat++) {
+//             int index = planeSat + plane * satsPerPlane;
+//             double meanAnomaly = std::fmod(planeSat * meanAnomalyDelta, 360.0);
+//             createSatellite(index, raan, meanAnomaly, plane);
+//         }
+//     }
+// }
 
 void ConstellationCreator::createSatellite(int index, double raan, double meanAnomaly, int plane) {
     cModule *parent = getParentModule();
