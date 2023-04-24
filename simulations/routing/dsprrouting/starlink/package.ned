@@ -1,4 +1,4 @@
-package flora.simulations.routing.directedrouting.starlink;
+package flora.simulations.routing.dsprrouting.starlink;
 
 import inet.visualizer.common.IntegratedVisualizer;
 
@@ -8,12 +8,12 @@ import flora.ground.GroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.TopologyControl;
-import flora.routing.directed.DirectedRouting;
+import flora.routing.random.RandomRouting;
 import flora.mobility.SatMobilityOrchestrator;
 import flora.networklayer.ConstellationRoutingTable;
 
 @license(LGPL);
-network DirectedRoutingStarLink
+network DsprRoutingStarlink
 {
     parameters:
         @display("bgb=2160,1080;bgi=background_earth,s");
@@ -23,7 +23,7 @@ network DirectedRoutingStarLink
     submodules:
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
-        routing: DirectedRouting {
+        routing: RandomRouting {
             @display("p=-128,373.375;i=block/routing");
         }
 

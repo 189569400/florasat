@@ -11,10 +11,9 @@ namespace flora {
 namespace routing {
 namespace core {
 
-DijkstraResult dijkstra(int src, int dst, const std::unordered_map<int, SatelliteInfo>& constellation) {
+DijkstraResult dijkstra(int src, const std::unordered_map<int, SatelliteInfo>& constellation) {
     int size = constellation.size();
     ASSERT(src >= 0 && src < size);
-    ASSERT(dst >= 0 && dst < size);
 
     std::vector<std::vector<double>> cost;
     std::vector<double> distance;

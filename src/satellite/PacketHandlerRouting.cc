@@ -28,35 +28,39 @@ void PacketHandlerRouting::initialize(int stage) {
 }
 
 void PacketHandlerRouting::handleMessage(cMessage *msg) {
-    if (msg->arrivedOn("queueIn") || msg->isSelfMessage()) {
-        processMessage(msg);
+    auto pkt = check_and_cast<inet::Packet *>(msg);
+    if (msg->arrivedOn("queueIn")) {
+        routeMessage(pkt);
+    } else if (msg->isSelfMessage()) {
+        auto frame = pkt->removeAtFront<ChannelBusyHeader>();
+        for (cModule::GateIterator it(this); !it.end(); ++it) {
+            cGate *gate = *it;
+            if (frame->getGate() == gate->getId()) {
+                sendMessage(gate, pkt);
+                return;
+            }
+        }
+        error("Error in PacketHandlerRouting::handleMessage: Unexpected gate %d not found.", frame->getGate());
     } else {
         if (msg->arrivedOn("groundLink1$i")) {
-            auto pkt = check_and_cast<inet::Packet *>(msg);
-            routing->initRouting(pkt, this);
+            routing->initRouting(pkt, getParentModule());
         }
-        receiveMessage(msg);
+        send(pkt, "queueOut");
     }
 }
 
-void PacketHandlerRouting::processMessage(cMessage *msg) {
-    auto pkt = check_and_cast<inet::Packet *>(msg);
-
+void PacketHandlerRouting::routeMessage(Packet *pkt) {
     auto frame = pkt->removeAtFront<RoutingHeader>();
     int hops = frame->getNumHop();
     int sequenceNumber = frame->getSequenceNumber();
-    pkt->insertAtFront(frame);
-
+    frame->appendRoute(satIndex);
     if (hops > maxHops) {
         EV << "SAT [" << satIndex << "]: MSG expired. Delete." << endl;
-        // TODO: EMIT PACKET DROP
-        bubble("MSG expired.");
-        delete msg;
+        delete pkt;
         return;
     }
-
-    insertSatinRoute(pkt);
-
+    frame->setNumHop(frame->getNumHop() + 1);
+    pkt->insertAtFront(frame);
     cGate *outputGate = nullptr;
     auto routeInformation = routing->routePacket(pkt, getParentModule());
     switch (routeInformation.direction) {
@@ -78,37 +82,20 @@ void PacketHandlerRouting::processMessage(cMessage *msg) {
         default:
             error("Unexpected gate");
     }
-    routeMessage(outputGate, msg);
+    sendMessage(outputGate, pkt);
 }
 
-void PacketHandlerRouting::receiveMessage(cMessage *msg) {
-    send(msg, "queueOut");
-}
-
-void PacketHandlerRouting::routeMessage(cGate *gate, cMessage *msg) {
+void PacketHandlerRouting::sendMessage(cGate *gate, Packet *pkt) {
     if (gate->getTransmissionChannel()->isBusy()) {
-        // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down is busy." << endl;
-        scheduleAt(gate->getTransmissionChannel()->getTransmissionFinishTime(), msg);
+        auto frame = makeShared<ChannelBusyHeader>();
+        frame->setChunkLength(B(1));
+        frame->setGate(gate->getId());
+        pkt->insertAtFront(frame);
+        EV << "Channel busy! ATTENTION!" << endl;
+        scheduleAt(gate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
     } else {
-        // EV << "SAT [" << satIndex << ", " << sequenceNumber << "]: Send down." << endl;
-        send(msg->dup(), gate);
+        send(pkt->dup(), gate);
     }
-}
-
-bool PacketHandlerRouting::isExpired(Packet *pkt) {
-    auto frame = pkt->removeAtFront<RoutingHeader>();
-    int hops = frame->getNumHop();
-    pkt->insertAtFront(frame);
-    return hops > maxHops;
-}
-
-void PacketHandlerRouting::insertSatinRoute(Packet *pkt) {
-    auto frame = pkt->removeAtFront<RoutingHeader>();
-    int numHops = frame->getNumHop();
-    frame->setNumHop(numHops + 1);
-    frame->appendRoute(satIndex);
-    frame->appendTimestamps(simTime());
-    pkt->insertAtFront(frame);
 }
 
 }  // namespace satellite

@@ -16,8 +16,12 @@
 #include "inet/common/Simsignals.h"
 #include "inet/common/packet/Message.h"
 #include "inet/common/packet/Packet.h"
+#include "routing/core/DijkstraShortestPath.h"
 #include "metrics/MetricsCollector.h"
 #include "routing/RoutingHeader_m.h"
+#include "topologycontrol/TopologyControl.h"
+#include "networklayer/ConstellationRoutingTable.h"
+#include "TransportHeader_m.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -31,6 +35,8 @@ class PacketGenerator : public cSimpleModule {
     int numSent = 0;
     B sentBytes = B(0);
     B receivedBytes = B(0);
+    topologycontrol::TopologyControl *topologycontrol;
+    networklayer::ConstellationRoutingTable *routingTable;
 
    protected:
     virtual void initialize(int stage) override;
@@ -42,7 +48,7 @@ class PacketGenerator : public cSimpleModule {
 
    protected:
     virtual void handleMessage(cMessage *msg) override;
-    void encapsulate(Packet *packet, int destinationId);
+    void encapsulate(Packet *packet, int dstGs, int firstSat, int lastSat);
     void decapsulate(Packet *packet);
 };
 

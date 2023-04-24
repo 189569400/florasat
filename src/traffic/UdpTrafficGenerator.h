@@ -20,9 +20,11 @@
 #define __FLORA_TRAFFIC_UDPTRAFFICGENERATOR_H_
 
 #include <vector>
+#include <string>
 
 #include "inet/applications/base/ApplicationBase.h"
 #include "inet/applications/base/ApplicationPacket_m.h"
+#include "ground/TransportHeader_m.h"
 #include "inet/common/Simsignals.h"
 #include "inet/common/TimeTag_m.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
@@ -47,12 +49,13 @@ class UdpTrafficGenerator : public ClockUserModuleMixin<ApplicationBase>
     // parameters
     std::vector<L3Address> destAddresses;
     std::vector<std::string> destAddressStr;
+    int localPort = -1, destPort = -1;
     clocktime_t startTime;
     clocktime_t stopTime;
     const char *packetName = nullptr;
 
     // state
-    // UdpSocket socket;
+    UdpSocket socket;
     ClockEvent *selfMsg = nullptr;
     L3Address appLocalAddress;
 

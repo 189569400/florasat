@@ -17,6 +17,7 @@ import flora.topologycontrol.TopologyControl;
 import flora.routing.random.RandomRouting;
 import flora.mobility.SatMobilityOrchestrator;
 import flora.metrics.MetricsCollector;
+import flora.networklayer.ConstellationRoutingTable;
 
 @license(LGPL);
 network RandomRouteIridium
@@ -43,6 +44,10 @@ network RandomRouteIridium
 
         satMobilityOrchestrator: SatMobilityOrchestrator {
             @display("p=-128,673.375;i=block/rightarrow");
+        }
+
+        constellationRoutingTable: ConstellationRoutingTable {
+            @display("p=-128,773.375;i=block/network2");
         }
 
         visualizer: IntegratedVisualizer {

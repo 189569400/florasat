@@ -14,6 +14,7 @@
 #include "mobility/INorad.h"
 #include "mobility/NoradA.h"
 #include "routing/RoutingHeader_m.h"
+#include "ChannelBusyHeader_m.h"
 #include "routing/RoutingBase.h"
 
 using namespace omnetpp;
@@ -33,12 +34,8 @@ class PacketHandlerRouting : public cSimpleModule {
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
     virtual void handleMessage(cMessage *msg) override;
-    void processMessage(cMessage *msg);
-    void receiveMessage(cMessage *msg);
-    void routeMessage(cGate *gate, cMessage *msg);
-
-    void insertSatinRoute(Packet *pkt);
-    bool isExpired(Packet *pkt);
+    void routeMessage(Packet *msg);
+    void sendMessage(cGate *gate, Packet *pkt);
 };
 
 }  // namespace satellite

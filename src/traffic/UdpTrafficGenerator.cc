@@ -69,7 +69,14 @@ void UdpTrafficGenerator::sendPacket() {
     payload->setSequenceNumber(numSent);
     payload->addTag<CreationTimeTag>()->setCreationTime(simTime());
     packet->insertAtBack(payload);
+
+    const auto transpHeader = makeShared<TransportHeader>();
     L3Address destAddr = chooseDestAddr();
+    transpHeader->setChunkLength(B(1));
+    transpHeader->setDstIpAddress(destAddr.str().c_str());
+    transpHeader->setSrcIpAddress(appLocalAddress.str().c_str());
+    packet->insertAtFront(transpHeader);
+
     emit(packetSentSignal, packet);
     // socket.sendTo(packet, destAddr, 5000);
     send(packet, "socketOut");
@@ -78,7 +85,7 @@ void UdpTrafficGenerator::sendPacket() {
 
 void UdpTrafficGenerator::processStart() {
     // socket.setOutputGate(gate("socketOut"));
-    const char *localAddress = par("localAddress");
+    const char *localAddress = getParentModule()->par("localAddress");
     appLocalAddress = L3Address(localAddress);
     // socket.bind(L3Address(localAddress), 5000);
     // setSocketOptions();

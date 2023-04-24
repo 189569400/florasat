@@ -30,7 +30,7 @@ struct DijkstraResult {
     std::vector<int> prev;
 };
 
-DijkstraResult dijkstra(int src, int dst, const std::unordered_map<int, SatelliteInfo>& constellation);
+DijkstraResult dijkstra(int src, const std::unordered_map<int, SatelliteInfo>& constellation);
 DijkstraResult dijkstraEarlyAbort(int src, int dst, const std::unordered_map<int, SatelliteInfo>& constellation);
 
 std::vector<int> reconstructPath(int src, int dest, std::vector<int> prev);
