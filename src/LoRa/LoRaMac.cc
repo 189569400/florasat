@@ -176,7 +176,7 @@ void LoRaMac::initialize(int stage)
         if (FSAGame)
         {
             realNodeNumber = par("realNodeNumber");
-            int id = (realNodeNumber-3) / 20;
+            int id = (realNodeNumber-5) / 10;
             double b = 1 - (1.0/maxClassSslots);
             std::list<double>::iterator it = estimations.begin();
             advance(it, id);
