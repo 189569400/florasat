@@ -2,23 +2,62 @@ package flora.simulations.dtnTutorial;
 
 import flora.dtn.node.Node;
 import flora.dtn.central.Central;
+import flora.LoRaPhy.LoRaMedium;
+import flora.LoRa.LoRaNode;
+import flora.ground.GroundStationRouting;
+import flora.satellite.SatelliteRouting;
+import flora.constellation.ConstellationCreator;
+import flora.topologycontrol.TopologyControl;
+import flora.routing.random.RandomRouting;
+import flora.routing.directed.DirectedRouting;
+import flora.mobility.FasterSatMobility;
+import flora.metrics.MetricsCollector;
+import flora.routing.dtn.contactplan.ContactPlan;
+import inet.visualizer.common.IntegratedVisualizer;
 
-network dtnsim
+network DtnSim
 {
     parameters:
-        int nodesNumber = default(0);
-        @display("bgb=503,408");
+        int nrOfGS = default(2);
+        int nrOfGW = default(3);
+        @display("bgb=2160,1080;bgi=background_earth,s");
 
     submodules:
-        node[nodesNumber+1]: Node {
-            parameters:
-                @display("p=169,50");
+        groundStation[nrOfGS]: GroundStationRouting {
+            @display("p=692.48,340.83;i=device/receiverdish");
         }
 
-        central: Central {
-            parameters:
-                @display("p=40,150");
+        loRaGW[nrOfGW]: SatelliteRouting {
+            @display("p=695.185,549.115;i=satellit_blue");
         }
 
-    connections:
+        routing: DirectedRouting {
+            @display("p=-128,373.375");
+        }
+        
+        contactPlan: ContactPlan {
+        	@display("p=-128,373.375");
+        }
+
+        constellationCreator: ConstellationCreator {
+            @display("p=-128,473.375");
+        }
+
+        topologyControl: TopologyControl {
+            @display("p=-128,573.375");
+        }
+
+        fasterSatMobility: FasterSatMobility {
+            @display("p=-128,673.375");
+        }
+
+        metricsCollector: MetricsCollector {
+            @display("p=-128,773.375");
+        }
+
+        visualizer: IntegratedVisualizer {
+            @display("p=-128,875.0");
+        }
+
+    connections allowunconnected:
 }
