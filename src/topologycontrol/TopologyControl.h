@@ -24,6 +24,7 @@
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
 #include "topologycontrol/utilities/WalkerType.h"
+#include "routing/dtn/contactplan/ContactPlan.h"
 
 using namespace omnetpp;
 
@@ -61,14 +62,22 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateIntraSatelliteLinks();
     void updateInterSatelliteLinks();
     void updateGroundstationLinks();
+    void updateGroundstationLinksDtn();
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
+    void linkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
+    void unlinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
+    void updateLinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
+    bool isDtnContactStarting(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
+    bool isDtnContactTakingPlace(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
+    bool isDtnContactEnding(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
     bool isIslEnabled(double latitude);
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
     /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/
     ChannelState deleteChannel(cGate *outGate);
+
 
    protected:
     /**
@@ -125,6 +134,8 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
 
     /** @brief Used to indicate if there was a change to the topology. */
     bool topologyChanged = false;
+
+    bool isDtn = false;
 };
 
 }  // namespace topologycontrol

@@ -39,6 +39,7 @@ void TopologyControl::initialize(int stage) {
         groundlinkDelay = par("groundlinkDelay");
         groundlinkDatarate = par("groundlinkDatarate");
         minimumElevation = par("minimumElevation");
+        isDtn = par("isDtn");
         EV << "Loaded parameters: "
            << "updateInterval: " << updateIntervalParameter << "; "
            << "isClosedConstellation: " << isClosedConstellation << "; "
@@ -49,6 +50,7 @@ void TopologyControl::initialize(int stage) {
            << "minimumElevation: " << minimumElevation << endl;
     } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
         EV << "initialize TopologyControl" << endl;
+        EV << "isDtn: " << isDtn << endl;
 
         loadSatellites();
         loadGroundstations();
@@ -84,10 +86,13 @@ void TopologyControl::UpdateTopology() {
     }
     // update ISL links and groundlinks
     topologyChanged = false;
-    updateIntraSatelliteLinks();
-    updateInterSatelliteLinks();
-    updateGroundstationLinks();
-
+    if (isDtn == false) {
+        updateIntraSatelliteLinks();
+        updateInterSatelliteLinks();
+        updateGroundstationLinks();
+    } else {
+        updateGroundstationLinksDtn();
+    }
     // if there was any change to the topology, track current contacts
     if (topologyChanged)
         trackTopologyChange();
@@ -182,6 +187,150 @@ void TopologyControl::updateIntraSatelliteLinks() {
             }
         }
     }
+}
+
+/**
+ * Updates the links between each Groundstation and Satellites based on a ContactPlan instance.
+ */
+void TopologyControl::updateGroundstationLinksDtn() {
+    ContactPlan *contactPlan = check_and_cast<ContactPlan *>(getParentModule()->getSubmodule("contactPlan"));
+    if (contactPlan == nullptr) {
+        error("Error in TopologyControl::updateNodeLinksDtn(): contactPlan is nullptr. Make sure the module exists.");
+    }
+    // TODO: Improve time complexity in this function from O(n^3)
+    for (size_t i = 0; i < groundstationCount; i++) {
+        GroundstationInfo *gsInfo = &groundstationInfos.at(i);
+        std::set<SatelliteInfo *> satellites;
+        for (size_t i = 0; i < satelliteCount; i++) {
+            SatelliteInfo *satInfo = &satelliteInfos.at(i);
+            vector<Contact> satContacts = contactPlan->getContactsBySrcDst(gsInfo->groundStationId, satInfo->satelliteId + groundstationCount);
+            for (size_t i = 0; i < satContacts.size(); i++) {
+                Contact contact = satContacts.at(i);
+                if (isDtnContactStarting(gsInfo, satInfo, contact)){
+                    linkGroundStationToSatDtn(gsInfo, satInfo);
+                } else if (isDtnContactTakingPlace(gsInfo, satInfo, contact)) {
+                    updateLinkGroundStationToSatDtn(gsInfo, satInfo);
+                } else if (isDtnContactEnding(gsInfo, satInfo, contact)) {
+                    unlinkGroundStationToSatDtn(gsInfo, satInfo);
+                }
+            }
+        }
+        EV << gsInfo->to_string() << endl;
+    }
+}
+
+/**
+ * Checks if a contact between a GroundStation and Satellite is starting based on a Contact instance
+ *
+ * @param gsInfo contains data related to a GroundStation
+ * @param satInfo contains data related to a Satellite
+ * @param contact represent a Contact between two nodes in a Contact Plan
+ * @return whether a contact between a GroundStation and a Satellite is starting
+ */
+bool TopologyControl::isDtnContactStarting(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact) {
+    return contact.getSourceEid() == gsInfo->groundStationId && contact.getDestinationEid() == satInfo->satelliteId + groundstationCount && contact.getStart() == simTime().dbl();
+}
+
+/**
+ * Checks if a contact between a GroundStation and Satellite is taking place based on a Contact instance
+ *
+ * @param gsInfo contains data related to a GroundStation
+ * @param satInfo contains data related to a Satellite
+ * @param contact represent a Contact between two nodes in a Contact Plan
+ * @return whether a contact between a GroundStation and a Satellite is taking place
+ */
+bool TopologyControl::isDtnContactTakingPlace(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact) {
+    return contact.getSourceEid() == gsInfo->groundStationId && contact.getDestinationEid() == satInfo->satelliteId + groundstationCount && contact.getEnd() > simTime().dbl() && contact.getStart() < simTime().dbl();
+}
+
+/**
+ * Checks if a contact between a GroundStation and Satellite is ending based on a Contact instance
+ *
+ * @param gsInfo contains data related to a GroundStation
+ * @param satInfo contains data related to a Satellite
+ * @param contact represent a Contact between two nodes in a Contact Plan
+ * @return whether a contact between a GroundStation and a Satellite is ending
+ */
+bool TopologyControl::isDtnContactEnding(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact) {
+    return contact.getSourceEid() == gsInfo->groundStationId && contact.getDestinationEid() == satInfo->satelliteId + groundstationCount && contact.getEnd() == simTime().dbl();
+}
+
+/**
+ * Creates a link between a GroundStation and Satellite
+ * @param gsInfo contains data related to a GroundStation
+ * @param satInfo contains data related to a Satellite
+ */
+void TopologyControl::linkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo) {
+    double distance = satInfo->noradModule->getDistance(gsInfo->mobility->getLUTPositionY(), gsInfo->mobility->getLUTPositionX(), 0);
+    double delay = distance * groundlinkDelay; // delay of the channel between satellite and groundstation (ms)
+    EV << "Create channel between GS " << gsInfo->groundStationId << " and SAT " << satInfo->satelliteId << endl;
+    int freeIndexGs = -1;
+    for (size_t i = 0; i < 20; i++) {
+        cGate *gate = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
+        if (!gate->isConnectedOutside()) {
+            freeIndexGs = i;
+            break;
+        }
+    }
+    if (freeIndexGs == -1) {
+        error("No free gs gate index found.");
+    }
+
+    int freeIndexSat = -1;
+    for (size_t i = 0; i < 20; i++) {
+        cGate *gate = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, i);
+        if (!gate->isConnectedOutside()) {
+            freeIndexSat = i;
+            break;
+        }
+    }
+    if (freeIndexSat == -1) {
+        error("No free sat gate index found.");
+    }
+
+    cGate *uplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, freeIndexGs);
+    cGate *uplinkI = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::INPUT, freeIndexGs);
+    cGate *downlinkO = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, freeIndexSat);
+    cGate *downlinkI = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::INPUT, freeIndexSat);
+    updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
+    updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
+    GsSatConnection connection = GsSatConnection(gsInfo, satInfo, freeIndexGs, freeIndexSat);
+    gsSatConnections.emplace(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId), connection);
+    topologyChanged = true;
+    gsInfo->satellites.emplace(satInfo->satelliteId);
+}
+
+/**
+ * Deletes the link between a GroundStation and Satellite
+ * @param gsInfo contains data related to a GroundStation
+ * @param satInfo contains data related to a Satellite
+ */
+void TopologyControl::unlinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo) {
+    GsSatConnection *connection = &gsSatConnections.at(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId));
+    cGate *uplink = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->gsGateIndex);
+    cGate *downlink = connection->satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->satGateIndex);
+    deleteChannel(uplink);
+    deleteChannel(downlink);
+    gsSatConnections.erase(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId));
+    topologyChanged = true;
+    gsInfo->satellites.erase(satInfo->satelliteId);
+}
+
+/**
+ * Update the link between a GroundStation and Satellite
+ * @param gsInfo contains data related to a GroundStation
+ * @param satInfo contains data related to a Satellite
+ */
+void TopologyControl::updateLinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo) {
+    double distance = satInfo->noradModule->getDistance(gsInfo->mobility->getLUTPositionY(), gsInfo->mobility->getLUTPositionX(), 0);
+    double delay = distance * groundlinkDelay; // delay of the channel between nearest satellite and groundstation (ms)
+    GsSatConnection *connection = &gsSatConnections.at(std::pair<int, int>(gsInfo->groundStationId, satInfo->satelliteId));
+    cGate *uplinkO = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->gsGateIndex);
+    cGate *uplinkI = gsInfo->groundStation->gateHalf(GS_SATLINK_NAME.c_str(), cGate::Type::INPUT, connection->gsGateIndex);
+    cGate *downlinkO = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::OUTPUT, connection->satGateIndex);
+    cGate *downlinkI = satInfo->satelliteModule->gateHalf(SAT_GROUNDLINK_NAME.c_str(), cGate::Type::INPUT, connection->satGateIndex);
+    updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
+    updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
 }
 
 void TopologyControl::updateGroundstationLinks() {

@@ -34,4 +34,6 @@ simple TopologyControl
         // 10 MBit/s
         double groundlinkDatarate = default(10000000);
         double minimumElevation = default(10.0);
+        
+        bool isDtn = default(false);
 }
