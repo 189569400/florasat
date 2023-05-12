@@ -20,7 +20,7 @@ namespace routing {
 
 class DirectedRouting : public RoutingBase {
    public:
-    ISLDirection routePacket(inet::Packet *pkt, cModule *callerSat) override;
+    ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) override;
 };
 
 }  // namespace routing

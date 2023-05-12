@@ -12,7 +12,10 @@
 
 #include <vector>
 
+#include "RoutingHeader_m.h"
+#include "core/utils/VectorUtils.h"
 #include "inet/common/packet/Packet.h"
+#include "routing/core/DijkstraShortestPath.h"
 #include "topologycontrol/TopologyControl.h"
 
 namespace flora {
@@ -28,7 +31,8 @@ class RoutingBase : public cSimpleModule {
 
    public:
     virtual void initRouting(Packet *pkt, cModule *callerSat);
-    virtual ISLDirection routePacket(Packet *pkt, cModule *callerSat) = 0;
+    virtual std::pair<int, int> calculateFirstAndLastSatellite(int srcGs, int dstGs);
+    virtual ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) = 0;
 
    protected:
     virtual void initialize(int stage) override;

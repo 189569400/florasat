@@ -19,6 +19,7 @@
 #include "routing/core/DijkstraShortestPath.h"
 #include "metrics/MetricsCollector.h"
 #include "routing/RoutingHeader_m.h"
+#include "routing/RoutingBase.h"
 #include "topologycontrol/TopologyControl.h"
 #include "networklayer/ConstellationRoutingTable.h"
 #include "TransportHeader_m.h"
@@ -36,6 +37,7 @@ class PacketGenerator : public cSimpleModule {
     B sentBytes = B(0);
     B receivedBytes = B(0);
     topologycontrol::TopologyControl *topologycontrol;
+    routing::RoutingBase *routingModule;
     networklayer::ConstellationRoutingTable *routingTable;
 
    protected:

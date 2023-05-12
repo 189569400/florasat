@@ -19,7 +19,62 @@ void RoutingBase::initialize(int stage) {
     }
 }
 
-void RoutingBase::initRouting(Packet *pkt, cModule *callerSat) {}
+void RoutingBase::initRouting(Packet *pkt, cModule *callerSat) {
+}
+
+std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int dstGs) {
+    auto srcGsInfo = topologyControl->getGroundstationInfo(srcGs);
+    auto dstGsInfo = topologyControl->getGroundstationInfo(dstGs);
+    if (srcGsInfo.satellites.empty()) {
+        error("Error in RoutingBase::calculateFirstAndLastSatellite: srcGsInfo has no satellite connections");
+    }
+    if (dstGsInfo.satellites.empty()) {
+        error("Error in RoutingBase::calculateFirstAndLastSatellite: dstGsInfo has no satellite connections");
+    }
+
+    int firstSat = -1;
+    int lastSat = -1;
+    double minDistance = -1;
+    std::vector<int> path;
+
+#ifndef NDEBUG
+    EV << "<><><><><><><><>" << endl;
+    EV << "Calculate first and last sat. Distances " << srcGs << "->" << dstGs << ":" << endl;
+#endif
+
+    for (auto pFirstSat : srcGsInfo.satellites) {
+        routing::core::DijkstraResult result = routing::core::dijkstra(pFirstSat, topologyControl->getSatelliteInfos());
+        for (auto pLastSat : dstGsInfo.satellites) {
+            auto distance = result.distances[pLastSat];
+            auto glDistance = dstGsInfo.getDistance(topologyControl->getSatelliteInfo(pLastSat));
+
+#ifndef NDEBUG
+            auto path = routing::core::reconstructPath(pFirstSat, pLastSat, result.prev);
+            EV << "Distance(" << pFirstSat << "," << pLastSat << ") = " << distance << " + " << glDistance << "; Route: [" << flora::core::utils::vector::toString(path.begin(), path.end()) << "]" << endl;
+#endif
+
+            distance = distance + glDistance;
+
+            if (minDistance == -1 || distance < minDistance) {
+                firstSat = pFirstSat;
+                lastSat = pLastSat;
+                minDistance = distance;
+            }
+        }
+    }
+
+#ifndef NDEBUG
+    EV << "Shortest path (" << srcGs << "->" << dstGs << ") found with firstSat (" << firstSat << ") and lastSat (" << lastSat << ")"
+       << "| Distance: " << minDistance << "km" << endl;
+    EV << "<><><><><><><><>" << endl;
+#endif
+
+    ASSERT(firstSat != -1);
+    ASSERT(lastSat != -1);
+    ASSERT(minDistance != -1);
+
+    return std::make_pair(firstSat, lastSat);
+}
 
 bool RoutingBase::HasConnection(cModule *satellite, ISLDirection side) {
     if (satellite == nullptr)

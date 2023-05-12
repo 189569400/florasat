@@ -17,6 +17,7 @@ void PacketGenerator::initialize(int stage) {
         numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
         topologycontrol = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
         routingTable = check_and_cast<networklayer::ConstellationRoutingTable *>(getSystemModule()->getSubmodule("constellationRoutingTable"));
+        routingModule = check_and_cast<routing::RoutingBase *>(getSystemModule()->getSubmodule("routing"));
 
         numSent = 0;
         numReceived = 0;
@@ -37,37 +38,10 @@ void PacketGenerator::handleMessage(cMessage *msg) {
     } else if (pkt->arrivedOn("transportIn")) {
         auto frame = pkt->peekAtFront<TransportHeader>();
         int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDstIpAddress()));
-        auto srcGsInfo = topologycontrol->getGroundstationInfo(groundStationId);
-        auto dstGsInfo = topologycontrol->getGroundstationInfo(dstGs);
-        if (srcGsInfo.satellites.empty()) {
-            error("Error in PacketGenerator::handleMessage: srcGsInfo has no satellite connections");
-        }
-        if (dstGsInfo.satellites.empty()) {
-            error("Error in PacketGenerator::handleMessage: dstGsInfo has no satellite connections");
-        }
 
-        int firstSat = -1;
-        int lastSat = -1;
-        double minDistance = -1;
-        std::vector<int> path;
-
-        for (auto pFirstSat : srcGsInfo.satellites) {
-            routing::core::DijkstraResult result = routing::core::dijkstra(pFirstSat, topologycontrol->getSatelliteInfos());
-            for (auto pLastSat : dstGsInfo.satellites) {
-                if (minDistance == -1 || result.distances[pLastSat] < minDistance) {
-                    firstSat = pFirstSat;
-                    lastSat = pLastSat;
-                    minDistance = result.distances[pLastSat];
-                }
-            }
-        }
-
-        EV << "Shortest path found with firstSat (" << firstSat << ") and lastSat (" << lastSat << ")"
-           << "| Distance: " << minDistance << "km" << endl;
-
-        ASSERT(firstSat != -1);
-        ASSERT(lastSat != -1);
-        ASSERT(minDistance != -1);
+        auto satPair = routingModule->calculateFirstAndLastSatellite(groundStationId, dstGs);
+        auto firstSat = satPair.first;
+        auto lastSat = satPair.second;
 
         encapsulate(pkt, dstGs, firstSat, lastSat);
 

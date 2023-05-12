@@ -132,17 +132,23 @@ void UdpTrafficGenerator::handleMessageWhenUp(cMessage *msg) {
         ASSERT(msg == selfMsg);
         switch (selfMsg->getKind()) {
             case START:
+#ifndef NDEBUG
                 EV << "START" << endl;
+#endif
                 processStart();
                 break;
 
             case SEND:
+#ifndef NDEBUG
                 EV << "SEND" << endl;
+#endif
                 processSend();
                 break;
 
             case STOP:
+#ifndef NDEBUG
                 EV << "STOP" << endl;
+#endif
                 processStop();
                 break;
 

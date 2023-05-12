@@ -8,7 +8,7 @@ import flora.ground.GroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.TopologyControl;
-import flora.routing.random.RandomRouting;
+import flora.routing.dspr.DsprRouting;
 import flora.mobility.SatMobilityOrchestrator;
 import flora.networklayer.ConstellationRoutingTable;
 
@@ -23,7 +23,7 @@ network DsprRoutingStarlink
     submodules:
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
-        routing: RandomRouting {
+        routing: DsprRouting {
             @display("p=-128,373.375;i=block/routing");
         }
 

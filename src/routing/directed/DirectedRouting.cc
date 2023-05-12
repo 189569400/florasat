@@ -12,26 +12,13 @@ namespace routing {
 
 Define_Module(DirectedRouting);
 
-ISLDirection DirectedRouting::routePacket(inet::Packet *pkt, cModule *callerSat) {
-    auto frame = pkt->removeAtFront<RoutingHeader>();
-    int destGroundstationId = frame->getDestinationGroundstation();
-    pkt->insertAtFront(frame);
-
+ISLDirection DirectedRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) {
     int routerSatIndex = callerSat->getIndex();
+    int destSatIndex = frame->getLastSatellite();
 
-    int destSatIndex = -1;
-
-    // forward to which satellite? Here is a point to introduce shortest path etc.
-    for (int number : topologyControl->getGroundstationInfo(destGroundstationId).satellites) {
-        destSatIndex = number;
-        break;
-    }
-    if (destSatIndex == -1) {
-        error("DestSatIndex was not set!");
-    }
-
-    // forward to which groundstation gate?
+    // this is the last satellite
     if (routerSatIndex == destSatIndex) {
+        int destGroundstationId = frame->getDestinationGroundstation();
         flora::topologycontrol::GsSatConnection gsSatConnection = topologyControl->getGroundstationSatConnection(destGroundstationId, destSatIndex);
         return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection.satGateIndex);
     }

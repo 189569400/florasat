@@ -10,6 +10,9 @@
 
 #include <omnetpp.h>
 
+#include <vector>
+
+#include "core/utils/VectorUtils.h"
 #include "inet/common/packet/Packet.h"
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
@@ -22,7 +25,7 @@ namespace routing {
 class DsprRouting : public RoutingBase {
    public:
     void initRouting(inet::Packet *pkt, cModule *callerSat) override;
-    ISLDirection routePacket(inet::Packet *pkt, cModule *callerSat) override;
+    ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) override;
 };
 
 }  // namespace routing
