@@ -43,16 +43,13 @@ ISLDirection DsprRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *c
         return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection.satGateIndex);
     }
 
-    if (frame->getPathArraySize() == 0) {
-        throw new cRuntimeError("Error in DsprRouting::routePacket: Next hop was not found.");
-    }
+    if (frame->getPathArraySize() == 0) throw new cRuntimeError("Error in DsprRouting::routePacket: Next hop was not found.");
     frame->erasePath(0);
     int nextSatId = frame->getPath(0);
 
 #ifndef NDEBUG
     std::vector<int> remRoute;
-    for (size_t i = 1; i < frame->getPathArraySize(); i++)
-    {
+    for (size_t i = 1; i < frame->getPathArraySize(); i++) {
         remRoute.emplace_back(frame->getPath(i));
     }
     EV << "(Sat " << thisSatId << ") Next hop: " << nextSatId << "; Remaining Path: [" << flora::core::utils::vector::toString(remRoute.begin(), remRoute.end()) << "]" << endl;

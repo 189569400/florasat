@@ -55,6 +55,7 @@ void PacketHandlerRouting::handleMessage(cMessage *msg) {
             routing->initRouting(pkt, getParentModule());
         }
         // queue packet
+        emit(packetReceivedSignal, pkt);
         send(pkt, "queueOut");
     }
 }

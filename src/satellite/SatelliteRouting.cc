@@ -15,21 +15,57 @@ Define_Module(SatelliteRouting);
 void SatelliteRouting::initialize() {
     // subscribe to dropped packets
     subscribe(packetDroppedSignal, this);
+    subscribe(packetReceivedSignal, this);
+
+    // init vars
+    numReceived = 0;
+    WATCH(numReceived);
+    numDroppedMaxHop = 0;
+    WATCH(numDroppedMaxHop);
+    numDroppedFullQueue = 0;
+    WATCH(numDroppedFullQueue);
+
+    receivedCountStats.setName("receivedCountStats");
+    droppedMaxHopCountStats.setName("droppedMaxHopCountStats");
+    droppedFullQueueCountStats.setName("droppedFullQueueCountStats");
 }
 
 void SatelliteRouting::finish() {
+    EV << "Received: " << numReceived << endl;
+    EV << "Dropped: " << numDroppedFullQueue + numDroppedMaxHop << "(FullQueue: " << numDroppedFullQueue << "; MaxHops: " << numDroppedFullQueue << ")" << endl;
+
+    recordScalar("#received", numReceived);
+    recordScalar("#droppedFullQueue", numDroppedFullQueue);
+    recordScalar("#droppedMaxHops", numDroppedMaxHop);
 }
 
 void SatelliteRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) {
     if (signalID == packetDroppedSignal) {
-        auto packet = check_and_cast<inet::Packet *>(obj);
+        auto pkt = check_and_cast<inet::Packet *>(obj);
         auto reason = check_and_cast<inet::PacketDropDetails *>(details);
-        handlePacketDropped(packet, reason);
+        handlePacketDropped(pkt, reason);
+    } else if (signalID == packetReceivedSignal) {
+        auto pkt = check_and_cast<inet::Packet *>(obj);
+        handlePacketReceived(pkt);
     }
 }
 
-void SatelliteRouting::handlePacketDropped(inet::Packet *packet, inet::PacketDropDetails *reason) {
-    EV_INFO << "Dropped: " << packet << EV_ENDL;
+void SatelliteRouting::handlePacketDropped(inet::Packet *pkt, inet::PacketDropDetails *reason) {
+    EV_INFO << "Dropped: " << pkt << EV_ENDL;
+    if (reason->getReason() == PacketDropReason::HOP_LIMIT_REACHED) {
+        numDroppedMaxHop++;
+        droppedMaxHopCountStats.record(numDroppedMaxHop);
+    } else if (reason->getReason() == PacketDropReason::QUEUE_OVERFLOW) {
+        numDroppedFullQueue++;
+        droppedFullQueueCountStats.record(numDroppedFullQueue);
+    } else {
+        error("Unhandled drop reason: %s", reason->getReason());
+    }
+}
+
+void SatelliteRouting::handlePacketReceived(inet::Packet *pkt) {
+    numReceived++;
+    receivedCountStats.record(numReceived);
 }
 
 }  // namespace satellite
