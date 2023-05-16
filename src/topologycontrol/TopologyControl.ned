@@ -34,6 +34,7 @@ simple TopologyControl
         // GROUNDLINK SETTINGS
         double groundlinkDelay = default(0.0000033356); // speed of light (s/km)
         double groundlinkDatarate = default(10000000); // 10 MBit/s
-        double minimumElevation = default(10.0);
+        double minimumElevation = default(10.0);        
+        bool isDtn = default(false);
         int numGroundLinks = default(40);
 }

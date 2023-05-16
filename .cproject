@@ -94,7 +94,7 @@
 					<fileInfo id="org.omnetpp.cdt.gnu.config.release.796292328.749355655" name="loRaNetworkTest.ini" rcbsApplicability="disable" resourcePath="simulations/SimpleLoRaNetwork.ini" toolsToInvoke=""/>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="simulations"/>
-						<entry excluding="LoRa/LoRaClass.h|LoRa/LoRaClass.cc|LoRaSat" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="LoRaSat|LoRa/LoRaClass.cc|LoRa/LoRaClass.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
