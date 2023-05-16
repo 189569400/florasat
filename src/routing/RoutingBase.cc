@@ -8,31 +8,107 @@
 #include "RoutingBase.h"
 
 namespace flora {
+namespace routing {
 
-Define_Module(RoutingBase);
+void RoutingBase::initialize(int stage) {
+    if (stage == inet::INITSTAGE_LOCAL) {
+        topologyControl = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
+        if (topologyControl == nullptr) {
+            error("Error in DirectedRouting::initialize(): topologyControl is nullptr.");
+        }
+    }
+}
 
-ISLDirection RoutingBase::RoutePacket(inet::Packet *pkt, cModule *callerSat) {
-    return ISLDirection(Direction::ISL_DOWN, -1);
+void RoutingBase::initRouting(Packet *pkt, cModule *callerSat) {
+}
+
+std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int dstGs) {
+    auto srcGsInfo = topologyControl->getGroundstationInfo(srcGs);
+    auto dstGsInfo = topologyControl->getGroundstationInfo(dstGs);
+    if (srcGsInfo.satellites.empty()) {
+        error("Error in RoutingBase::calculateFirstAndLastSatellite: srcGsInfo has no satellite connections");
+    }
+    if (dstGsInfo.satellites.empty()) {
+        error("Error in RoutingBase::calculateFirstAndLastSatellite: dstGsInfo has no satellite connections");
+    }
+
+    int firstSat = -1;
+    int lastSat = -1;
+    double minDistance = -1;
+    std::vector<int> path;
+
+#ifndef NDEBUG
+    EV << "<><><><><><><><>" << endl;
+    EV << "Calculate first and last sat. Distances " << srcGs << "->" << dstGs << ":" << endl;
+#endif
+
+    for (auto pFirstSat : srcGsInfo.satellites) {
+        routing::core::DijkstraResult result = routing::core::runDijkstra(pFirstSat, topologyControl->getSatellites());
+        for (auto pLastSat : dstGsInfo.satellites) {
+            auto distance = result.distances[pLastSat];
+            auto glDistance = dstGsInfo.getDistance(*topologyControl->getSatellite(pLastSat));
+
+#ifndef NDEBUG
+            auto path = routing::core::reconstructPath(pFirstSat, pLastSat, result.prev);
+            EV << "Distance(" << pFirstSat << "," << pLastSat << ") = " << distance << " + " << glDistance << "; Route: [" << flora::core::utils::vector::toString(path.begin(), path.end()) << "]" << endl;
+#endif
+
+            distance = distance + glDistance;
+
+            if (minDistance == -1 || distance < minDistance) {
+                firstSat = pFirstSat;
+                lastSat = pLastSat;
+                minDistance = distance;
+            }
+        }
+    }
+
+#ifndef NDEBUG
+    EV << "Shortest path (" << srcGs << "->" << dstGs << ") found with firstSat (" << firstSat << ") and lastSat (" << lastSat << ")"
+       << "| Distance: " << minDistance << "km" << endl;
+    EV << "<><><><><><><><>" << endl;
+#endif
+
+    ASSERT(firstSat != -1);
+    ASSERT(lastSat != -1);
+    ASSERT(minDistance != -1);
+
+    return std::make_pair(firstSat, lastSat);
 }
 
 bool RoutingBase::HasConnection(cModule *satellite, ISLDirection side) {
     if (satellite == nullptr)
-        error("RandomRouting::HasConnection(): satellite mullptr");
+        throw new cRuntimeError("RandomRouting::HasConnection(): satellite mullptr");
+
     switch (side.direction) {
         case ISL_UP:
-            return satellite->gateHalf("up", cGate::Type::OUTPUT)->isConnectedOutside();
+            return satellite->gateHalf("up", omnetpp::cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_DOWN:
-            return satellite->gateHalf("down", cGate::Type::OUTPUT)->isConnectedOutside();
+            return satellite->gateHalf("down", omnetpp::cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_LEFT:
-            return satellite->gateHalf("left", cGate::Type::OUTPUT)->isConnectedOutside();
+            return satellite->gateHalf("left", omnetpp::cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_RIGHT:
-            return satellite->gateHalf("right", cGate::Type::OUTPUT)->isConnectedOutside();
+            return satellite->gateHalf("right", omnetpp::cGate::Type::OUTPUT)->isConnectedOutside();
         case ISL_DOWNLINK:
-            return satellite->gateHalf("groundLink", cGate::Type::OUTPUT, side.gateIndex)->isConnectedOutside();
+            return satellite->gateHalf("groundLink", omnetpp::cGate::Type::OUTPUT, side.gateIndex)->isConnectedOutside();
         default:
-            error("HasConnection is not implemented for this side.");
+            throw new cRuntimeError("HasConnection is not implemented for this side.");
     }
     return false;
 }
 
+int RoutingBase::GetGroundlinkIndex(int satelliteId, int groundstationId) {
+    std::set<int> gsSatellites = GetConnectedSatellites(groundstationId);
+    if (gsSatellites.find(satelliteId) != gsSatellites.end()) {
+        return topologyControl->getGroundstationSatConnection(groundstationId, satelliteId).satGateIndex;
+    }
+    return -1;
+}
+
+std::set<int> RoutingBase::GetConnectedSatellites(int groundStationId) {
+    if (topologyControl == nullptr) error("Error in RoutingBase::GetGroundStationConnections(): topologyControl is nullptr. Did you call initialize on RoutingBase?");
+    return topologyControl->getGroundstationInfo(groundStationId).satellites;
+}
+
+}  // namespace routing
 }  // namespace flora

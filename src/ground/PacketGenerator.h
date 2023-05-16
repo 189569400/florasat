@@ -5,46 +5,55 @@
  *      Author: Robin Ohs
  */
 
-#ifndef GROUND_PACKETGENERATOR_H_
-#define GROUND_PACKETGENERATOR_H_
+#ifndef __FLORA_GROUND_PACKETGENERATOR_H_
+#define __FLORA_GROUND_PACKETGENERATOR_H_
 
 #include <omnetpp.h>
-#include "routing/RoutingFrame_m.h"
-#include "metrics/MetricsCollector.h"
+
+#include "core/Utils.h"
 #include "inet/common/INETDefs.h"
-#include "inet/common/packet/Packet.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/common/Simsignals.h"
+#include "inet/common/packet/Message.h"
+#include "inet/common/packet/Packet.h"
+#include "routing/core/DijkstraShortestPath.h"
+#include "metrics/MetricsCollector.h"
+#include "routing/RoutingHeader_m.h"
+#include "routing/RoutingBase.h"
+#include "topologycontrol/TopologyControl.h"
+#include "networklayer/ConstellationRoutingTable.h"
+#include "TransportHeader_m.h"
 
 using namespace omnetpp;
+using namespace inet;
 
-namespace flora
-{
+namespace flora {
 
-    class PacketGenerator : public cSimpleModule
-    {
-        protected:
-            virtual void initialize(int stage) override;
-            virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+class PacketGenerator : public cSimpleModule {
+   protected:
+    // statistics
+    int numReceived = 0;
+    int numSent = 0;
+    B sentBytes = B(0);
+    B receivedBytes = B(0);
+    topologycontrol::TopologyControl *topologycontrol;
+    routing::RoutingBase *routingModule;
+    networklayer::ConstellationRoutingTable *routingTable;
 
-            metrics::MetricsCollector* metricsCollector;
-            
-            int groundStationId;
-            int sentPackets = 0;
-            int receivedPackets = 0;
-            int numGroundStations;
+   protected:
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 
-            simtime_t updateInterval;
+    int sentPackets;
+    int groundStationId;
+    int numGroundStations;
 
-            cMessage *selfMsg = nullptr;
+   protected:
+    virtual void handleMessage(cMessage *msg) override;
+    void encapsulate(Packet *packet, int dstGs, int firstSat, int lastSat);
+    void decapsulate(Packet *packet);
+};
 
-        protected:
-            virtual void handleMessage(cMessage* msg) override;
-            void handleSelfMessage(cMessage* msg);
-            void receiveMessage(cMessage* pkt);
-            void scheduleUpdate();
-            int getRandomNumber();
-    };
+}  // namespace flora
 
-} // flora
-
-#endif // GROUND_PACKETGENERATOR_H_
+#endif  // __FLORA_GROUND_PACKETGENERATOR_H_

@@ -15,9 +15,12 @@
 
 package flora.satellite;
 
+import inet.queueing.sink.ActivePacketSink;
+
 simple PacketHandlerRouting
 {
     parameters:
+        @class(satellite::PacketHandlerRouting);
         @display("i=block/app");
         int maxHops = default(50);
 
@@ -32,5 +35,5 @@ simple PacketHandlerRouting
         output queueOut;
 
         // GroundStation gates
-        inout groundLink1[20] @labels(GroundStationGate);
+        inout groundLink1[40] @labels(GroundStationGate);
 }

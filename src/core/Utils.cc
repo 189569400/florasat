@@ -5,7 +5,7 @@
  *      Author: Robin Ohs
  */
 
-#include "utils.h"
+#include "Utils.h"
 
 namespace flora {
 namespace core {
@@ -18,6 +18,7 @@ int randomNumber(omnetpp::cModule* mod, int start, int end, int excluded) {
     }
     return rn;
 }
+
 
 }  // namespace utils
 }  // namespace core

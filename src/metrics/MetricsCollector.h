@@ -13,31 +13,34 @@
 #include <vector>
 
 #include "PacketState.h"
-#include "routing/RoutingFrame_m.h"
+#include "routing/RoutingHeader_m.h"
+
+using namespace omnetpp;
+using namespace inet;
 
 namespace flora {
 namespace metrics {
 
-class MetricsCollector : public omnetpp::cSimpleModule {
+class MetricsCollector : public cSimpleModule {
    public:
     MetricsCollector();
     /** @brief Records the given packet with a given packet state. */
-    void record_packet(PacketState::Type state, RoutingFrame packet);
+    void record_packet(PacketState::Type state, RoutingHeader packet);
 
    protected:
     virtual void finish() override;
     virtual void initialize(int stage) override;
 
    private:
-    void print_packet(RoutingFrame *frame);
+    void print_packet(RoutingHeader *frame);
 
     /** @brief Calculates the latency (time from source to destination) of a frame (in ms). */
-    double calculate_latency(RoutingFrame *frame);
+    double calculate_latency(RoutingHeader *frame);
     /** @brief Calculates the average latency (time from source to destination) of vector of frames (in ms). */
-    double calculate_average_latency(std::vector<RoutingFrame> *frames);
+    double calculate_average_latency(std::vector<RoutingHeader> *frames);
 
    private:
-    std::map<PacketState::Type, std::vector<RoutingFrame>> recordedPackets;
+    std::map<PacketState::Type, std::vector<RoutingHeader>> recordedPackets;
 };
 
 }  // namespace metrics

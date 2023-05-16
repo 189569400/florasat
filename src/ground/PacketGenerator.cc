@@ -7,109 +7,78 @@
 
 #include "PacketGenerator.h"
 
-namespace flora
-{
-    Define_Module(PacketGenerator);
+namespace flora {
 
-    void PacketGenerator::initialize(int stage)
-    {
-        if (stage == 0)
-        {
-            groundStationId = getParentModule()->par("groundStationId");
-            updateInterval = par("updateInterval");
-            numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
+Define_Module(PacketGenerator);
 
-            metricsCollector = check_and_cast<metrics::MetricsCollector *>(getSystemModule()->getSubmodule("metricsCollector"));
-            if (metricsCollector == nullptr)
-            {
-                error("PacketGenerator::initialize(0): metricsCollector mullptr");
-            }
-        }
-        else if (stage == inet::INITSTAGE_APPLICATION_LAYER)
-        {
-            selfMsg = new cMessage("send_msg");
-            scheduleUpdate();
-        }
+void PacketGenerator::initialize(int stage) {
+    if (stage == INITSTAGE_LOCAL) {
+        groundStationId = getParentModule()->par("groundStationId");
+        numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
+        topologycontrol = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
+        routingTable = check_and_cast<networklayer::ConstellationRoutingTable *>(getSystemModule()->getSubmodule("constellationRoutingTable"));
+        routingModule = check_and_cast<routing::RoutingBase *>(getSystemModule()->getSubmodule("routing"));
+
+        numSent = 0;
+        numReceived = 0;
+        sentBytes = B(0);
+        receivedBytes = B(0);
+        WATCH(numSent);
+        WATCH(numReceived);
+        WATCH(sentBytes);
+        WATCH(receivedBytes);
     }
+}
 
-    void PacketGenerator::scheduleUpdate()
-    {
-        cancelEvent(selfMsg);
-        if (selfMsg != 0)
-        {
-            simtime_t nextUpdate = simTime() + updateInterval;
-            scheduleAt(nextUpdate, selfMsg);
-        }
+void PacketGenerator::handleMessage(cMessage *msg) {
+    auto pkt = check_and_cast<inet::Packet *>(msg);
+    if (msg->arrivedOn("satelliteLink$i")) {
+        decapsulate(pkt);
+        send(pkt, "transportOut");
+    } else if (pkt->arrivedOn("transportIn")) {
+        auto frame = pkt->peekAtFront<TransportHeader>();
+        int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDstIpAddress()));
+
+        auto satPair = routingModule->calculateFirstAndLastSatellite(groundStationId, dstGs);
+        auto firstSat = satPair.first;
+        auto lastSat = satPair.second;
+
+        encapsulate(pkt, dstGs, firstSat, lastSat);
+
+        int gateIndex = topologycontrol->getGroundstationSatConnection(groundStationId, firstSat).gsGateIndex;
+        send(pkt, "satelliteLink$o", gateIndex);
+    } else {
+        error("Unexpected gate");
     }
+}
 
-    void PacketGenerator::handleMessage(cMessage *msg)
-    {
-        if (msg->isSelfMessage())
-        {
-            handleSelfMessage(msg);
-        }
-        else
-        {
-            receiveMessage(msg);
-        }
-    }
+void PacketGenerator::encapsulate(Packet *packet, int dstGs, int firstSat, int lastSat) {
+    auto header = makeShared<RoutingHeader>();
+    header->setChunkLength(B(8));
+    header->setSequenceNumber(sentPackets);
+    header->setLength(packet->getTotalLength());
+    header->setSourceGroundstation(groundStationId);
+    header->setDestinationGroundstation(dstGs);
+    header->setFirstSatellite(firstSat);
+    header->setLastSatellite(lastSat);
+    header->setOriginTime(simTime());
+    packet->insertAtFront(header);
 
-    void PacketGenerator::handleSelfMessage(cMessage *msg)
-    {
-        auto newPacket = new Packet("DataFrame");
-        auto payload = makeShared<RoutingFrame>();
-        payload->setSequenceNumber(sentPackets);
-        payload->setSourceGroundstation(groundStationId);
-        int destination = getRandomNumber();
-        payload->setDestinationGroundstation(destination);
-        payload->setOriginTime(simTime());
-        
-        newPacket->insertAtFront(payload);
+    numSent++;
+    sentBytes += (header->getChunkLength() + header->getLength());
+    emit(packetSentSignal, packet);
+}
 
-        std::stringstream ss;
-        ss << "GS[" << groundStationId << "]: Send msg to " << destination << ".";
-        EV << ss.str() << endl;
+void PacketGenerator::decapsulate(Packet *packet) {
+    auto header = packet->popAtFront<RoutingHeader>();
+    auto lengthField = header->getLength();
+    auto rcvdBytes = header->getChunkLength() + lengthField;
 
-        for (size_t i = 0; i < 20; i++)
-        {
-            if (getParentModule()->gateHalf("satelliteLink", cGate::Type::OUTPUT, i)->isConnectedOutside())
-            {
-                cGate *gate = gateHalf("satelliteLink", cGate::Type::OUTPUT, i);
-                send(newPacket, gate);
-                break;
-            }
-        }
-        sentPackets = sentPackets + 1;
-        scheduleUpdate();
-    }
+    VALIDATE(packet->getDataLength() == lengthField);  // if the packet is correct
 
-    int PacketGenerator::getRandomNumber()
-    {
-        int rn = intuniform(0, numGroundStations - 1);
-        while (rn == groundStationId)
-        {
-            rn = intuniform(0, numGroundStations - 1);
-        }
-        return rn;
-    }
+    numReceived++;
+    receivedBytes += rcvdBytes;
+    emit(packetReceivedSignal, packet);
+}
 
-    void PacketGenerator::receiveMessage(cMessage *msg)
-    {
-        auto pkt = check_and_cast<inet::Packet *>(msg);
-        auto frame = pkt->removeAtFront<RoutingFrame>();
-
-        int destination = frame->getDestinationGroundstation();
-        frame->setReceptionTime(simTime());
-
-        if (groundStationId != destination)
-        {
-            metricsCollector->record_packet(metrics::PacketState::WRONG_DELIVERED, *frame.get());
-        }
-        else
-        {
-            metricsCollector->record_packet(metrics::PacketState::DELIVERED, *frame.get());
-        }
-        delete msg;
-    }
-
-} // flora
+}  // namespace flora

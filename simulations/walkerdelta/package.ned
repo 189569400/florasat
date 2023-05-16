@@ -25,7 +25,7 @@ network WalkerDelta
 {
     parameters:
         int nrOfGS = default(6);
-        int nrOfGW = default(240);
+        int nrOfGW = default(1920);
         @display("bgb=2160,1080;bgi=background_earth,s");
 
     submodules:

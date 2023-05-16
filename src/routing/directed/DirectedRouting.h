@@ -11,26 +11,18 @@
 #include <omnetpp.h>
 
 #include "inet/common/packet/Packet.h"
-#include "routing/ISLDirection.h"
-#include "routing/RoutingFrame_m.h"
-#include "topologycontrol/TopologyControl.h"
-
-using namespace omnetpp;
+#include "routing/RoutingBase.h"
+#include "routing/RoutingHeader_m.h"
 
 namespace flora {
+namespace routing {
 
-class DirectedRouting : public cSimpleModule {
+class DirectedRouting : public RoutingBase {
    public:
-    virtual void initialize(int stage) override;
-    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-    ISLDirection RoutePacket(inet::Packet* pkt, cModule* callerSat);
-    bool HasConnection(cModule* satellite, ISLDirection side);
-    bool IsSatelliteAscending(cModule* satellite);
-
-   protected:
-    topologycontrol::TopologyControl* topologyControl = nullptr;
+    ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) override;
 };
 
+}  // namespace routing
 }  // namespace flora
 
 #endif  // __FLORA_ROUTING_DIRECTEDROUTING_H_
