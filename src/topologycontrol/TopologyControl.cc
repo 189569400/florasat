@@ -47,7 +47,6 @@ void TopologyControl::initialize(int stage) {
         groundlinkDatarate = par("groundlinkDatarate");
         numGroundLinks = par("numGroundLinks");
         minimumElevation = par("minimumElevation");
-<<<<<<< HEAD
         isDtn = par("isDtn");
         EV << "Loaded parameters: "
            << "updateInterval: " << updateIntervalParameter << "; "
@@ -60,12 +59,10 @@ void TopologyControl::initialize(int stage) {
     } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
         EV << "initialize TopologyControl" << endl;
         EV << "isDtn: " << isDtn << endl;
-=======
         interPlaneSpacing = par("interPlaneSpacing");
         planeCount = par("planeCount");
         numSatellites = getSystemModule()->getSubmoduleVectorSize("loRaGW");
         numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
->>>>>>> dev_routing
 
         // calculated properties
         satsPerPlane = numSatellites / planeCount;
@@ -113,7 +110,6 @@ void TopologyControl::updateTopology() {
     core::Timer timer = core::Timer();
     // update ISL links and groundlinks
     topologyChanged = false;
-<<<<<<< HEAD
     if (isDtn == false) {
         updateIntraSatelliteLinks();
         updateInterSatelliteLinks();
@@ -121,13 +117,8 @@ void TopologyControl::updateTopology() {
     } else {
         updateGroundstationLinksDtn();
     }
-=======
-    updateIntraSatelliteLinks();
-    updateInterSatelliteLinks();
-    updateGroundstationLinks();
 
     EV << "TC: Calculation took " << timer.getTime() / 1000 / 1000 << "ms" << endl;
->>>>>>> dev_routing
     // if there was any change to the topology, track current contacts
     if (topologyChanged)
         trackTopologyChange();
@@ -140,7 +131,6 @@ GroundstationInfo const &TopologyControl::getGroundstationInfo(int gsId) const {
 
 SatelliteRoutingBase *const TopologyControl::getSatellite(int satId) const {
     ASSERT(satId >= 0 && satId < numSatellites);
-
     return satellites.at(satId);
 }
 
