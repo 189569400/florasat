@@ -1,7 +1,7 @@
 #include "PositionAwareBase.h"
 
 namespace flora {
-namespace topologycontrol {
+namespace core {
 
 double PositionAwareBase::getDistance(const PositionAwareBase &other) {
     auto pos_1 = cEcef(getLatitude(), getLongitude(), getAltitude());
@@ -9,5 +9,5 @@ double PositionAwareBase::getDistance(const PositionAwareBase &other) {
     return pos_1.getDistance(pos_2) / 1000.0; 
 }
 
-}  // namespace topologycontrol
+}  // namespace core
 }  // namespace flora

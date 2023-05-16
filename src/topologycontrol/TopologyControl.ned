@@ -28,8 +28,6 @@ simple TopologyControl
 
         // ISL SETTINGS
         bool interPlaneIslDisabled = default(false);
-        double upperLatitudeBound = default(70.0);
-        double lowerLatitudeBound = default(-70.0);
         double islDelay = default(0.0000033356); // speed of light (s/km)
         double islDatarate = default(2500000000); // 2.5 GBit/s
         

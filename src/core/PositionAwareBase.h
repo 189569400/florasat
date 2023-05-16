@@ -12,7 +12,7 @@
 #include "libnorad/cSite.h"
 
 namespace flora {
-namespace topologycontrol {
+namespace core {
 
 class PositionAwareBase {
    public:
@@ -27,7 +27,7 @@ class PositionAwareBase {
     double getDistance(const PositionAwareBase &other);
 };
 
-}  // namespace topologycontrol
+}  // namespace core
 }  // namespace flora
 
 #endif

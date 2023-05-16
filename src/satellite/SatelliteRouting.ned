@@ -15,41 +15,17 @@
 
 package flora.satellite;
 
-import leosatellites.mobility.NoradA;
-
-import flora.mobility.SatMobility;
+import flora.satellite.SatelliteRoutingBase;
 import flora.satellite.PacketHandlerRouting;
-
 import flora.satellite.queue.ActivePacketConsumer;
 import inet.queueing.queue.DropTailQueue;
 
-import inet.networklayer.common.InterfaceTable;
-import inet.linklayer.ethernet.EthernetInterface;
-import inet.linklayer.ethernet.common.MacAddressTable;
-
-module SatelliteRouting
+module SatelliteRouting extends SatelliteRoutingBase
 {
     parameters:
         @class(satellite::SatelliteRouting);
-        @display("p=695.185,549.115;i=satellit_blue");
-        int numGroundLinks = default(40);
-
-    gates:
-        inout left;
-        inout right;
-        inout up;
-        inout down;
-        inout groundLink[numGroundLinks];
 
     submodules:
-        satMobility: SatMobility {
-            @display("p=100,100");
-        }
-
-        NoradModule: NoradA {
-            @display("p=300,100");
-        }
-
         packetHandler: PacketHandlerRouting {
             @display("p=700,100");
         }
@@ -74,8 +50,6 @@ module SatelliteRouting
         packetHandler.right1  <--> right;
         packetHandler.left1  <--> left;
         packetHandler.up1  <--> up;
-
-        // GROUNDLINK LINKS (SATELLITE TO GS)
         for i=0..numGroundLinks-1 {
             packetHandler.groundLink1[i]  <--> groundLink[i];
         }

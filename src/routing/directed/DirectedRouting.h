@@ -13,7 +13,6 @@
 #include "inet/common/packet/Packet.h"
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
-#include "topologycontrol/data/SatelliteInfo.h"
 
 namespace flora {
 namespace routing {

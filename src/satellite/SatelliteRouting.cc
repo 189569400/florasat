@@ -12,25 +12,31 @@ namespace satellite {
 
 Define_Module(SatelliteRouting);
 
-void SatelliteRouting::initialize() {
-    // subscribe to dropped packets
-    subscribe(packetDroppedSignal, this);
-    subscribe(packetReceivedSignal, this);
+void SatelliteRouting::initialize(int stage) {
+    SatelliteRoutingBase::initialize(stage);
 
-    // init vars
-    numReceived = 0;
-    WATCH(numReceived);
-    numDroppedMaxHop = 0;
-    WATCH(numDroppedMaxHop);
-    numDroppedFullQueue = 0;
-    WATCH(numDroppedFullQueue);
+    if (stage == inet::INITSTAGE_LOCAL) {
+        // subscribe to dropped packets
+        subscribe(packetDroppedSignal, this);
+        subscribe(packetReceivedSignal, this);
 
-    receivedCountStats.setName("receivedCountStats");
-    droppedMaxHopCountStats.setName("droppedMaxHopCountStats");
-    droppedFullQueueCountStats.setName("droppedFullQueueCountStats");
+        // init vars
+        numReceived = 0;
+        WATCH(numReceived);
+        numDroppedMaxHop = 0;
+        WATCH(numDroppedMaxHop);
+        numDroppedFullQueue = 0;
+        WATCH(numDroppedFullQueue);
+
+        receivedCountStats.setName("receivedCountStats");
+        droppedMaxHopCountStats.setName("droppedMaxHopCountStats");
+        droppedFullQueueCountStats.setName("droppedFullQueueCountStats");
+    }
 }
 
 void SatelliteRouting::finish() {
+    SatelliteRoutingBase::finish();
+
     EV << "Received: " << numReceived << endl;
     EV << "Dropped: " << numDroppedFullQueue + numDroppedMaxHop << "(FullQueue: " << numDroppedFullQueue << "; MaxHops: " << numDroppedFullQueue << ")" << endl;
 

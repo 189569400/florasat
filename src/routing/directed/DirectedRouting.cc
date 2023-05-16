@@ -12,7 +12,7 @@ namespace routing {
 
 Define_Module(DirectedRouting);
 
-ISLDirection DirectedRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) {
+ISLDirection DirectedRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule* callerSat) {
     int routerSatIndex = callerSat->getIndex();
     int destSatIndex = frame->getLastSatellite();
 
@@ -23,10 +23,13 @@ ISLDirection DirectedRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModul
         return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection.satGateIndex);
     }
 
-    topologycontrol::SatelliteInfo routerSat = topologyControl->getSatelliteInfo(routerSatIndex);
-    int myPlane = routerSat.getPlane();
-    bool isAscending = routerSat.isAscending();
-    int destPlane = topologyControl->getSatelliteInfo(destSatIndex).getPlane();
+    SatelliteRoutingBase* routerSat = topologyControl->getSatellite(routerSatIndex);
+    ASSERT(routerSat != nullptr);
+    int myPlane = routerSat->getPlane();
+    bool isAscending = routerSat->isAscending();
+    SatelliteRoutingBase* destSat = topologyControl->getSatellite(destSatIndex);
+    ASSERT(destSat != nullptr);
+    int destPlane = destSat->getPlane();
 
     // destination is on same plane
     if (myPlane < destPlane) {

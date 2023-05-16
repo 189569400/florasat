@@ -5,16 +5,18 @@
  *     Author: Robin Ohs
  */
 
-#ifndef __FLORA_TOPOLOGYCONTROL_UTILITIES_WALKERTYPE_H_
-#define __FLORA_TOPOLOGYCONTROL_UTILITIES_WALKERTYPE_H_
+#ifndef __FLORA_CORE_WALKERTYPE_H_
+#define __FLORA_CORE_WALKERTYPE_H_
 
 #include <omnetpp.h>
 #include <string.h>
 
+#include "Constants.h"
+
 using namespace omnetpp;
 
 namespace flora {
-namespace topologycontrol {
+namespace core {
 namespace WalkerType {
 
 /** @brief The type of the walker constellation. */
@@ -26,10 +28,12 @@ enum WalkerType {
 
 WalkerType parseWalkerType(std::string value);
 
-std::string as_string(WalkerType walkerType);
+std::ostream &operator<<(std::ostream &ss, const WalkerType &state);
+
+std::string to_string(const WalkerType &state);
 
 }  // namespace WalkerType
-}  // namespace topologycontrol
+}  // namespace core
 }  // namespace flora
 
-#endif // __FLORA_TOPOLOGYCONTROL_UTILITIES_WALKERTYPE_H_
+#endif  // __FLORA_CORE_WALKERTYPE_H_

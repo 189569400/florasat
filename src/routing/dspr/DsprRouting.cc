@@ -21,7 +21,7 @@ void DsprRouting::initRouting(inet::Packet *pkt, cModule *callerSat) {
     EV << "Initialize routing from " << srcSat << "->" << dstSat << endl;
 #endif
 
-    core::DijkstraResult result = core::dijkstraEarlyAbort(srcSat, dstSat, topologyControl->getSatelliteInfos());
+    core::DijkstraResult result = core::runDijkstra(srcSat, topologyControl->getSatellites(), dstSat, true);
     std::vector<int> path = core::reconstructPath(srcSat, dstSat, result.prev);
     for (auto t : path) {
         frame->appendPath(t);
@@ -34,11 +34,11 @@ void DsprRouting::initRouting(inet::Packet *pkt, cModule *callerSat) {
 }
 
 ISLDirection DsprRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) {
-    int thisSatId = callerSat->getIndex();
+    int callerSatId = callerSat->getIndex();
     int lastSatId = frame->getLastSatellite();
 
     // last satellite reached
-    if (thisSatId == lastSatId) {
+    if (callerSatId == lastSatId) {
         flora::topologycontrol::GsSatConnection gsSatConnection = topologyControl->getGroundstationSatConnection(frame->getDestinationGroundstation(), lastSatId);
         return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection.satGateIndex);
     }
@@ -52,20 +52,20 @@ ISLDirection DsprRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *c
     for (size_t i = 1; i < frame->getPathArraySize(); i++) {
         remRoute.emplace_back(frame->getPath(i));
     }
-    EV << "(Sat " << thisSatId << ") Next hop: " << nextSatId << "; Remaining Path: [" << flora::core::utils::vector::toString(remRoute.begin(), remRoute.end()) << "]" << endl;
+    EV << "(Sat " << callerSatId << ") Next hop: " << nextSatId << "; Remaining Path: [" << flora::core::utils::vector::toString(remRoute.begin(), remRoute.end()) << "]" << endl;
 #endif
 
-    auto thisSatInfo = topologyControl->getSatelliteInfo(thisSatId);
-    if (thisSatInfo.hasLeftSat() && thisSatInfo.getLeftSat() == nextSatId) {
+    auto callerSatModule = topologyControl->getSatellite(callerSatId);
+    if (callerSatModule->hasLeftSat() && callerSatModule->getLeftSatId() == nextSatId) {
         return ISLDirection(Direction::ISL_LEFT, -1);
-    } else if (thisSatInfo.hasUpSat() && thisSatInfo.getUpSat() == nextSatId) {
+    } else if (callerSatModule->hasUpSat() && callerSatModule->getUpSatId() == nextSatId) {
         return ISLDirection(Direction::ISL_UP, -1);
-    } else if (thisSatInfo.hasRightSat() && thisSatInfo.getRightSat() == nextSatId) {
+    } else if (callerSatModule->hasRightSat() && callerSatModule->getRightSatId() == nextSatId) {
         return ISLDirection(Direction::ISL_RIGHT, -1);
-    } else if (thisSatInfo.hasDownSat() && thisSatInfo.getDownSat() == nextSatId) {
+    } else if (callerSatModule->hasDownSat() && callerSatModule->getDownSatId() == nextSatId) {
         return ISLDirection(Direction::ISL_DOWN, -1);
     }
-    throw new cRuntimeError("Error in DsprRouting::routePacket: Next routing direction was not found in satinfo.");
+    throw new cRuntimeError("Error in DsprRouting::routePacket: Next routing direction was not available in satellite.");
 }
 
 }  // namespace routing

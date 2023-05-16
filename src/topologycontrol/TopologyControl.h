@@ -18,18 +18,19 @@
 #include "core/Constants.h"
 #include "core/Timer.h"
 #include "core/Utils.h"
+#include "core/WalkerType.h"
 #include "core/utils/SetUtils.h"
+#include "satellite/SatelliteRoutingBase.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "mobility/GroundStationMobility.h"
 #include "mobility/NoradA.h"
 #include "topologycontrol/data/GroundstationInfo.h"
 #include "topologycontrol/data/GsSatConnection.h"
-#include "topologycontrol/data/SatelliteInfo.h"
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
-#include "topologycontrol/utilities/WalkerType.h"
 
 using namespace omnetpp;
+using namespace flora::satellite;
 using namespace flora::core;
 
 namespace flora {
@@ -40,8 +41,8 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     TopologyControl();
     void updateTopology();
     GroundstationInfo const &getGroundstationInfo(int gsId) const;
-    SatelliteInfo const &getSatelliteInfo(int satId) const;
-    std::unordered_map<int, SatelliteInfo> const &getSatelliteInfos() const;
+    SatelliteRoutingBase* const getSatellite(int satId) const;
+    std::unordered_map<int, SatelliteRoutingBase*> const &getSatellites() const;
     GsSatConnection const &getGroundstationSatConnection(int gsId, int satId) const;
 
    protected:
@@ -49,7 +50,6 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
     virtual void handleMessage(cMessage *msg) override;
-    void handleSelfMessage(cMessage *msg);
     /** @brief Schedules the update timer that will update the topology state.*/
     void scheduleUpdate();
 
@@ -62,12 +62,11 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
-    bool isIslEnabled(const PositionAwareBase &entity) const;
-    SatelliteInfo &findSatByPlaneAndNumberInPlane(int plane, int numberInPlane);
+    SatelliteRoutingBase* findSatByPlaneAndNumberInPlane(int plane, int numberInPlane);
 
-    void connectSatellites(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction firstOutDirection);
-    void disconnectSatellites(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction firstOutDirection);
-    void removeOldConnections(SatelliteInfo &first, SatelliteInfo &second, isldirection::Direction direction);
+    void connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDirection);
+    void disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDirection);
+    void removeOldConnections(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
 
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
@@ -86,7 +85,7 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     ClockEvent *updateTimer = nullptr;
 
     /** @brief Map of satellite ids and their correspinding SatelliteInfo data struct. */
-    std::unordered_map<int, SatelliteInfo> satelliteInfos;
+    std::unordered_map<int, SatelliteRoutingBase*> satellites;
     int numSatellites;
 
     /** @brief Structs that represent groundstations and all satellites in range. */
@@ -99,10 +98,6 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
 
     /** @brief Can be set to true for constellations that do not feature inter-plane ISL*/
     bool interPlaneIslDisabled;
-    /** @brief The upper latitude to shut down inter-plane ISL. (Noth-Pole) */
-    double upperLatitudeBound;
-    /** @brief The lower latitude to shut down inter-plane ISL. (South-Pole) */
-    double lowerLatitudeBound;
     /** @brief Delay of the isl channel, in microseconds/km. */
     double islDelay;
     /** @brief Datarate of the isl channel, in bit/second. */

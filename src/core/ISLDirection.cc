@@ -30,14 +30,21 @@ std::ostream &operator<<(std::ostream &ss, const Direction &direction) {
     switch (direction) {
         case Direction::ISL_LEFT:
             ss << Constants::ISL_LEFT_NAME;
+            break;
         case Direction::ISL_UP:
             ss << Constants::ISL_UP_NAME;
+            break;
         case Direction::ISL_RIGHT:
             ss << Constants::ISL_UP_NAME;
+            break;
         case Direction::ISL_DOWN:
             ss << Constants::ISL_DOWN_NAME;
+            break;
         case Direction::ISL_DOWNLINK:
             ss << Constants::SAT_GROUNDLINK_NAME;
+            break;
+        default:
+            throw omnetpp::cRuntimeError("Error in ISLDrection::string operator");
     }
     return ss;
 }

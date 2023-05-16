@@ -14,10 +14,10 @@
 #include <deque>
 #include <unordered_map>
 
-#include "topologycontrol/data/SatelliteInfo.h"
+#include "satellite/SatelliteRoutingBase.h"
 
 using namespace omnetpp;
-using namespace flora::topologycontrol;
+using namespace flora::satellite;
 
 #define INF 999999999
 
@@ -30,8 +30,7 @@ struct DijkstraResult {
     std::vector<int> prev;
 };
 
-DijkstraResult dijkstra(int src, const std::unordered_map<int, SatelliteInfo>& constellation);
-DijkstraResult dijkstraEarlyAbort(int src, int dst, const std::unordered_map<int, SatelliteInfo>& constellation);
+DijkstraResult runDijkstra(int src, const std::unordered_map<int, SatelliteRoutingBase*>& constellation, int dst = -1, bool earlyAbort = false);
 
 std::vector<int> reconstructPath(int src, int dest, std::vector<int> prev);
 

@@ -12,9 +12,6 @@
 
 #include <sstream>
 
-#include "GroundstationInfo.h"
-#include "SatelliteInfo.h"
-
 using namespace omnetpp;
 
 namespace flora {

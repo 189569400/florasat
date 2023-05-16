@@ -17,7 +17,6 @@
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
 #include "routing/core/DijkstraShortestPath.h"
-#include "topologycontrol/data/SatelliteInfo.h"
 
 namespace flora {
 namespace routing {

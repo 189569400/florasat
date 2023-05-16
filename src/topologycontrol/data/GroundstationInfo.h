@@ -14,15 +14,15 @@
 #include <sstream>
 
 #include "core/Constants.h"
+#include "core/PositionAwareBase.h"
 #include "mobility/GroundStationMobility.h"
-#include "PositionAwareBase.h"
 
 using namespace omnetpp;
 
 namespace flora {
 namespace topologycontrol {
 
-class GroundstationInfo: public PositionAwareBase {
+class GroundstationInfo: public flora::core::PositionAwareBase {
    private:
     int groundStationId;
     cModule *groundStation;

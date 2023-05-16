@@ -43,10 +43,10 @@ std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int d
 #endif
 
     for (auto pFirstSat : srcGsInfo.satellites) {
-        routing::core::DijkstraResult result = routing::core::dijkstra(pFirstSat, topologyControl->getSatelliteInfos());
+        routing::core::DijkstraResult result = routing::core::runDijkstra(pFirstSat, topologyControl->getSatellites());
         for (auto pLastSat : dstGsInfo.satellites) {
             auto distance = result.distances[pLastSat];
-            auto glDistance = dstGsInfo.getDistance(topologyControl->getSatelliteInfo(pLastSat));
+            auto glDistance = dstGsInfo.getDistance(*topologyControl->getSatellite(pLastSat));
 
 #ifndef NDEBUG
             auto path = routing::core::reconstructPath(pFirstSat, pLastSat, result.prev);
