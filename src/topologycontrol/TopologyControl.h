@@ -28,11 +28,8 @@
 #include "topologycontrol/data/GsSatConnection.h"
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
-<<<<<<< HEAD
-#include "topologycontrol/utilities/WalkerType.h"
 #include "routing/dtn/contactplan/ContactPlan.h"
-=======
->>>>>>> dev_routing
+
 
 using namespace omnetpp;
 using namespace flora::satellite;
@@ -68,7 +65,6 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
-<<<<<<< HEAD
     void linkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
     void unlinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
     void updateLinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
@@ -76,14 +72,12 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     bool isDtnContactTakingPlace(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
     bool isDtnContactEnding(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
     bool isIslEnabled(double latitude);
-=======
     SatelliteRoutingBase* findSatByPlaneAndNumberInPlane(int plane, int numberInPlane);
 
     void connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDirection);
     void disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDirection);
     void removeOldConnections(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
 
->>>>>>> dev_routing
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
     /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/
