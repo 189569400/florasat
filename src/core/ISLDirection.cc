@@ -35,7 +35,7 @@ std::ostream &operator<<(std::ostream &ss, const Direction &direction) {
             ss << Constants::ISL_UP_NAME;
             break;
         case Direction::ISL_RIGHT:
-            ss << Constants::ISL_UP_NAME;
+            ss << Constants::ISL_RIGHT_NAME;
             break;
         case Direction::ISL_DOWN:
             ss << Constants::ISL_DOWN_NAME;
