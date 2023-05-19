@@ -10,19 +10,19 @@
 
 #include <omnetpp.h>
 
+#include "TransportHeader_m.h"
 #include "core/Utils.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/Simsignals.h"
 #include "inet/common/packet/Message.h"
 #include "inet/common/packet/Packet.h"
-#include "routing/core/DijkstraShortestPath.h"
 #include "metrics/MetricsCollector.h"
-#include "routing/RoutingHeader_m.h"
-#include "routing/RoutingBase.h"
-#include "topologycontrol/TopologyControl.h"
 #include "networklayer/ConstellationRoutingTable.h"
-#include "TransportHeader_m.h"
+#include "routing/RoutingBase.h"
+#include "routing/RoutingHeader_m.h"
+#include "routing/core/DijkstraShortestPath.h"
+#include "topologycontrol/TopologyControl.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -36,12 +36,17 @@ class PacketGenerator : public cSimpleModule {
     int numSent = 0;
     B sentBytes = B(0);
     B receivedBytes = B(0);
+
+    cHistogram hopCountStats;
+    cOutVector hopCountVector;
+
     topologycontrol::TopologyControl *topologycontrol;
     routing::RoutingBase *routingModule;
     networklayer::ConstellationRoutingTable *routingTable;
 
    protected:
     virtual void initialize(int stage) override;
+    virtual void finish() override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 
     int sentPackets;

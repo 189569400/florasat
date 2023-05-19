@@ -30,6 +30,21 @@ void PacketGenerator::initialize(int stage) {
     }
 }
 
+void PacketGenerator::finish() {
+    // This function is called by OMNeT++ at the end of the simulation.
+    EV << "Sent:     " << numSent << endl;
+    EV << "Received: " << numReceived << endl;
+    EV << "Hop count, min:    " << hopCountStats.getMin() << endl;
+    EV << "Hop count, max:    " << hopCountStats.getMax() << endl;
+    EV << "Hop count, mean:   " << hopCountStats.getMean() << endl;
+    EV << "Hop count, stddev: " << hopCountStats.getStddev() << endl;
+
+    recordScalar("#sent", numSent);
+    recordScalar("#received", numReceived);
+
+    hopCountStats.recordAs("hop count");
+}
+
 void PacketGenerator::handleMessage(cMessage *msg) {
     auto pkt = check_and_cast<inet::Packet *>(msg);
     if (msg->arrivedOn("satelliteLink$i")) {
@@ -71,6 +86,13 @@ void PacketGenerator::encapsulate(Packet *packet, int dstGs, int firstSat, int l
 
 void PacketGenerator::decapsulate(Packet *packet) {
     auto header = packet->popAtFront<RoutingHeader>();
+    if (header->getDestinationGroundstation() != groundStationId) {
+        error("Packet was routed to wrong destination.");
+    }
+
+    hopCountVector.record(header->getNumHop());
+    hopCountStats.collect(header->getNumHop());
+
     auto lengthField = header->getLength();
     auto rcvdBytes = header->getChunkLength() + lengthField;
 
