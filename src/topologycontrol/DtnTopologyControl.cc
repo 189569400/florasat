@@ -12,93 +12,10 @@ namespace topologycontrol {
 
 Define_Module(DtnTopologyControl);
 
-DtnTopologyControl::DtnTopologyControl() : updateIntervalParameter(0),
-                                     updateTimer(nullptr),
-                                     numSatellites(0),
-                                     numGroundStations(0),
-                                     numGroundLinks(40),
-                                     interPlaneIslDisabled(false),
-                                     islDelay(0.0),
-                                     islDatarate(0.0),
-                                     groundlinkDelay(0.0),
-                                     groundlinkDatarate(0.0),
-                                     minimumElevation(10.0),
-                                     walkerType(WalkerType::UNINITIALIZED),
-                                     interPlaneSpacing(1),
-                                     planeCount(0),
-                                     satsPerPlane(0),
-                                     topologyChanged(false) {
-}
-
-DtnTopologyControl::~DtnTopologyControl() {
-    cancelAndDeleteClockEvent(updateTimer);
-}
-
 void DtnTopologyControl::initialize(int stage) {
-    if (stage == inet::INITSTAGE_LOCAL) {
-        // loaded properties
-        updateIntervalParameter = &par("updateInterval");
-        updateTimer = new ClockEvent("UpdateTimer");
-        walkerType = WalkerType::parseWalkerType(par("walkerType"));
-        interPlaneIslDisabled = par("interPlaneIslDisabled");
-        islDelay = par("islDelay");
-        islDatarate = par("islDatarate");
-        groundlinkDelay = par("groundlinkDelay");
-        groundlinkDatarate = par("groundlinkDatarate");
-        numGroundLinks = par("numGroundLinks");
-        minimumElevation = par("minimumElevation");
-        EV << "Loaded parameters: "
-           << "updateInterval: " << updateIntervalParameter << "; "
-           << "islDelay: " << islDelay << "; "
-           << "islDatarate: " << islDatarate << "; "
-           << "minimumElevation: " << minimumElevation << endl;
-    } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
-        EV << "initialize TopologyControl" << endl;
-        interPlaneSpacing = par("interPlaneSpacing");
-        planeCount = par("planeCount");
-        numSatellites = getSystemModule()->getSubmoduleVectorSize("loRaGW");
-        numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
+    TopologyControlBase::initialize(stage);
 
-        // calculated properties
-        satsPerPlane = numSatellites / planeCount;
-
-        // validate state
-        VALIDATE(walkerType != WalkerType::UNINITIALIZED);
-        VALIDATE(numGroundLinks > 0);
-        VALIDATE(interPlaneSpacing <= planeCount - 1 && interPlaneSpacing >= 0);
-        VALIDATE(numSatellites > 0);
-        VALIDATE(planeCount > 0);
-        VALIDATE(satsPerPlane > 0);
-        VALIDATE(satsPerPlane * planeCount == numSatellites);
-        VALIDATE(numGroundStations > 0);
-
-    } else if (stage == inet::INITSTAGE_PHYSICAL_LAYER) {
-        loadSatellites();
-        loadGroundstations();
-
-        if (satellites.size() == 0) {
-            error("Error in TopologyControl::initialize(): No satellites found.");
-            return;
-        }
-
-        updateTopology();
-
-        if (!updateTimer->isScheduled()) {
-            scheduleUpdate();
-        }
-    }
-}
-
-void DtnTopologyControl::handleMessage(cMessage *msg) {
-    if (msg == updateTimer) {
-        updateTopology();
-        scheduleUpdate();
-    } else
-        error("TopologyControl: Unknown message.");
-}
-
-void DtnTopologyControl::scheduleUpdate() {
-    scheduleClockEventAfter(updateIntervalParameter->doubleValue(), updateTimer);
+    // DTN related initialization
 }
 
 void DtnTopologyControl::updateTopology() {
@@ -113,48 +30,6 @@ void DtnTopologyControl::updateTopology() {
     // if there was any change to the topology, track current contacts
     if (topologyChanged)
         trackTopologyChange();
-}
-
-GroundstationInfo const &DtnTopologyControl::getGroundstationInfo(int gsId) const {
-    ASSERT(gsId >= 0 && gsId < numGroundStations);
-    return groundstationInfos.at(gsId);
-}
-
-SatelliteRoutingBase *const DtnTopologyControl::getSatellite(int satId) const {
-    ASSERT(satId >= 0 && satId < numSatellites);
-    return satellites.at(satId);
-}
-
-std::unordered_map<int, SatelliteRoutingBase *> const &DtnTopologyControl::getSatellites() const {
-    return satellites;
-}
-
-GsSatConnection const &DtnTopologyControl::getGroundstationSatConnection(int gsId, int satId) const {
-    return gsSatConnections.at(std::pair<int, int>(gsId, satId));
-}
-
-void DtnTopologyControl::loadGroundstations() {
-    groundstationInfos.clear();
-    for (size_t i = 0; i < numGroundStations; i++) {
-        cModule *groundstation = getSystemModule()->getSubmodule("groundStation", i);
-        if (groundstation == nullptr) {
-            error("Error in TopologyControl::getGroundstations(): groundStation with index %zu is nullptr. Make sure the module exists.", i);
-        }
-        GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundstation->getSubmodule("gsMobility"));
-        if (mobility == nullptr) {
-            error("Error in TopologyControl::getGroundstations(): mobility module of Groundstation is nullptr. Make sure a module with name `gsMobility` exists.");
-        }
-        GroundstationInfo created = GroundstationInfo(groundstation->par("groundStationId"), groundstation, mobility);
-        groundstationInfos.emplace(i, created);
-    }
-}
-
-void DtnTopologyControl::loadSatellites() {
-    satellites.clear();
-    for (size_t i = 0; i < numSatellites; i++) {
-        SatelliteRoutingBase *sat = check_and_cast<SatelliteRoutingBase *>(getParentModule()->getSubmodule("loRaGW", i));
-        satellites.emplace(i, sat);
-    }
 }
 
 void DtnTopologyControl::updateIntraSatelliteLinks() {
@@ -265,7 +140,7 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
 
     int freeIndexSat = -1;
     for (size_t i = 0; i < numGroundLinks; i++) {
-        const cGate *gate = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, i);
+        const cGate *gate = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, i).first;
         if (!gate->isConnectedOutside()) {
             freeIndexSat = i;
             break;
@@ -277,8 +152,8 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
 
     cGate *uplinkO = gsInfo.getOutputGate(freeIndexGs);
     cGate *uplinkI = gsInfo.getInputGate(freeIndexGs);
-    cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat);
-    cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat);
+    cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
+    cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
     updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
     gsSatConnections.emplace(std::pair<int, int>(gsId, satId), GsSatConnection(gsId, satId, freeIndexGs, freeIndexSat));
@@ -296,7 +171,7 @@ void DtnTopologyControl::unlinkGroundStationToSatDtn(int gsId, int satId) {
     SatelliteRoutingBase *sat = satellites.at(satId);
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
     cGate *uplink= gsInfo.getOutputGate(connection.gsGateIndex);
-    cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex);
+    cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
     deleteChannel(uplink);
     deleteChannel(downlink);
     gsSatConnections.erase(std::pair<int, int>(gsId, satId));
@@ -316,8 +191,8 @@ void DtnTopologyControl::updateLinkGroundStationToSatDtn(int gsId, int satId) {
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
     cGate *uplinkO = gsInfo.getOutputGate(connection.gsGateIndex);
     cGate *uplinkI = gsInfo.getInputGate(connection.gsGateIndex);
-    cGate *downlinkO = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex);
-    cGate *downlinkI = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex);
+    cGate *downlinkO = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+    cGate *downlinkI = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
     updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
 }
@@ -336,11 +211,6 @@ void DtnTopologyControl::updateInterSatelliteLinks() {
         default:
             error("Error in TopologyControl::updateInterSatelliteLinks(): Unexpected WalkerType '%s'.", to_string(walkerType).c_str());
     }
-}
-
-SatelliteRoutingBase *DtnTopologyControl::findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) {
-    int id = plane * satsPerPlane + numberInPlane;
-    return satellites.at(id);
 }
 
 void DtnTopologyControl::updateISLInWalkerDelta() {
@@ -419,172 +289,6 @@ void DtnTopologyControl::updateISLInWalkerStar() {
             }
         }
     }
-}
-
-void DtnTopologyControl::connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDir) {
-    ASSERT(first != nullptr);
-    ASSERT(second != nullptr);
-    ASSERT(firstOutDir != isldirection::ISL_DOWNLINK);
-
-    isldirection::Direction secondOutDir = isldirection::getCounterDirection(firstOutDir);
-
-    cGate *firstOut = first->getOutputGate(firstOutDir);
-    cGate *firstIn = firstOut->getOtherHalf();
-    cGate *secondOut = second->getOutputGate(secondOutDir);
-    cGate *secondIn = secondOut->getOtherHalf();
-
-    ASSERT(firstOut != nullptr);
-    ASSERT(firstIn != nullptr);
-    ASSERT(secondOut != nullptr);
-    ASSERT(secondIn != nullptr);
-
-    // disconnect old connections if not the desired connections
-    removeOldConnections(first, second, firstOutDir);
-
-    double distance = first->getDistance(*second);
-    double delay = islDelay * distance;
-
-    ChannelState cs1 = updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
-    ChannelState cs2 = updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
-
-    switch (firstOutDir) {
-        case isldirection::Direction::ISL_LEFT:
-            first->setLeftSat(second);
-            second->setRightSat(first);
-            break;
-        case isldirection::Direction::ISL_UP:
-            first->setUpSat(second);
-            second->setDownSat(first);
-            break;
-        case isldirection::Direction::ISL_RIGHT:
-            first->setRightSat(second);
-            second->setLeftSat(first);
-            break;
-        case isldirection::Direction::ISL_DOWN:
-            first->setDownSat(second);
-            second->setUpSat(first);
-            break;
-        default:
-            error("Error in TopologyControl::connectSatellites: Should not reach default branch of switch.");
-            break;
-    }
-
-    if (cs1 == ChannelState::CREATED || cs2 == ChannelState::CREATED) {
-        topologyChanged = true;
-    }
-}
-
-void DtnTopologyControl::removeOldConnections(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction) {
-    switch (direction) {
-        case isldirection::Direction::ISL_LEFT:
-            if (first->hasLeftSat() && first->getLeftSatId() != second->getId()) {
-                disconnectSatellites(first, first->getLeftSat(), direction);
-            }
-            break;
-        case isldirection::Direction::ISL_UP:
-            if (first->hasUpSat() && first->getUpSatId() != second->getId()) {
-                disconnectSatellites(first, first->getUpSat(), direction);
-            }
-            break;
-        case isldirection::Direction::ISL_RIGHT:
-            if (first->hasRightSat() && first->getRightSatId() != second->getId()) {
-                disconnectSatellites(first, first->getRightSat(), direction);
-            }
-            break;
-        case isldirection::Direction::ISL_DOWN:
-            if (first->hasDownSat() && first->getDownSatId() != second->getId()) {
-                disconnectSatellites(first, first->getDownSat(), direction);
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-void DtnTopologyControl::disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDir) {
-    ASSERT(firstOutDir != isldirection::ISL_DOWNLINK);
-
-    cGate *firstOut = first->getOutputGate(firstOutDir);
-    cGate *secondOut = second->getOutputGate(isldirection::getCounterDirection(firstOutDir));
-
-    ASSERT(firstOut != nullptr);
-    ASSERT(secondOut != nullptr);
-
-    ChannelState cs1 = deleteChannel(firstOut);
-    ChannelState cs2 = deleteChannel(secondOut);
-
-    if (cs1 == ChannelState::DELETED || cs2 == ChannelState::DELETED) {
-        switch (firstOutDir) {
-            case isldirection::Direction::ISL_LEFT:
-                first->removeLeftSat();
-                second->removeRightSat();
-                break;
-            case isldirection::Direction::ISL_UP:
-                first->removeUpSat();
-                second->removeDownSat();
-                break;
-            case isldirection::Direction::ISL_RIGHT:
-                first->removeRightSat();
-                second->removeLeftSat();
-                break;
-            case isldirection::Direction::ISL_DOWN:
-                first->removeDownSat();
-                second->removeUpSat();
-                break;
-            default:
-                error("Error in TopologyControl::connectSatellites: Should not reach default branch of switch.");
-                break;
-        }
-        topologyChanged = true;
-    }
-}
-
-ChannelState DtnTopologyControl::updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate) {
-    ASSERT(outGate != nullptr);
-    ASSERT(inGate != nullptr);
-    ASSERT(delay > 0.0);
-    ASSERT(datarate > 0.0);
-
-    cGate *nextGate = outGate->getNextGate();
-    if (nextGate != nullptr && nextGate->getId() == inGate->getId()) {
-        cDatarateChannel *channel = check_and_cast<cDatarateChannel *>(outGate->getChannel());
-        channel->setDelay(delay);
-        channel->setDatarate(datarate);
-        return ChannelState::UPDATED;
-    } else {
-        ASSERT(!outGate->isConnectedOutside());
-        cDatarateChannel *channel = cDatarateChannel::create(Constants::ISL_CHANNEL_NAME);
-        channel->setDelay(delay);
-        channel->setDatarate(datarate);
-        outGate->connectTo(inGate, channel);
-        channel->callInitialize();
-        return ChannelState::CREATED;
-    }
-}
-
-void DtnTopologyControl::disconnectGate(cGate *gate) {
-    if (gate->getType() == cGate::Type::INPUT) {
-        deleteChannel(gate->getPreviousGate());
-        deleteChannel(gate->getOtherHalf());
-    } else {
-        cGate *nextGate = gate->getNextGate();
-        if (nextGate != nullptr) {
-            deleteChannel(nextGate->getOtherHalf());
-            deleteChannel(gate);
-        }
-    }
-}
-
-ChannelState DtnTopologyControl::deleteChannel(cGate *outGate) {
-    if (outGate != nullptr && outGate->isConnectedOutside()) {
-        outGate->disconnect();
-        return ChannelState::DELETED;
-    }
-    return ChannelState::UNCHANGED;
-}
-
-void DtnTopologyControl::trackTopologyChange() {
-    EV << "Topology was changed at " << simTime() << endl;
 }
 
 }  // namespace topologycontrol

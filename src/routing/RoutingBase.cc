@@ -12,7 +12,7 @@ namespace routing {
 
 void RoutingBase::initialize(int stage) {
     if (stage == inet::INITSTAGE_LOCAL) {
-        topologyControl = check_and_cast<topologycontrol::TopologyControl *>(getSystemModule()->getSubmodule("topologyControl"));
+        topologyControl = check_and_cast<topologycontrol::TopologyControlBase *>(getSystemModule()->getSubmodule("topologyControl"));
         if (topologyControl == nullptr) {
             error("Error in DirectedRouting::initialize(): topologyControl is nullptr.");
         }

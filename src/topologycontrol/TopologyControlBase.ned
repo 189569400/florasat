@@ -15,12 +15,12 @@
 
 package flora.topologycontrol;
 
-simple TopologyControl
+simple TopologyControlBase
 {
     parameters:
-        @class(topologycontrol::TopologyControl);
+        @class(topologycontrol::TopologyControlBase);
         double updateInterval @unit(s) = default(1s);
-        
+
         // must be delta or star
         string walkerType @enum("STAR","DELTA");
         int planeCount;
@@ -30,7 +30,7 @@ simple TopologyControl
         bool interPlaneIslDisabled = default(false);
         double islDelay = default(0.0000033356); // speed of light (s/km)
         double islDatarate = default(2500000000); // 2.5 GBit/s
-        
+
         // GROUNDLINK SETTINGS
         double groundlinkDelay = default(0.0000033356); // speed of light (s/km)
         double groundlinkDatarate = default(10000000); // 10 MBit/s

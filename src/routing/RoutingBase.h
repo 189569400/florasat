@@ -16,7 +16,7 @@
 #include "core/utils/VectorUtils.h"
 #include "inet/common/packet/Packet.h"
 #include "routing/core/DijkstraShortestPath.h"
-#include "topologycontrol/TopologyControl.h"
+#include "topologycontrol/TopologyControlBase.h"
 
 namespace flora {
 namespace routing {
@@ -27,7 +27,7 @@ using namespace isldirection;
 
 class RoutingBase : public cSimpleModule {
    protected:
-    topologycontrol::TopologyControl *topologyControl = nullptr;
+    topologycontrol::TopologyControlBase *topologyControl = nullptr;
 
    public:
     virtual void initRouting(Packet *pkt, cModule *callerSat);

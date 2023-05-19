@@ -1,12 +1,12 @@
 /*
- * DtnTopologyControl.h
+ * ConstellationTopologyControl.h
  *
- * Created on: May 17, 2023
- *     Author: Sebastian Montoya
+ * Created on: Dec 20, 2022
+ *     Author: Robin Ohs
  */
 
-#ifndef __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
-#define __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
+#ifndef __FLORA_TOPOLOGYCONTROL_CONSTELLATIONTOPOLOGYCONTROL_H_
+#define __FLORA_TOPOLOGYCONTROL_CONSTELLATIONTOPOLOGYCONTROL_H_
 
 #include <omnetpp.h>
 
@@ -28,9 +28,7 @@
 #include "topologycontrol/data/GsSatConnection.h"
 #include "topologycontrol/utilities/ChannelState.h"
 #include "topologycontrol/utilities/PrintMap.h"
-#include "routing/dtn/contactplan/ContactPlan.h"
-#include "topologycontrol/TopologyControlBase.h"
-
+#include "TopologyControlBase.h"
 
 using namespace omnetpp;
 using namespace flora::satellite;
@@ -39,7 +37,7 @@ using namespace flora::core;
 namespace flora {
 namespace topologycontrol {
 
-class DtnTopologyControl : public TopologyControlBase {
+class ConstellationTopologyControl : public TopologyControlBase {
    protected:
     virtual void initialize(int stage) override;
     virtual void updateTopology() override;
@@ -47,18 +45,13 @@ class DtnTopologyControl : public TopologyControlBase {
    private:
     void updateIntraSatelliteLinks();
     void updateInterSatelliteLinks();
-    void updateGroundstationLinksDtn();
+    void updateGroundstationLinks();
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
-    void linkGroundStationToSatDtn(int gsId, int satId);
-    void unlinkGroundStationToSatDtn(int gsId, int satId);
-    void updateLinkGroundStationToSatDtn(int gsId, int satId);
-    bool isDtnContactStarting(int gsId, int satId, Contact contact);
-    bool isDtnContactTakingPlace(int gsId, int satId, Contact contact);
-    bool isDtnContactEnding(int gsId, int satId, Contact contact);
+
 };
 
 }  // namespace topologycontrol
 }  // namespace flora
 
-#endif  // __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
+#endif  // __FLORA_TOPOLOGYCONTROL_CONSTELLATIONTOPOLOGYCONTROL_H_

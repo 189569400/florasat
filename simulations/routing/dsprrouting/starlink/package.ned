@@ -7,7 +7,7 @@ import flora.LoRa.LoRaNode;
 import flora.ground.GroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
-import flora.topologycontrol.TopologyControl;
+import flora.topologycontrol.ConstellationTopologyControl;
 import flora.routing.dspr.DsprRouting;
 import flora.mobility.SatMobilityOrchestrator;
 import flora.networklayer.ConstellationRoutingTable;
@@ -31,7 +31,7 @@ network DsprRoutingStarlink
             @display("p=-128,473.375;i=block/cogwheel");
         }
 
-        topologyControl: TopologyControl {
+        topologyControl: ConstellationTopologyControl {
             @display("p=-128,573.375;i=block/network2");
         }
 

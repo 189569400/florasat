@@ -7,10 +7,10 @@ import flora.LoRa.LoRaNode;
 import flora.ground.GroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
-import flora.topologycontrol.TopologyControl;
+import flora.topologycontrol.DtnTopologyControl;
 import flora.routing.random.RandomRouting;
 import flora.routing.directed.DirectedRouting;
-import flora.mobility.FasterSatMobility;
+import flora.mobility.SatMobilityOrchestrator;
 import flora.metrics.MetricsCollector;
 import flora.routing.dtn.contactplan.ContactPlan;
 import inet.visualizer.common.IntegratedVisualizer;
@@ -43,11 +43,11 @@ network DtnSim
             @display("p=-128,473.375");
         }
 
-        topologyControl: TopologyControl {
+        topologyControl: DtnTopologyControl {
             @display("p=-128,573.375");
         }
 
-        fasterSatMobility: FasterSatMobility {
+        fasterSatMobility: SatMobilityOrchestrator {
             @display("p=-128,673.375");
         }
 

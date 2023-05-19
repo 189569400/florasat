@@ -62,9 +62,9 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     /** @brief Gives the number in the plane. The first sat in any plane has number 0.*/
     int getNumberInPlane() const { return satNumberInPlane; }
 
-    cGate *getInputGate(isldirection::Direction direction, int index = -1);
-    cGate *getOutputGate(isldirection::Direction direction, int index = -1);
-
+    std::pair<cGate *, ISLState> getInputGate(isldirection::Direction direction, int index = -1);
+    std::pair<cGate *, ISLState> getOutputGate(isldirection::Direction direction, int index = -1);
+    std::pair<cGate *, ISLState> getGate(isldirection::Direction direction, cGate::Type type, int index);
     /** @brief Connects the satellite to the other satellite. The return value indicates whether the connection is new or the channel params were updated.*/
     bool connect(SatelliteRoutingBase *other, isldirection::Direction direction);
 
@@ -152,9 +152,9 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     virtual void finish() override;
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-
-   private:
-    cGate *getGate(isldirection::Direction direction, cGate::Type type, int index);
+#ifndef NDEBUG
+    virtual void refreshDisplay() const override;
+#endif
 };
 
 }  // namespace satellite

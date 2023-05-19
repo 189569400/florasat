@@ -15,8 +15,8 @@
 
 package flora.topologycontrol;
 
-simple DtnTopologyControl extends TopologyControlBase
+simple ConstellationTopologyControl extends TopologyControlBase
 {
     parameters:
-        @class(topologycontrol::DtnTopologyControl);
+        @class(topologycontrol::ConstellationTopologyControl);
 }

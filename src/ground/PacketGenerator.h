@@ -22,7 +22,7 @@
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
 #include "routing/core/DijkstraShortestPath.h"
-#include "topologycontrol/TopologyControl.h"
+#include "topologycontrol/TopologyControlBase.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -40,7 +40,7 @@ class PacketGenerator : public cSimpleModule {
     cHistogram hopCountStats;
     cOutVector hopCountVector;
 
-    topologycontrol::TopologyControl *topologycontrol;
+    topologycontrol::TopologyControlBase *topologycontrol;
     routing::RoutingBase *routingModule;
     networklayer::ConstellationRoutingTable *routingTable;
 

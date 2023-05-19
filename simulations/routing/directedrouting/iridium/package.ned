@@ -13,7 +13,7 @@ import flora.LoRa.LoRaNode;
 import flora.ground.GroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
-import flora.topologycontrol.TopologyControl;
+import flora.topologycontrol.ConstellationTopologyControl;
 import flora.routing.directed.DirectedRouting;
 import flora.mobility.SatMobilityOrchestrator;
 import flora.metrics.MetricsCollector;
@@ -38,7 +38,7 @@ network DirectedRoutingIridium
             @display("p=-128,473.375;i=block/cogwheel");
         }
 
-        topologyControl: TopologyControl {
+        topologyControl: ConstellationTopologyControl {
             @display("p=-128,573.375;i=block/network2");
         }
 
