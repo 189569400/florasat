@@ -1,12 +1,12 @@
 /*
- * TopologyControl.h
+ * DtnTopologyControl.h
  *
- * Created on: Dec 20, 2022
- *     Author: Robin Ohs
+ * Created on: May 17, 2023
+ *     Author: Sebastian Montoya
  */
 
-#ifndef __FLORA_TOPOLOGYCONTROL_TOPOLOGYCONTROL_H_
-#define __FLORA_TOPOLOGYCONTROL_TOPOLOGYCONTROL_H_
+#ifndef __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
+#define __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
 
 #include <omnetpp.h>
 
@@ -38,9 +38,9 @@ using namespace flora::core;
 namespace flora {
 namespace topologycontrol {
 
-class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
+class DtnTopologyControl : public ClockUserModuleMixin<cSimpleModule> {
    public:
-    TopologyControl();
+    DtnTopologyControl();
     void updateTopology();
     GroundstationInfo const &getGroundstationInfo(int gsId) const;
     SatelliteRoutingBase* const getSatellite(int satId) const;
@@ -48,7 +48,7 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     GsSatConnection const &getGroundstationSatConnection(int gsId, int satId) const;
 
    protected:
-    virtual ~TopologyControl();
+    virtual ~DtnTopologyControl();
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
     virtual void handleMessage(cMessage *msg) override;
@@ -60,11 +60,16 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void loadGroundstations();
     void updateIntraSatelliteLinks();
     void updateInterSatelliteLinks();
-    void updateGroundstationLinks();
     void updateGroundstationLinksDtn();
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
+    void linkGroundStationToSatDtn(int gsId, int satId);
+    void unlinkGroundStationToSatDtn(int gsId, int satId);
+    void updateLinkGroundStationToSatDtn(int gsId, int satId);
+    bool isDtnContactStarting(int gsId, int satId, Contact contact);
+    bool isDtnContactTakingPlace(int gsId, int satId, Contact contact);
+    bool isDtnContactEnding(int gsId, int satId, Contact contact);
     bool isIslEnabled(double latitude);
     SatelliteRoutingBase* findSatByPlaneAndNumberInPlane(int plane, int numberInPlane);
 
@@ -127,4 +132,4 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
 }  // namespace topologycontrol
 }  // namespace flora
 
-#endif  // __FLORA_TOPOLOGYCONTROL_TOPOLOGYCONTROL_H_
+#endif  // __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_

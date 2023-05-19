@@ -15,10 +15,10 @@
 
 package flora.topologycontrol;
 
-simple TopologyControl
+simple DtnTopologyControl
 {
     parameters:
-        @class(topologycontrol::TopologyControl);
+        @class(topologycontrol::DtnTopologyControl);
         double updateInterval @unit(s) = default(1s);
         
         // must be delta or star
