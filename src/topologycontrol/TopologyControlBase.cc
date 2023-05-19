@@ -10,22 +10,24 @@
 namespace flora {
 namespace topologycontrol {
 
-TopologyControlBase::TopologyControlBase() : updateIntervalParameter(0),
-                                             updateTimer(nullptr),
-                                             numSatellites(0),
-                                             numGroundStations(0),
-                                             numGroundLinks(40),
-                                             interPlaneIslDisabled(false),
-                                             islDelay(0.0),
-                                             islDatarate(0.0),
-                                             groundlinkDelay(0.0),
-                                             groundlinkDatarate(0.0),
-                                             minimumElevation(10.0),
-                                             walkerType(WalkerType::UNINITIALIZED),
-                                             interPlaneSpacing(1),
-                                             planeCount(0),
+Register_Abstract_Class(TopologyControlBase);
+
+TopologyControlBase::TopologyControlBase() : topologyChanged(false),
                                              satsPerPlane(0),
-                                             topologyChanged(false) {
+                                             numGroundStations(0),
+                                             numSatellites(0),
+                                             planeCount(0),
+                                             interPlaneSpacing(1),
+                                             minimumElevation(10.0),
+                                             numGroundLinks(40),
+                                             groundlinkDatarate(0.0),
+                                             groundlinkDelay(0.0),
+                                             islDatarate(0.0),
+                                             islDelay(0.0),
+                                             interPlaneIslDisabled(false),
+                                             walkerType(WalkerType::UNINITIALIZED),
+                                             updateTimer(nullptr),
+                                             updateIntervalParameter(0) {
 }
 
 TopologyControlBase::~TopologyControlBase() {
@@ -97,9 +99,9 @@ void TopologyControlBase::scheduleUpdate() {
     scheduleClockEventAfter(updateIntervalParameter->doubleValue(), updateTimer);
 }
 
-GroundstationInfo const &TopologyControlBase::getGroundstationInfo(int gsId) const {
+GroundStationRouting *const TopologyControlBase::getGroundstationInfo(int gsId) const {
     ASSERT(gsId >= 0 && gsId < numGroundStations);
-    return groundstationInfos.at(gsId);
+    return groundStations.at(gsId);
 }
 
 SatelliteRoutingBase *const TopologyControlBase::getSatellite(int satId) const {
@@ -115,24 +117,17 @@ GsSatConnection const &TopologyControlBase::getGroundstationSatConnection(int gs
     return gsSatConnections.at(std::pair<int, int>(gsId, satId));
 }
 
-SatelliteRoutingBase *TopologyControlBase::findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) {
+SatelliteRoutingBase *const TopologyControlBase::findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) const {
     int id = plane * satsPerPlane + numberInPlane;
     return satellites.at(id);
 }
 
 void TopologyControlBase::loadGroundstations() {
-    groundstationInfos.clear();
+    groundStations.clear();
     for (size_t i = 0; i < numGroundStations; i++) {
-        cModule *groundstation = getSystemModule()->getSubmodule("groundStation", i);
-        if (groundstation == nullptr) {
-            error("Error in TopologyControlBase::getGroundstations(): groundStation with index %zu is nullptr. Make sure the module exists.", i);
-        }
-        GroundStationMobility *mobility = check_and_cast<GroundStationMobility *>(groundstation->getSubmodule("gsMobility"));
-        if (mobility == nullptr) {
-            error("Error in TopologyControlBase::getGroundstations(): mobility module of Groundstation is nullptr. Make sure a module with name `gsMobility` exists.");
-        }
-        GroundstationInfo created = GroundstationInfo(groundstation->par("groundStationId"), groundstation, mobility);
-        groundstationInfos.emplace(i, created);
+        GroundStationRouting *gs = check_and_cast<GroundStationRouting *>(getParentModule()->getSubmodule("groundStation", i));
+        EV << "TC: Loaded Groundstation " << i << endl;
+        groundStations.emplace(i, gs);
     }
 }
 

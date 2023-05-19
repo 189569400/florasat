@@ -8,29 +8,9 @@
 #ifndef __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
 #define __FLORA_TOPOLOGYCONTROL_DTNTOPOLOGYCONTROL_H_
 
-#include <omnetpp.h>
-
-#include <algorithm>
-#include <set>
-#include <string>
-#include <unordered_map>
-
-#include "core/Constants.h"
 #include "core/Timer.h"
-#include "core/Utils.h"
-#include "core/WalkerType.h"
-#include "core/utils/SetUtils.h"
-#include "satellite/SatelliteRoutingBase.h"
-#include "inet/common/clock/ClockUserModuleMixin.h"
-#include "mobility/GroundStationMobility.h"
-#include "mobility/NoradA.h"
-#include "topologycontrol/data/GroundstationInfo.h"
-#include "topologycontrol/data/GsSatConnection.h"
-#include "topologycontrol/utilities/ChannelState.h"
-#include "topologycontrol/utilities/PrintMap.h"
 #include "routing/dtn/contactplan/ContactPlan.h"
 #include "topologycontrol/TopologyControlBase.h"
-
 
 using namespace omnetpp;
 using namespace flora::satellite;

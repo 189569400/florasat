@@ -37,9 +37,9 @@ class RoutingBase : public cSimpleModule {
    protected:
     virtual void initialize(int stage) override;
     int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-    bool HasConnection(cModule *satellite, ISLDirection side);
-    std::set<int> GetConnectedSatellites(int groundStationId);
-    int GetGroundlinkIndex(int satelliteId, int groundstationId);
+    bool hasConnection(cModule *satellite, ISLDirection side);
+    std::set<int> const &getConnectedSatellites(int groundStationId) const;
+    int getGroundlinkIndex(int satelliteId, int groundstationId);
 };
 
 }  // namespace routing

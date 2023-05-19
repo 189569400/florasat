@@ -13,7 +13,7 @@ Define_Module(PacketGenerator);
 
 void PacketGenerator::initialize(int stage) {
     if (stage == INITSTAGE_LOCAL) {
-        groundStationId = getParentModule()->par("groundStationId");
+        groundStationId = getParentModule()->getIndex();
         numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
         topologycontrol = check_and_cast<topologycontrol::TopologyControlBase *>(getSystemModule()->getSubmodule("topologyControl"));
         routingTable = check_and_cast<networklayer::ConstellationRoutingTable *>(getSystemModule()->getSubmodule("constellationRoutingTable"));

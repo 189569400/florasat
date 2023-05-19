@@ -9,6 +9,7 @@
 #define __FLORA_CORE_UTILS_SETUTILS_H_
 
 #include <set>
+#include <algorithm>
 
 namespace flora {
 namespace core {

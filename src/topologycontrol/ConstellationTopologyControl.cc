@@ -57,36 +57,43 @@ void ConstellationTopologyControl::updateIntraSatelliteLinks() {
 void ConstellationTopologyControl::updateGroundstationLinks() {
     // iterate over groundstations
     for (size_t gsId = 0; gsId < numGroundStations; gsId++) {
-        GroundstationInfo &gsInfo = groundstationInfos.at(gsId);
+        GroundStationRouting *gs = groundStations.at(gsId);
+        ASSERT(gs != nullptr);
         for (size_t satId = 0; satId < numSatellites; satId++) {
+            EV << "Check connection between GS(" << gsId << ") and SAT(" << satId << ")" << endl;
             SatelliteRoutingBase *sat = satellites.at(satId);
 
-            bool isOldConnection = utils::set::contains<int>(gsInfo.satellites, satId);
+            ASSERT(sat != nullptr);
+
+            bool isOldConnection = gs->isConnectedTo(satId);
 
             // if is not in range continue with next sat
-            if (sat->getElevation(gsInfo) < minimumElevation) {
+            if (sat->getElevation(*gs) < minimumElevation) {
+                EV << "--> Not in range." << endl;
                 // if they were previous connected, delete that connection
                 if (isOldConnection) {
+                    EV << "--> Disconnect" << endl;
                     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
-                    cGate *uplink = gsInfo.getOutputGate(connection.gsGateIndex);
+                    cGate *uplink = gs->getOutputGate(connection.gsGateIndex);
                     cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
                     deleteChannel(uplink);
                     deleteChannel(downlink);
                     gsSatConnections.erase(std::pair<int, int>(gsId, satId));
-                    gsInfo.satellites.erase(satId);
+                    gs->removeSatellite(satId);
                     topologyChanged = true;
                 }
                 // in all cases continue with next sat
                 continue;
             }
-
-            double delay = sat->getDistance(gsInfo) * groundlinkDelay;
+            EV << "--> In range" << endl;
+            double delay = sat->getDistance(*gs) * groundlinkDelay;
 
             // if they were previous connected, update channel with new delay
             if (isOldConnection) {
+                EV << "--> Update" << endl;
                 GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
-                cGate *uplinkO = gsInfo.getOutputGate(connection.gsGateIndex);
-                cGate *uplinkI = gsInfo.getInputGate(connection.gsGateIndex);
+                cGate *uplinkO = gs->getOutputGate(connection.gsGateIndex);
+                cGate *uplinkI = gs->getInputGate(connection.gsGateIndex);
                 cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
                 cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
@@ -94,9 +101,10 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
             }
             // they were not previous connected, create new channel between gs and sat
             else {
+                EV << "--> New connection" << endl;
                 int freeIndexGs = -1;
                 for (size_t i = 0; i < numGroundLinks; i++) {
-                    cGate *gate = gsInfo.getOutputGate(i);
+                    cGate *gate = gs->getOutputGate(i);
                     if (!gate->isConnectedOutside()) {
                         freeIndexGs = i;
                         break;
@@ -118,14 +126,14 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
                     error("No free sat gate index found.");
                 }
 
-                cGate *uplinkO = gsInfo.getOutputGate(freeIndexGs);
-                cGate *uplinkI = gsInfo.getInputGate(freeIndexGs);
+                cGate *uplinkO = gs->getOutputGate(freeIndexGs);
+                cGate *uplinkI = gs->getInputGate(freeIndexGs);
                 cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
                 cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
                 updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
                 gsSatConnections.emplace(std::pair<int, int>(gsId, satId), GsSatConnection(gsId, satId, freeIndexGs, freeIndexSat));
-                gsInfo.satellites.emplace(satId);
+                gs->addSatellite(satId);
                 topologyChanged = true;
             }
         }

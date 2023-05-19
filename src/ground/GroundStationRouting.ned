@@ -22,10 +22,11 @@ import flora.traffic.UdpTrafficGenerator;
 module GroundStationRouting
 {
     parameters:
+        @class(ground::GroundStationRouting);
         @display("i=device/receiverdish");
-        int groundStationId;
         string localAddress;
         int numGroundLinks = default(40);
+
     gates:
         inout satelliteLink[numGroundLinks] @labels(EtherFrame-conn);
 

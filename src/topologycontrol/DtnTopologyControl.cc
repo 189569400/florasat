@@ -122,13 +122,13 @@ bool DtnTopologyControl::isDtnContactEnding(int gsId, int satId, Contact contact
  * @param satInfo contains data related to a Satellite
  */
 void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
-    GroundstationInfo &gsInfo = groundstationInfos.at(gsId);
+    GroundStationRouting *gs = groundStations.at(gsId);
     SatelliteRoutingBase *sat = satellites.at(satId);
-    double delay = sat->getDistance(gsInfo) * groundlinkDelay; // delay of the channel between satellite and groundstation (ms)
+    double delay = sat->getDistance(*gs) * groundlinkDelay; // delay of the channel between satellite and groundstation (ms)
     EV << "Create channel between GS " << gsId << " and SAT " << satId << endl;
     int freeIndexGs = -1;
     for (size_t i = 0; i < numGroundLinks; i++) {
-        cGate *gate = gsInfo.getOutputGate(i);
+        cGate *gate = gs->getOutputGate(i);
         if (!gate->isConnectedOutside()) {
             freeIndexGs = i;
             break;
@@ -150,14 +150,14 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
         error("No free sat gate index found.");
     }
 
-    cGate *uplinkO = gsInfo.getOutputGate(freeIndexGs);
-    cGate *uplinkI = gsInfo.getInputGate(freeIndexGs);
+    cGate *uplinkO = gs->getOutputGate(freeIndexGs);
+    cGate *uplinkI = gs->getInputGate(freeIndexGs);
     cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
     cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
     updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
     gsSatConnections.emplace(std::pair<int, int>(gsId, satId), GsSatConnection(gsId, satId, freeIndexGs, freeIndexSat));
-    gsInfo.satellites.emplace(satId);
+    gs->addSatellite(satId);
     topologyChanged = true;
 }
 
@@ -167,15 +167,15 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
  * @param satInfo contains data related to a Satellite
  */
 void DtnTopologyControl::unlinkGroundStationToSatDtn(int gsId, int satId) {
-    GroundstationInfo &gsInfo = groundstationInfos.at(gsId);
+    GroundStationRouting *gs = groundStations.at(gsId);
     SatelliteRoutingBase *sat = satellites.at(satId);
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
-    cGate *uplink= gsInfo.getOutputGate(connection.gsGateIndex);
+    cGate *uplink= gs->getOutputGate(connection.gsGateIndex);
     cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
     deleteChannel(uplink);
     deleteChannel(downlink);
     gsSatConnections.erase(std::pair<int, int>(gsId, satId));
-    gsInfo.satellites.erase(satId);
+    gs->removeSatellite(satId);
     topologyChanged = true;
 }
 
@@ -185,12 +185,12 @@ void DtnTopologyControl::unlinkGroundStationToSatDtn(int gsId, int satId) {
  * @param satInfo contains data related to a Satellite
  */
 void DtnTopologyControl::updateLinkGroundStationToSatDtn(int gsId, int satId) {
-    GroundstationInfo &gsInfo = groundstationInfos.at(gsId);
+    GroundStationRouting *gs = groundStations.at(gsId);
     SatelliteRoutingBase *sat = satellites.at(satId);
-    double delay = sat->getDistance(gsInfo) * groundlinkDelay; // delay of the channel between nearest satellite and groundstation (ms)
+    double delay = sat->getDistance(*gs) * groundlinkDelay; // delay of the channel between nearest satellite and groundstation (ms)
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
-    cGate *uplinkO = gsInfo.getOutputGate(connection.gsGateIndex);
-    cGate *uplinkI = gsInfo.getInputGate(connection.gsGateIndex);
+    cGate *uplinkO = gs->getOutputGate(connection.gsGateIndex);
+    cGate *uplinkI = gs->getInputGate(connection.gsGateIndex);
     cGate *downlinkO = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
     cGate *downlinkI = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);

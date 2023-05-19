@@ -34,13 +34,13 @@ ISLDirection DirectedRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModul
     // destination is on same plane
     if (myPlane < destPlane) {
         if (isAscending) {
-            if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
+            if (hasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
                 return ISLDirection(Direction::ISL_RIGHT, -1);
             } else {
                 return ISLDirection(Direction::ISL_DOWN, -1);
             }
         } else {
-            if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
+            if (hasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
                 return ISLDirection(Direction::ISL_LEFT, -1);
             } else {
                 return ISLDirection(Direction::ISL_UP, -1);
@@ -48,22 +48,22 @@ ISLDirection DirectedRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModul
         }
     } else if (myPlane > destPlane) {
         if (isAscending) {
-            if (HasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
+            if (hasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
                 return ISLDirection(Direction::ISL_LEFT, -1);
             } else {
                 return ISLDirection(Direction::ISL_DOWN, -1);
             }
         } else {
-            if (HasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
+            if (hasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
                 return ISLDirection(Direction::ISL_RIGHT, -1);
             } else {
                 return ISLDirection(Direction::ISL_UP, -1);
             }
         }
     } else if (myPlane == destPlane) {
-        if (routerSatIndex < destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {
+        if (routerSatIndex < destSatIndex && hasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {
             return ISLDirection(Direction::ISL_UP, -1);
-        } else if (routerSatIndex > destSatIndex && HasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
+        } else if (routerSatIndex > destSatIndex && hasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
             return ISLDirection(Direction::ISL_DOWN, -1);
         } else {
             error("Error in PacketHandlerDirected::handleMessage: choosen gate should be connected!");

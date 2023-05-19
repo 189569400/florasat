@@ -25,10 +25,10 @@ void RoutingBase::initRouting(Packet *pkt, cModule *callerSat) {
 std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int dstGs) {
     auto srcGsInfo = topologyControl->getGroundstationInfo(srcGs);
     auto dstGsInfo = topologyControl->getGroundstationInfo(dstGs);
-    if (srcGsInfo.satellites.empty()) {
+    if (!srcGsInfo->isConnectedToAnySat()) {
         error("Error in RoutingBase::calculateFirstAndLastSatellite: srcGsInfo has no satellite connections");
     }
-    if (dstGsInfo.satellites.empty()) {
+    if (!dstGsInfo->isConnectedToAnySat()) {
         error("Error in RoutingBase::calculateFirstAndLastSatellite: dstGsInfo has no satellite connections");
     }
 
@@ -42,11 +42,11 @@ std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int d
     EV << "Calculate first and last sat. Distances " << srcGs << "->" << dstGs << ":" << endl;
 #endif
 
-    for (auto pFirstSat : srcGsInfo.satellites) {
+    for (auto pFirstSat : srcGsInfo->getSatellites()) {
         routing::core::DijkstraResult result = routing::core::runDijkstra(pFirstSat, topologyControl->getSatellites());
-        for (auto pLastSat : dstGsInfo.satellites) {
+        for (auto pLastSat : dstGsInfo->getSatellites()) {
             auto distance = result.distances[pLastSat];
-            auto glDistance = dstGsInfo.getDistance(*topologyControl->getSatellite(pLastSat));
+            auto glDistance = dstGsInfo->getDistance(*topologyControl->getSatellite(pLastSat));
 
 #ifndef NDEBUG
             auto path = routing::core::reconstructPath(pFirstSat, pLastSat, result.prev);
@@ -76,7 +76,7 @@ std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int d
     return std::make_pair(firstSat, lastSat);
 }
 
-bool RoutingBase::HasConnection(cModule *satellite, ISLDirection side) {
+bool RoutingBase::hasConnection(cModule *satellite, ISLDirection side) {
     if (satellite == nullptr)
         throw new cRuntimeError("RandomRouting::HasConnection(): satellite mullptr");
 
@@ -97,17 +97,17 @@ bool RoutingBase::HasConnection(cModule *satellite, ISLDirection side) {
     return false;
 }
 
-int RoutingBase::GetGroundlinkIndex(int satelliteId, int groundstationId) {
-    std::set<int> gsSatellites = GetConnectedSatellites(groundstationId);
+int RoutingBase::getGroundlinkIndex(int satelliteId, int groundstationId) {
+    std::set<int> gsSatellites = getConnectedSatellites(groundstationId);
     if (gsSatellites.find(satelliteId) != gsSatellites.end()) {
         return topologyControl->getGroundstationSatConnection(groundstationId, satelliteId).satGateIndex;
     }
     return -1;
 }
 
-std::set<int> RoutingBase::GetConnectedSatellites(int groundStationId) {
+std::set<int> const &RoutingBase::getConnectedSatellites(int groundStationId) const {
     if (topologyControl == nullptr) error("Error in RoutingBase::GetGroundStationConnections(): topologyControl is nullptr. Did you call initialize on RoutingBase?");
-    return topologyControl->getGroundstationInfo(groundStationId).satellites;
+    return topologyControl->getGroundstationInfo(groundStationId)->getSatellites();
 }
 
 }  // namespace routing
