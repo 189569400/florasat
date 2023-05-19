@@ -65,12 +65,6 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
     void trackTopologyChange();
-    void linkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
-    void unlinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
-    void updateLinkGroundStationToSatDtn(GroundstationInfo *gsInfo, SatelliteInfo *satInfo);
-    bool isDtnContactStarting(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
-    bool isDtnContactTakingPlace(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
-    bool isDtnContactEnding(GroundstationInfo *gsInfo, SatelliteInfo *satInfo, Contact contact);
     bool isIslEnabled(double latitude);
     SatelliteRoutingBase* findSatByPlaneAndNumberInPlane(int plane, int numberInPlane);
 
@@ -128,8 +122,6 @@ class TopologyControl : public ClockUserModuleMixin<cSimpleModule> {
 
     /** @brief Used to indicate if there was a change to the topology. */
     bool topologyChanged = false;
-
-    bool isDtn = false;
 };
 
 }  // namespace topologycontrol
