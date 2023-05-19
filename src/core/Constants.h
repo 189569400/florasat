@@ -21,7 +21,7 @@ class Constants {
     constexpr static char const* SAT_GROUNDLINK_NAME = "groundLink";
     constexpr static char const* GS_SATLINK_NAME = "satelliteLink";
 
-    constexpr static char const* ISL_STATE_NORMAL = "normal";
+    constexpr static char const* ISL_STATE_WORKING = "working";
 
     constexpr static char const* WALKERTYPE_DELTA = "DELTA";
     constexpr static char const* WALKERTYPE_STAR = "STAR";

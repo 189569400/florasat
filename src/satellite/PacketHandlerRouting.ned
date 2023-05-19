@@ -24,6 +24,9 @@ simple PacketHandlerRouting
         @display("i=block/app");
         int maxHops = default(50);
 
+        @signal[packetSent](type=inet::Packet);
+        @signal[packetReceived](type=inet::Packet);
+
     gates:        
         // ISL gates
         inout left1;

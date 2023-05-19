@@ -15,7 +15,7 @@ namespace flora {
 namespace core {
 
 enum ISLState {
-    NORMAL
+    WORKING
 };
 
 std::ostream &operator<<(std::ostream &ss, const ISLState &state);

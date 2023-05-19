@@ -12,13 +12,14 @@
 
 #include "core/Constants.h"
 #include "core/ISLDirection.h"
+#include "core/ISLState.h"
+#include "core/PositionAwareBase.h"
 #include "core/Utils.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/Simsignals.h"
 #include "inet/common/packet/Packet.h"
 #include "mobility/NoradA.h"
 #include "routing/RoutingHeader_m.h"
-#include "core/PositionAwareBase.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -30,7 +31,7 @@ namespace satellite {
 
 class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
    private:
-    int satId;
+    int satId = -1;
     int satPlane;
     int satNumberInPlane;
     NoradA *noradModule;
@@ -43,6 +44,15 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     SatelliteRoutingBase *rightSatellite = nullptr;
     SatelliteRoutingBase *upSatellite = nullptr;
     SatelliteRoutingBase *downSatellite = nullptr;
+
+    ISLState leftSendState = ISLState::WORKING;
+    ISLState leftRecvState = ISLState::WORKING;
+    ISLState upSendState = ISLState::WORKING;
+    ISLState upRecvState = ISLState::WORKING;
+    ISLState rightSendState = ISLState::WORKING;
+    ISLState rightRecvState = ISLState::WORKING;
+    ISLState downSendState = ISLState::WORKING;
+    ISLState downRecvState = ISLState::WORKING;
 
    public:
     /** @brief Returns the id of the satellite. */
@@ -96,6 +106,24 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     double getLatitude() const override;
     double getLongitude() const override;
     double getAltitude() const override;
+
+    ISLState getLeftSendState() const { return leftSendState; }
+    ISLState getLeftRecvState() const { return leftRecvState; }
+    ISLState getUpSendState() const { return upSendState; }
+    ISLState getUpRecvState() const { return upRecvState; }
+    ISLState getRightSendState() const { return rightSendState; }
+    ISLState getRightRecvState() const { return rightRecvState; }
+    ISLState getDownSendState() const { return downSendState; }
+    ISLState getDownRecvState() const { return downRecvState; }
+
+    void setLeftSendState(ISLState newState);
+    void setLeftRecvState(ISLState newState);
+    void setUpSendState(ISLState newState);
+    void setUpRecvState(ISLState newState);
+    void setRightSendState(ISLState newState);
+    void setRightRecvState(ISLState newState);
+    void setDownSendState(ISLState newState);
+    void setDownRecvState(ISLState newState);
 
     /** @brief Returns the elevation from this entity to a reference entity. */
     double getElevation(const PositionAwareBase &other) const;

@@ -65,7 +65,7 @@ void SatelliteRouting::handlePacketDropped(inet::Packet *pkt, inet::PacketDropDe
         numDroppedFullQueue++;
         droppedFullQueueCountStats.record(numDroppedFullQueue);
     } else {
-        error("Unhandled drop reason: %s", reason->getReason());
+        error("Unhandled drop reason: %d", reason->getReason());
     }
 }
 

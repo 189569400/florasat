@@ -166,6 +166,31 @@ double SatelliteRoutingBase::getDownSatDistance() const {
     return downSatellite->getDistance(*this);
 }
 
+void SatelliteRoutingBase::setLeftSendState(ISLState newState) {
+    leftSendState = newState;
+}
+void SatelliteRoutingBase::setLeftRecvState(ISLState newState) {
+    leftRecvState = newState;
+}
+void SatelliteRoutingBase::setUpSendState(ISLState newState) {
+    upSendState = newState;
+}
+void SatelliteRoutingBase::setUpRecvState(ISLState newState) {
+    upRecvState = newState;
+}
+void SatelliteRoutingBase::setRightSendState(ISLState newState) {
+    rightSendState = newState;
+}
+void SatelliteRoutingBase::setRightRecvState(ISLState newState) {
+    rightRecvState = newState;
+}
+void SatelliteRoutingBase::setDownSendState(ISLState newState) {
+    downSendState = newState;
+}
+void SatelliteRoutingBase::setDownRecvState(ISLState newState) {
+    downRecvState = newState;
+}
+
 double SatelliteRoutingBase::getLongitude() const {
     return noradModule->getLongitude();
 }

@@ -12,11 +12,11 @@ namespace core {
 
 std::ostream &operator<<(std::ostream &ss, const ISLState &state) {
     switch (state) {
-        case ISLState::NORMAL:
-            ss << Constants::ISL_STATE_NORMAL;
+        case ISLState::WORKING:
+            ss << Constants::ISL_STATE_WORKING;
             break;
         default:
-            throw omnetpp::cRuntimeError("Error in ISLDrection::string operator");
+            throw omnetpp::cRuntimeError("Error in ISLState::string operator");
     }
     return ss;
 }
