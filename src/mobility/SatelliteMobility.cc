@@ -7,7 +7,7 @@
 #include "INorad.h"
 #include "NoradA.h"
 
-namespace inet {
+//namespace inet {
 
 Define_Module(SatelliteMobility);
 
@@ -237,4 +237,4 @@ void SatelliteMobility::fixIfHostGetsOutside()
 {
     raiseErrorIfOutside();
 }
-} // namespace inet
+//} // namespace inet

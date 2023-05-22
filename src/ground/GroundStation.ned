@@ -26,7 +26,7 @@ import inet.linklayer.loopback.LoopbackInterface;
 import inet.linklayer.contract.IWiredInterface;
 import inet.linklayer.acking.AckingWirelessInterface;
 import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
-import leosatellites.mobility.GroundStationMobility;
+import flora.mobility.GroundStationMobility;
 import flora.ground.DummyNic;
 
 import flora.ground.GroundForwarder;
