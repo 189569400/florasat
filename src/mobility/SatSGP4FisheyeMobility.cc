@@ -18,10 +18,12 @@
 #include <cmath>
 
 #include "Norad.h"
+
+namespace flora {
+
 Define_Module(SatSGP4FisheyeMobility);
 
-void SatSGP4FisheyeMobility::initialize(int stage)
-{
+void SatSGP4FisheyeMobility::initialize(int stage) {
     SatSGP4Mobility::initialize(stage);
 
     // we have a round fisheye circle
@@ -34,8 +36,7 @@ void SatSGP4FisheyeMobility::initialize(int stage)
     transmitPower = getParentModule()->par("transmitPower");
 }
 
-void SatSGP4FisheyeMobility::setTargetPosition()
-{
+void SatSGP4FisheyeMobility::setTargetPosition() {
     nextChange += updateInterval.dbl();
     noradModule->updateTime(nextChange);
 
@@ -59,8 +60,7 @@ void SatSGP4FisheyeMobility::setTargetPosition()
     targetPosition.y = lastPosition.y;
 }
 
-void SatSGP4FisheyeMobility::setRefCenterPoint(const double& latitude, const double& longitude, const double& altitude)
-{
+void SatSGP4FisheyeMobility::setRefCenterPoint(const double& latitude, const double& longitude, const double& altitude) {
     refCenterLatitude = latitude;
     refCenterLongitude = longitude;
     refCenterAltitude = altitude;
@@ -69,17 +69,16 @@ void SatSGP4FisheyeMobility::setRefCenterPoint(const double& latitude, const dou
     move();
 }
 
-double SatSGP4FisheyeMobility::getRefCenterLatitude()
-{
+double SatSGP4FisheyeMobility::getRefCenterLatitude() {
     return refCenterLatitude;
 }
 
-double SatSGP4FisheyeMobility::getRefCenterLongitude()
-{
+double SatSGP4FisheyeMobility::getRefCenterLongitude() {
     return refCenterLongitude;
 }
 
-double SatSGP4FisheyeMobility::getRefCenterAltitude()
-{
+double SatSGP4FisheyeMobility::getRefCenterAltitude() {
     return refCenterAltitude;
 }
+
+}  // namespace flora

@@ -1,14 +1,9 @@
 #include "NoradA.h"
 
-#include <ctime>
-#include <cmath>
-#include <fstream>
-
-#include "../libnorad/cTLE.h"
-#include "../libnorad/cOrbitA.h"
-#include "../libnorad/cSite.h"
-
 using namespace omnetpp;
+
+namespace flora {
+
 Define_Module(NoradA);
 
 // Provides the functionality for satellite positioning
@@ -17,33 +12,28 @@ Define_Module(NoradA);
 // This class has been adapted from the Norad class so that orbits can be propagated without the
 // requirement of a TLE file. - Aiden Valentine
 
-NoradA::NoradA()
-{
+NoradA::NoradA() {
     gap = 0.0;
     orbit = nullptr;
     planes = 0;
     satPerPlane = 0;
 }
 
-void NoradA::finish()
-{
+void NoradA::finish() {
     delete orbit;
 }
 
 /**
  * Update the orbit given a target time.
  */
-void NoradA::updateTime(const simtime_t& targetTime)
-{
+void NoradA::updateTime(const simtime_t& targetTime) {
     orbit->getPosition((gap + targetTime.dbl()) / 60, &eci);
     geoCoord = eci.toGeo();
 }
 
-
-void NoradA::initializeMobility(const simtime_t& targetTime)
-{
-    //Instead of reading a TLE file and obtaining the Keplerian elements, the parameters are obtained
-    //from the default NED file parameters or the parameters specified within the INI file of the simulation.
+void NoradA::initializeMobility(const simtime_t& targetTime) {
+    // Instead of reading a TLE file and obtaining the Keplerian elements, the parameters are obtained
+    // from the default NED file parameters or the parameters specified within the INI file of the simulation.
     int satIndex = par("satIndex");
     satelliteIndex = satIndex;
     std::string satNameA = par("satName");
@@ -62,7 +52,7 @@ void NoradA::initializeMobility(const simtime_t& targetTime)
     int baseY = par("baseYear");
     double baseD = par("baseDay");
 
-    //The new cOrbitA orbital propagator class is called which passes these Keplerian elements rather than the TLE file.
+    // The new cOrbitA orbital propagator class is called which passes these Keplerian elements rather than the TLE file.
     orbit = new cOrbitA(satNameA, epochY, epochD, altitude, ecc, incl, meanAnom, bstarA, dragA, satIndex, planes, satPerPlane, raanA, argPerigeeA);
 
     // set the internal calendar time at which the simulation takes place
@@ -80,16 +70,14 @@ void NoradA::initializeMobility(const simtime_t& targetTime)
 /**
  * Get the RAAN of a node. Use to determine the orbital plane of the satellite.
  */
-double NoradA::getRaan()
-{
+double NoradA::getRaan() {
     return orbit->RAAN();
 }
 
 /**
  * Get the inclination of a node. Use to determine the orbital plane of the satellite.
  */
-double NoradA::getInclination()
-{
+double NoradA::getInclination() {
     return orbit->Inclination();
 }
 
@@ -100,29 +88,26 @@ double NoradA::getInclination()
  * the same index within neighbouring planes, as this is a valid connection. This method is used within the
  * SatelliteNetworkConfigurator class to filter links that are not compatible.
  */
-bool NoradA::isInterSatelliteLink(const int sat2Index)
-{
-    int currentPlaneSat1 = trunc(satelliteIndex/satPerPlane);
-    int currentPlaneSat2 = trunc(sat2Index/satPerPlane);
-    if (currentPlaneSat1 == currentPlaneSat2){
-        int minSat = ((satPerPlane) * currentPlaneSat1);
-        int maxSat = (minSat + (satPerPlane-1));
-        if((satelliteIndex+1 == sat2Index) or (satelliteIndex-1 == sat2Index)){
-            return true; //Same Plane, adjacent satellite
+bool NoradA::isInterSatelliteLink(const int sat2Index) {
+    int currentPlaneSat1 = trunc(satelliteIndex / satPerPlane);
+    int currentPlaneSat2 = trunc(sat2Index / satPerPlane);
+    if (currentPlaneSat1 == currentPlaneSat2) {
+        int minSat = ((satPerPlane)*currentPlaneSat1);
+        int maxSat = (minSat + (satPerPlane - 1));
+        if ((satelliteIndex + 1 == sat2Index) or (satelliteIndex - 1 == sat2Index)) {
+            return true;  // Same Plane, adjacent satellite
+        } else if ((satelliteIndex == maxSat && sat2Index == minSat) || (satelliteIndex == minSat && sat2Index == maxSat)) {
+            return true;  // Same Plane, adjacent satellite edge case
         }
-        else if((satelliteIndex==maxSat && sat2Index==minSat) || (satelliteIndex==minSat && sat2Index==maxSat)){
-            return true; //Same Plane, adjacent satellite edge case
-        }
-    }
-    else if ((currentPlaneSat1 == currentPlaneSat2-1) || (currentPlaneSat1 == currentPlaneSat2+1)  //Neighbouring Planes
-              || (currentPlaneSat1 == planes && currentPlaneSat2==0)
-              || (currentPlaneSat1 == 0 && currentPlaneSat2 == planes)){
-        int planeIndexSat1 = (satelliteIndex % (planes*satPerPlane))-(satPerPlane*currentPlaneSat1);
-        int planeIndexSat2 = (sat2Index % (planes*satPerPlane))-(satPerPlane*currentPlaneSat2);
-        if(planeIndexSat1 == planeIndexSat2){   //Satellites are are adjacent on neighbouring planes
+    } else if ((currentPlaneSat1 == currentPlaneSat2 - 1) || (currentPlaneSat1 == currentPlaneSat2 + 1)  // Neighbouring Planes
+               || (currentPlaneSat1 == planes && currentPlaneSat2 == 0) || (currentPlaneSat1 == 0 && currentPlaneSat2 == planes)) {
+        int planeIndexSat1 = (satelliteIndex % (planes * satPerPlane)) - (satPerPlane * currentPlaneSat1);
+        int planeIndexSat2 = (sat2Index % (planes * satPerPlane)) - (satPerPlane * currentPlaneSat2);
+        if (planeIndexSat1 == planeIndexSat2) {  // Satellites are are adjacent on neighbouring planes
             return true;
         }
     }
     return false;
 }
 
+}  // namespace flora

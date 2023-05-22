@@ -14,13 +14,12 @@
 //
 
 #include "LUTMotionMobility.h"
-#include <cmath>
 
-using namespace inet;
+namespace flora {
+
 Define_Module(LUTMotionMobility);
 
-void LUTMotionMobility::initialize(int stage)
-{
+void LUTMotionMobility::initialize(int stage) {
     StationaryMobility::initialize(stage);
     EV << "initializing LUTMotionMobility stage " << stage << endl;
     if (stage == 0) {
@@ -31,29 +30,26 @@ void LUTMotionMobility::initialize(int stage)
     }
 }
 
-double LUTMotionMobility::getLUTPositionX() const
-{
+double LUTMotionMobility::getLUTPositionX() const {
     return longitude;
 }
-double LUTMotionMobility::getLUTPositionY() const
-{
+double LUTMotionMobility::getLUTPositionY() const {
     return latitude;
 }
 
-Coord& LUTMotionMobility::getCurrentPosition()
-{
-    //return Coord(longitude, latitude);
+Coord& LUTMotionMobility::getCurrentPosition() {
+    // return Coord(longitude, latitude);
     return lastPosition;
 }
 
+void LUTMotionMobility::setInitialPosition() {
+    lastPosition.x = ((mapx * longitude) / 360) + (mapx / 2);
+    // lastPosition.x = (2160 + (longitude+180))/360;
+    lastPosition.x = static_cast<int>(lastPosition.x) % static_cast<int>(mapx);
 
-void LUTMotionMobility::setInitialPosition()
-{
-   lastPosition.x = ((mapx * longitude) / 360) + (mapx / 2);
-   //lastPosition.x = (2160 + (longitude+180))/360;
-   lastPosition.x = static_cast<int>(lastPosition.x) % static_cast<int>(mapx);
-
-   lastPosition.y = ((-mapy * latitude) / 180) + (mapy / 2);
-   lastPosition = Coord((((mapx * longitude) / 360) + (mapx / 2)), (((-mapy * latitude) / 180) + (mapy / 2)), 0);
-   //lastPosition.y = (1080 + (latitude+90))/180;
+    lastPosition.y = ((-mapy * latitude) / 180) + (mapy / 2);
+    lastPosition = Coord((((mapx * longitude) / 360) + (mapx / 2)), (((-mapy * latitude) / 180) + (mapy / 2)), 0);
+    // lastPosition.y = (1080 + (latitude+90))/180;
 }
+
+}  // namespace flora

@@ -18,6 +18,10 @@
 
 #include "SatSGP4Mobility.h"
 
+using namespace inet;
+
+namespace flora {
+
 //-----------------------------------------------------
 // Class: SatSGP4FisheyeMobility
 //
@@ -25,10 +29,8 @@
 // the position of a satellite module and resets the satellite position when
 // it gets outside the playground.
 //-----------------------------------------------------
-class SatSGP4FisheyeMobility : public SatSGP4Mobility
-{
-public:
-
+class SatSGP4FisheyeMobility : public SatSGP4Mobility {
+   public:
     // sets a new reference point for the fisheye
     void setRefCenterPoint(const double& latitude, const double& longitude, const double& altitude);
 
@@ -41,8 +43,7 @@ public:
     // returns the reference point's altitude
     double getRefCenterAltitude();
 
-protected:
-
+   protected:
     // initialize Fisheye
     // - this method is same as SatSGP4Mobility::initialize() except that it satisfies
     // - mapX == mapY for a proper display. It also sets the center reference point.
@@ -50,7 +51,7 @@ protected:
 
     virtual void setTargetPosition();
 
-private:
+   private:
     // fisheye reference point
     double refCenterLatitude;
     double refCenterLongitude;
@@ -58,5 +59,7 @@ private:
 
     double transmitPower;
 };
+
+}  // namespace flora
 
 #endif

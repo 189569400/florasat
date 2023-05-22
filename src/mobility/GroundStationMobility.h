@@ -3,11 +3,14 @@
 
 #include "LUTMotionMobility.h"
 
-class GroundStationMobility : public LUTMotionMobility{
-    public:
-        // returns the Euclidean distance from ground station to reference point - Implemented by Aiden Valentine
-        virtual double getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude = -9999) const;
+namespace flora {
 
+class GroundStationMobility : public LUTMotionMobility {
+   public:
+    // returns the Euclidean distance from ground station to reference point - Implemented by Aiden Valentine
+    virtual double getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude = -9999) const;
 };
+
+}  // namespace flora
 
 #endif /* LEOSATELLITES_MOBILITY_GROUNDSTATIONMOBILITY_H_ */
