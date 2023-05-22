@@ -15,6 +15,9 @@ std::ostream &operator<<(std::ostream &ss, const ISLState &state) {
         case ISLState::WORKING:
             ss << Constants::ISL_STATE_WORKING;
             break;
+        case ISLState::DISABLED:
+            ss << Constants::ISL_STATE_DISABLED;
+            break;
         default:
             throw omnetpp::cRuntimeError("Error in ISLState::string operator");
     }

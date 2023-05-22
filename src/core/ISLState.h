@@ -9,13 +9,15 @@
 #define __FLORA_CORE_ISLSTATE_H_
 
 #include <omnetpp.h>
+
 #include "Constants.h"
 
 namespace flora {
 namespace core {
 
 enum ISLState {
-    WORKING
+    WORKING,
+    DISABLED,
 };
 
 std::ostream &operator<<(std::ostream &ss, const ISLState &state);

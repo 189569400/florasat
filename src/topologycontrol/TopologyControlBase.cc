@@ -166,7 +166,7 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
 
     // Performs the following steps for each ISL direction (excluding groundlink)
     // 1. Delete the old connections if they are not the desired ones. If disconncts are happening, signal topology change.
-    // 2. If ISL antennas are working connect or update their channel, otherwise disconnect them.
+    // 2. Create the satellite pair connections.
     // 3. Check if it is a new connection and if yes, signal topology change.
     // 4. Save the new satellite pair.
     switch (direction) {
@@ -179,16 +179,8 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
                 disconnectSatellites(first, first->getLeftSat(), direction);
             }
             // 2.
-            if (first->getLeftSendState() == ISLState::WORKING && second->getRightRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
-            } else {
-                firstOut->disconnect();
-            }
-            if (second->getRightSendState() == ISLState::WORKING && first->getLeftRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
-            } else {
-                secondOut->disconnect();
-            }
+            createSatelliteConnection(firstOut, secondIn, delay, islDatarate, first->getLeftSendState(), second->getRightRecvState());
+            createSatelliteConnection(secondOut, firstIn, delay, islDatarate, second->getRightSendState(), first->getLeftRecvState());
             // 3.
             if (!first->hasLeftSat() || !second->hasRightSat()) {
                 topologyChanged = true;
@@ -206,16 +198,8 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
                 disconnectSatellites(first, first->getUpSat(), direction);
             }
             // 2.
-            if (first->getUpSendState() == ISLState::WORKING && second->getDownRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
-            } else {
-                firstOut->disconnect();
-            }
-            if (second->getDownSendState() == ISLState::WORKING && first->getUpRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
-            } else {
-                secondOut->disconnect();
-            }
+            createSatelliteConnection(firstOut, secondIn, delay, islDatarate, first->getUpSendState(), second->getDownRecvState());
+            createSatelliteConnection(secondOut, firstIn, delay, islDatarate, second->getDownSendState(), first->getUpRecvState());
             // 3.
             if (!first->hasUpSat() || !second->hasDownSat()) {
                 topologyChanged = true;
@@ -233,16 +217,8 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
                 disconnectSatellites(first, first->getRightSat(), direction);
             }
             // 2.
-            if (first->getRightSendState() == ISLState::WORKING && second->getLeftRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
-            } else {
-                firstOut->disconnect();
-            }
-            if (second->getLeftSendState() == ISLState::WORKING && first->getRightRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
-            } else {
-                secondOut->disconnect();
-            }
+            createSatelliteConnection(firstOut, secondIn, delay, islDatarate, first->getRightSendState(), second->getLeftRecvState());
+            createSatelliteConnection(secondOut, firstIn, delay, islDatarate, second->getLeftSendState(), first->getRightRecvState());
             // 3.
             if (!first->hasRightSat() || !second->hasLeftSat()) {
                 topologyChanged = true;
@@ -260,16 +236,8 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
                 disconnectSatellites(first, first->getDownSat(), direction);
             }
             // 2.
-            if (first->getDownSendState() == ISLState::WORKING && second->getUpRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
-            } else {
-                firstOut->disconnect();
-            }
-            if (second->getUpSendState() == ISLState::WORKING && first->getDownRecvState() == ISLState::WORKING) {
-                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
-            } else {
-                secondOut->disconnect();
-            }
+            createSatelliteConnection(firstOut, secondIn, delay, islDatarate, first->getDownSendState(), second->getUpRecvState());
+            createSatelliteConnection(secondOut, firstIn, delay, islDatarate, second->getUpSendState(), first->getDownRecvState());
             // 3.
             if (!first->hasDownSat() || !second->hasUpSat()) {
                 topologyChanged = true;
@@ -282,10 +250,6 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
             error("Error in TopologyControlBase::connectSatellites: Should not reach default branch of switch.");
             break;
     }
-
-#ifndef NDEBUG
-    EV << "<X><X><X><X><X><X>" << endl;
-#endif
 }
 
 void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction) {
@@ -326,6 +290,14 @@ void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, Sate
         default:
             error("Error in TopologyControlBase::disconnectSatellites: Should not reach default branch of switch.");
             break;
+    }
+}
+
+void TopologyControlBase::createSatelliteConnection(cGate *outGate, cGate *inGate, double delay, double datarate, ISLState outState, ISLState inState) {
+    if (outState == ISLState::WORKING && inState == ISLState::WORKING) {
+        updateOrCreateChannel(outGate, inGate, delay, islDatarate);
+    } else {
+        outGate->disconnect();
     }
 }
 
