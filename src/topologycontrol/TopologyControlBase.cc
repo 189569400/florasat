@@ -161,40 +161,126 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
     EV << "Connect " << first->getId() << " and " << second->getId() << " on " << to_string(direction) << endl;
 #endif
 
-    // disconnect old connections if not the desired connections
-    removeOldConnections(first, second, direction);
-
     double distance = first->getDistance(*second);
     double delay = islDelay * distance;
 
-    ChannelState cs1 = updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
-    ChannelState cs2 = updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
-
-    ASSERT(cs1 == cs2);
-
-    if (cs1 == ChannelState::CREATED && cs2 == ChannelState::CREATED) {
-        switch (direction) {
-            case isldirection::Direction::ISL_LEFT:
-                first->setLeftSat(second);
-                second->setRightSat(first);
-                break;
-            case isldirection::Direction::ISL_UP:
-                first->setUpSat(second);
-                second->setDownSat(first);
-                break;
-            case isldirection::Direction::ISL_RIGHT:
-                first->setRightSat(second);
-                second->setLeftSat(first);
-                break;
-            case isldirection::Direction::ISL_DOWN:
-                first->setDownSat(second);
-                second->setUpSat(first);
-                break;
-            default:
-                error("Error in TopologyControlBase::connectSatellites: Should not reach default branch of switch.");
-                break;
-        }
-        topologyChanged = true;
+    // Performs the following steps for each ISL direction (excluding groundlink)
+    // 1. Delete the old connections if they are not the desired ones. If disconncts are happening, signal topology change.
+    // 2. If ISL antennas are working connect or update their channel, otherwise disconnect them.
+    // 3. Check if it is a new connection and if yes, signal topology change.
+    // 4. Save the new satellite pair.
+    switch (direction) {
+        case isldirection::Direction::ISL_LEFT:
+            // 1.
+            if (second->hasRightSat() && second->getRightSatId() != first->getId()) {
+                disconnectSatellites(second, second->getRightSat(), counterDirection);
+            }
+            if (first->hasLeftSat() && first->getLeftSatId() != second->getId()) {
+                disconnectSatellites(first, first->getLeftSat(), direction);
+            }
+            // 2.
+            if (first->getLeftSendState() == ISLState::WORKING && second->getRightRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
+            } else {
+                firstOut->disconnect();
+            }
+            if (second->getRightSendState() == ISLState::WORKING && first->getLeftRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
+            } else {
+                secondOut->disconnect();
+            }
+            // 3.
+            if (!first->hasLeftSat() || !second->hasRightSat()) {
+                topologyChanged = true;
+            }
+            // 4.
+            first->setLeftSat(second);
+            second->setRightSat(first);
+            break;
+        case isldirection::Direction::ISL_UP:
+            // 1.
+            if (second->hasDownSat() && second->getDownSatId() != first->getId()) {
+                disconnectSatellites(second, second->getDownSat(), counterDirection);
+            }
+            if (first->hasUpSat() && first->getUpSatId() != second->getId()) {
+                disconnectSatellites(first, first->getUpSat(), direction);
+            }
+            // 2.
+            if (first->getUpSendState() == ISLState::WORKING && second->getDownRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
+            } else {
+                firstOut->disconnect();
+            }
+            if (second->getDownSendState() == ISLState::WORKING && first->getUpRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
+            } else {
+                secondOut->disconnect();
+            }
+            // 3.
+            if (!first->hasUpSat() || !second->hasDownSat()) {
+                topologyChanged = true;
+            }
+            // 4.
+            first->setUpSat(second);
+            second->setDownSat(first);
+            break;
+        case isldirection::Direction::ISL_RIGHT:
+            // 1.
+            if (second->hasLeftSat() && second->getLeftSatId() != first->getId()) {
+                disconnectSatellites(second, second->getLeftSat(), counterDirection);
+            }
+            if (first->hasRightSat() && first->getRightSatId() != second->getId()) {
+                disconnectSatellites(first, first->getRightSat(), direction);
+            }
+            // 2.
+            if (first->getRightSendState() == ISLState::WORKING && second->getLeftRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
+            } else {
+                firstOut->disconnect();
+            }
+            if (second->getLeftSendState() == ISLState::WORKING && first->getRightRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
+            } else {
+                secondOut->disconnect();
+            }
+            // 3.
+            if (!first->hasRightSat() || !second->hasLeftSat()) {
+                topologyChanged = true;
+            }
+            // 4.
+            first->setRightSat(second);
+            second->setLeftSat(first);
+            break;
+        case isldirection::Direction::ISL_DOWN:
+            // 1.
+            if (second->hasUpSat() && second->getUpSatId() != first->getId()) {
+                disconnectSatellites(second, second->getUpSat(), counterDirection);
+            }
+            if (first->hasDownSat() && first->getDownSatId() != second->getId()) {
+                disconnectSatellites(first, first->getDownSat(), direction);
+            }
+            // 2.
+            if (first->getDownSendState() == ISLState::WORKING && second->getUpRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(firstOut, secondIn, delay, islDatarate);
+            } else {
+                firstOut->disconnect();
+            }
+            if (second->getUpSendState() == ISLState::WORKING && first->getDownRecvState() == ISLState::WORKING) {
+                updateOrCreateChannel(secondOut, firstIn, delay, islDatarate);
+            } else {
+                secondOut->disconnect();
+            }
+            // 3.
+            if (!first->hasDownSat() || !second->hasUpSat()) {
+                topologyChanged = true;
+            }
+            // 4.
+            first->setDownSat(second);
+            second->setUpSat(first);
+            break;
+        default:
+            error("Error in TopologyControlBase::connectSatellites: Should not reach default branch of switch.");
+            break;
     }
 
 #ifndef NDEBUG
@@ -202,111 +288,44 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
 #endif
 }
 
-void TopologyControlBase::createConnection(SatelliteRoutingBase *from, SatelliteRoutingBase *to, isldirection::Direction direction) {
-    ASSERT(from != nullptr);
-    ASSERT(to != nullptr);
-    ASSERT(direction != isldirection::Direction::ISL_DOWNLINK);
-}
-
-void TopologyControlBase::removeOldConnections(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction) {
-    switch (direction) {
-        case isldirection::Direction::ISL_LEFT:
-            if (first->hasLeftSat() && first->getLeftSatId() != second->getId()) {
-                disconnectSatellites(first, first->getLeftSat(), direction);
-                // remove potential connection of new partner
-                if (second->hasRightSat()) {
-                    disconnectSatellites(second, second->getRightSat(), isldirection::Direction::ISL_RIGHT);
-                }
-            }
-            break;
-        case isldirection::Direction::ISL_UP:
-            if (first->hasUpSat() && first->getUpSatId() != second->getId()) {
-                disconnectSatellites(first, first->getUpSat(), direction);
-                // remove potential connection of new partner
-                if (second->hasDownSat()) {
-                    disconnectSatellites(second, second->getDownSat(), isldirection::Direction::ISL_DOWN);
-                }
-            }
-            break;
-        case isldirection::Direction::ISL_RIGHT:
-            if (first->hasRightSat() && first->getRightSatId() != second->getId()) {
-                disconnectSatellites(first, first->getRightSat(), direction);
-                // remove potential connection of new partner
-                if (second->hasLeftSat()) {
-                    disconnectSatellites(second, second->getLeftSat(), isldirection::Direction::ISL_LEFT);
-                }
-            }
-            break;
-        case isldirection::Direction::ISL_DOWN:
-            if (first->hasDownSat() && first->getDownSatId() != second->getId()) {
-                disconnectSatellites(first, first->getDownSat(), direction);
-                // remove potential connection of new partner
-                if (second->hasUpSat()) {
-                    disconnectSatellites(second, second->getUpSat(), isldirection::Direction::ISL_UP);
-                }
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction firstOutDir) {
-    ASSERT(firstOutDir != isldirection::ISL_DOWNLINK);
+void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction) {
+    ASSERT(direction != isldirection::ISL_DOWNLINK);
 
 #ifndef NDEBUG
-    EV << "Disconnect " << first->getId() << " and " << second->getId() << " on " << to_string(firstOutDir) << endl;
+    EV << "Disconnect " << first->getId() << " and " << second->getId() << " on " << to_string(direction) << endl;
 #endif
 
-    cGate *firstOut = first->getOutputGate(firstOutDir).first;
-    cGate *secondOut = second->getOutputGate(isldirection::getCounterDirection(firstOutDir)).first;
+    cGate *firstOut = first->getOutputGate(direction).first;
+    cGate *secondOut = second->getOutputGate(isldirection::getCounterDirection(direction)).first;
 
     ASSERT(firstOut != nullptr);
     ASSERT(secondOut != nullptr);
 
-    ChannelState cs1 = deleteChannel(firstOut);
-    ChannelState cs2 = deleteChannel(secondOut);
+    firstOut->disconnect();
+    secondOut->disconnect();
 
-    if (cs1 == ChannelState::DELETED) {
-        switch (firstOutDir) {
-            case isldirection::Direction::ISL_LEFT:
-                first->removeLeftSat();
-                break;
-            case isldirection::Direction::ISL_UP:
-                first->removeUpSat();
-                break;
-            case isldirection::Direction::ISL_RIGHT:
-                first->removeRightSat();
-                break;
-            case isldirection::Direction::ISL_DOWN:
-                first->removeDownSat();
-                break;
-            default:
-                error("Error in TopologyControlBase::disconnectSatellites: Should not reach default branch of switch.");
-                break;
-        }
-        topologyChanged = true;
-    }
+    topologyChanged = true;
 
-    if (cs2 == ChannelState::DELETED) {
-        switch (firstOutDir) {
-            case isldirection::Direction::ISL_LEFT:
-                second->removeRightSat();
-                break;
-            case isldirection::Direction::ISL_UP:
-                second->removeDownSat();
-                break;
-            case isldirection::Direction::ISL_RIGHT:
-                second->removeLeftSat();
-                break;
-            case isldirection::Direction::ISL_DOWN:
-                second->removeUpSat();
-                break;
-            default:
-                error("Error in TopologyControlBase::disconnectSatellites: Should not reach default branch of switch.");
-                break;
-        }
-        topologyChanged = true;
+    switch (direction) {
+        case isldirection::Direction::ISL_LEFT:
+            first->removeLeftSat();
+            second->removeRightSat();
+            break;
+        case isldirection::Direction::ISL_UP:
+            first->removeUpSat();
+            second->removeDownSat();
+            break;
+        case isldirection::Direction::ISL_RIGHT:
+            first->removeRightSat();
+            second->removeLeftSat();
+            break;
+        case isldirection::Direction::ISL_DOWN:
+            first->removeDownSat();
+            second->removeUpSat();
+            break;
+        default:
+            error("Error in TopologyControlBase::disconnectSatellites: Should not reach default branch of switch.");
+            break;
     }
 }
 

@@ -56,9 +56,7 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
 
     void connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
     void disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
-    void removeOldConnections(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
 
-    void createConnection(SatelliteRoutingBase *from, SatelliteRoutingBase *to, isldirection::Direction direction);
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
     /** @brief Deletes the channel of outGate. If channel does not exist, nothing happens, otherwise deletes the channel.*/
