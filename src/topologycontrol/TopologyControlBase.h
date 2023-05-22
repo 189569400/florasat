@@ -51,11 +51,26 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
 
     virtual void updateTopology() = 0;
 
-    // Is called if the topology is checked for updates and the routing topology has changed
+    /** This method is called if the topology has changed.
+     * It is only called if there is a pre-plannable topology change.
+     * E.g., ISL gates that get disabled do not lead to a call.
+     */
     virtual void trackTopologyChange() {}
 
+    /** Used to connect a satellite pair with the given direction as the output direction of the first satellite.
+     * The input gate is the output gate of the second satellite on the counter direction.
+     */
     void connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
+
+    /** Used to connect a satellite pair with the given direction as the output direction of the first satellite.
+     * The input gate is the output gate of the second satellite on the counter direction.
+     */
     void disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
+
+    /** @brief Creates a one-way connection between the outGate and the inGate.
+     * Considers the ISLStates of the gates and only connects if they are both working.
+     */
+    void createSatelliteConnection(cGate *outGate, cGate *inGate, double delay, double datarate, ISLState outState, ISLState inState);
 
     /** @brief Creates/Updates the channel from outGate to inGate. If channel exists updates channel params, otherwise creates the channel.*/
     ChannelState updateOrCreateChannel(cGate *outGate, cGate *inGate, double delay, double datarate);
