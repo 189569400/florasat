@@ -24,6 +24,15 @@ std::ostream &operator<<(std::ostream &ss, const ISLState &state) {
     return ss;
 }
 
+ISLState from_str(const char *text) {
+    if (!strcasecmp(text, Constants::ISL_STATE_WORKING))
+        return ISLState::WORKING;
+    else if (!strcasecmp(text, Constants::ISL_STATE_DISABLED))
+        return ISLState::DISABLED;
+    else
+        throw cRuntimeError("Unknown text constant: %s", text);
+}
+
 std::string to_string(const ISLState &state) {
     std::ostringstream ss;
     ss << state;

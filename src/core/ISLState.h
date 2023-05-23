@@ -12,6 +12,8 @@
 
 #include "Constants.h"
 
+using namespace omnetpp;
+
 namespace flora {
 namespace core {
 
@@ -23,6 +25,8 @@ enum ISLState {
 std::ostream &operator<<(std::ostream &ss, const ISLState &state);
 
 std::string to_string(const ISLState &state);
+
+ISLState from_str(const char *text);
 
 }  // namespace core
 }  // namespace flora
