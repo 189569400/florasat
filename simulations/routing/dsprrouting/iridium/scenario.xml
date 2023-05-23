@@ -1,0 +1,9 @@
+<scenario>
+    <at t="0.1s">
+        <set-isl-state satid="21" value="DISABLED" />
+        <set-isl-state satid="20" value="DISABLED" />
+    </at>
+    <at t="0.2s">
+        <set-isl-state satid="20" dir="right" type="send" value="WORKING" />
+    </at>
+</scenario>

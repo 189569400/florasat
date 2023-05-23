@@ -31,10 +31,16 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
    public:
     TopologyControlBase();
 
+    virtual void updateTopology() = 0;
+
     // Sat API
     SatelliteRoutingBase *const getSatellite(int satId) const;
     SatelliteRoutingBase *const findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) const;
     std::unordered_map<int, SatelliteRoutingBase *> const &getSatellites() const;
+
+    int getNumberOfSatellites() const {
+        return numSatellites;
+    };
 
     // GS API
     GroundStationRouting *const getGroundstationInfo(int gsId) const;
@@ -48,8 +54,6 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 
     virtual void handleMessage(cMessage *msg) override;
-
-    virtual void updateTopology() = 0;
 
     /** This method is called if the topology has changed.
      * It is only called if there is a pre-plannable topology change.

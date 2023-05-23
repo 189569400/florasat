@@ -60,7 +60,6 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
         GroundStationRouting *gs = groundStations.at(gsId);
         ASSERT(gs != nullptr);
         for (size_t satId = 0; satId < numSatellites; satId++) {
-            EV << "Check connection between GS(" << gsId << ") and SAT(" << satId << ")" << endl;
             SatelliteRoutingBase *sat = satellites.at(satId);
 
             ASSERT(sat != nullptr);
@@ -69,10 +68,8 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
 
             // if is not in range continue with next sat
             if (sat->getElevation(*gs) < minimumElevation) {
-                EV << "--> Not in range." << endl;
                 // if they were previous connected, delete that connection
                 if (isOldConnection) {
-                    EV << "--> Disconnect" << endl;
                     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
                     cGate *uplink = gs->getOutputGate(connection.gsGateIndex);
                     cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
@@ -85,12 +82,10 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
                 // in all cases continue with next sat
                 continue;
             }
-            EV << "--> In range" << endl;
             double delay = sat->getDistance(*gs) * groundlinkDelay;
 
             // if they were previous connected, update channel with new delay
             if (isOldConnection) {
-                EV << "--> Update" << endl;
                 GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
                 cGate *uplinkO = gs->getOutputGate(connection.gsGateIndex);
                 cGate *uplinkI = gs->getInputGate(connection.gsGateIndex);
@@ -101,7 +96,6 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
             }
             // they were not previous connected, create new channel between gs and sat
             else {
-                EV << "--> New connection" << endl;
                 int freeIndexGs = -1;
                 for (size_t i = 0; i < numGroundLinks; i++) {
                     cGate *gate = gs->getOutputGate(i);
