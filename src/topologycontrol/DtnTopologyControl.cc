@@ -14,15 +14,13 @@ Define_Module(DtnTopologyControl);
 
 void DtnTopologyControl::initialize(int stage) {
     TopologyControlBase::initialize(stage);
-
-    // DTN related initialization
 }
 
 void DtnTopologyControl::updateTopology() {
     core::Timer timer = core::Timer();
     // update ISL links and groundlinks
     topologyChanged = false;
-    updateIntraSatelliteLinks();
+    // updateIntraSatelliteLinks();
     updateInterSatelliteLinks();
     updateGroundstationLinksDtn();
 
@@ -33,6 +31,8 @@ void DtnTopologyControl::updateTopology() {
 }
 
 void DtnTopologyControl::updateIntraSatelliteLinks() {
+    ContactPlan *contactPlan = check_and_cast<ContactPlan *>(getParentModule()->getSubmodule("contactPlan"));
+    ASSERT(contactPlan != nullptr);
     // iterate over planes
     for (size_t plane = 0; plane < planeCount; plane++) {
         // iterate over sats in plane
@@ -48,8 +48,14 @@ void DtnTopologyControl::updateIntraSatelliteLinks() {
             SatelliteRoutingBase *otherSat = satellites.at(nextId);
             ASSERT(otherSat != nullptr);
 
-            // connect the satellites
-            connectSatellites(curSat, otherSat, isldirection::Direction::ISL_UP);
+            vector<Contact> contactsBetweenSats = contactPlan->getContactsBySrcDst(numGroundStations + curSat->getId(), numGroundStations + otherSat->getId());
+            for (size_t satContactIndex = 0; satContactIndex < contactsBetweenSats.size(); satContactIndex++) {
+                int shiftedCurSatId = getShiftedSatelliteId(curSat->getId());
+                int shiftedOtherSatId = getShiftedSatelliteId(otherSat->getId());
+                if (isDtnContactStarting(shiftedCurSatId, shiftedOtherSatId, contactsBetweenSats.at(satContactIndex))){
+                    connectSatellites(curSat, otherSat, isldirection::Direction::ISL_UP);
+                }
+            }
         }
     }
 }
@@ -68,12 +74,13 @@ void DtnTopologyControl::updateGroundstationLinksDtn() {
             vector<Contact> satContacts = contactPlan->getContactsBySrcDst(gsId, satId + numGroundStations);
             for (size_t i = 0; i < satContacts.size(); i++) {
                 Contact contact = satContacts.at(i);
-                if (isDtnContactStarting(gsId, satId, contact)){
-                    linkGroundStationToSatDtn(gsId, satId);
-                } else if (isDtnContactTakingPlace(gsId, satId, contact)) {
-                    updateLinkGroundStationToSatDtn(gsId, satId);
-                } else if (isDtnContactEnding(gsId, satId, contact)) {
-                    unlinkGroundStationToSatDtn(gsId, satId);
+                int shiftedSatId = getShiftedSatelliteId(satId);
+                if (isDtnContactStarting(gsId, shiftedSatId, contact)){
+                    linkGroundStationToSatDtn(gsId, shiftedSatId);
+                } else if (isDtnContactTakingPlace(gsId, shiftedSatId, contact)) {
+                    updateLinkGroundStationToSatDtn(gsId, shiftedSatId);
+                } else if (isDtnContactEnding(gsId, shiftedSatId, contact)) {
+                    unlinkGroundStationToSatDtn(gsId, shiftedSatId);
                 }
             }
         }
@@ -88,8 +95,8 @@ void DtnTopologyControl::updateGroundstationLinksDtn() {
  * @param contact represent a Contact between two nodes in a Contact Plan
  * @return whether a contact between a GroundStation and a Satellite is starting
  */
-bool DtnTopologyControl::isDtnContactStarting(int gsId, int satId, Contact contact) {
-    return contact.getSourceEid() == gsId && contact.getDestinationEid() == satId + numGroundStations && contact.getStart() == simTime().dbl();
+bool DtnTopologyControl::isDtnContactStarting(int gsId, int satId, Contact contact) { // TODO: Change name of gsId since it can be satId also
+    return contact.getSourceEid() == gsId && contact.getDestinationEid() == satId && contact.getStart() == simTime().dbl();
 }
 
 /**
@@ -101,7 +108,7 @@ bool DtnTopologyControl::isDtnContactStarting(int gsId, int satId, Contact conta
  * @return whether a contact between a GroundStation and a Satellite is taking place
  */
 bool DtnTopologyControl::isDtnContactTakingPlace(int gsId, int satId, Contact contact) {
-    return contact.getSourceEid() == gsId && contact.getDestinationEid() == satId + numGroundStations && contact.getEnd() > simTime().dbl() && contact.getStart() < simTime().dbl();
+    return contact.getSourceEid() == gsId && contact.getDestinationEid() == satId && contact.getEnd() > simTime().dbl() && contact.getStart() < simTime().dbl();
 }
 
 /**
@@ -113,7 +120,7 @@ bool DtnTopologyControl::isDtnContactTakingPlace(int gsId, int satId, Contact co
  * @return whether a contact between a GroundStation and a Satellite is ending
  */
 bool DtnTopologyControl::isDtnContactEnding(int gsId, int satId, Contact contact) {
-    return contact.getSourceEid() == gsId && contact.getDestinationEid() == satId + numGroundStations && contact.getEnd() == simTime().dbl();
+    return contact.getSourceEid() == gsId && contact.getDestinationEid() == satId && contact.getEnd() == simTime().dbl();
 }
 
 /**
@@ -191,101 +198,43 @@ void DtnTopologyControl::updateLinkGroundStationToSatDtn(int gsId, int satId) {
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
     cGate *uplinkO = gs->getOutputGate(connection.gsGateIndex);
     cGate *uplinkI = gs->getInputGate(connection.gsGateIndex);
-    cGate *downlinkO = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
-    cGate *downlinkI = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+    cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+    cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
     updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
+}
+
+int DtnTopologyControl::getShiftedSatelliteId(int satId) {
+    return numGroundStations + satId;
 }
 
 void DtnTopologyControl::updateInterSatelliteLinks() {
     // if inter-plane ISL is not enabled/available
     if (interPlaneIslDisabled) return;
 
-    switch (walkerType) {
-        case WalkerType::DELTA:
-            updateISLInWalkerDelta();
-            break;
-        case WalkerType::STAR:
-            updateISLInWalkerStar();
-            break;
-        default:
-            error("Error in TopologyControl::updateInterSatelliteLinks(): Unexpected WalkerType '%s'.", to_string(walkerType).c_str());
-    }
-}
+    ContactPlan *contactPlan = check_and_cast<ContactPlan *>(getParentModule()->getSubmodule("contactPlan"));
+    ASSERT(contactPlan != nullptr);
 
-void DtnTopologyControl::updateISLInWalkerDelta() {
-    for (size_t index = 0; index < numSatellites; index++) {
-        SatelliteRoutingBase *curSat = satellites.at(index);
-        ASSERT(curSat != nullptr);
-
-        // sat (o, i) = i-th sat in plane o
-        // F = interplanefacing angle
-        int satPlane = curSat->getPlane();
-        SatelliteRoutingBase *rightSat = (satPlane != planeCount - 1)
-                                             ? findSatByPlaneAndNumberInPlane(satPlane + 1, curSat->getNumberInPlane())
-                                             : findSatByPlaneAndNumberInPlane(0, (curSat->getNumberInPlane() + interPlaneSpacing) % satsPerPlane);
-        ASSERT(rightSat != nullptr);
-
-        if (curSat->isAscending()) {
-            // if next plane partner is descending, connection is not possible
-            if (rightSat->isDescending()) {
-                // if we were connected to that satellite on right
-                if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
+    for (size_t satId = 0; satId < numSatellites; satId++) {
+        vector<Contact> satContacts = contactPlan->getContactsBySrc(getShiftedSatelliteId(satId));
+        for (size_t contactIndex = 0; contactIndex < satContacts.size(); contactIndex++) {
+            Contact contact = satContacts.at(contactIndex);
+            if (contact.getSourceEid() >= numGroundStations && contact.getDestinationEid() >= numGroundStations) {
+                SatelliteRoutingBase *curSat = satellites.at(contact.getSourceEid()- numGroundStations);
+                SatelliteRoutingBase *otherSat = satellites.at(contact.getDestinationEid()- numGroundStations);
+                if (isDtnContactStarting(contact.getSourceEid(), contact.getDestinationEid(), contact)) {
+                    if (curSat->isAscending()) {
+                        connectSatellites(curSat, otherSat, isldirection::Direction::ISL_RIGHT);
+                    } else {
+                        connectSatellites(curSat, otherSat, isldirection::Direction::ISL_LEFT);
+                    }
+                } else if (isDtnContactEnding(contact.getSourceEid(), contact.getDestinationEid(), contact)) {
+                    if (curSat->hasRightSat() && curSat->getRightSatId() == otherSat->getId()) {
+                        disconnectSatellites(curSat, otherSat, isldirection::Direction::ISL_RIGHT);
+                    } else if (curSat->hasLeftSat() && curSat->getLeftSatId() == otherSat->getId()) {
+                        disconnectSatellites(curSat, otherSat, isldirection::Direction::ISL_LEFT);
+                    }
                 }
-                // if we were connected to that satellite on left
-                else if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
-                }
-            } else {
-                connectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
-            }
-        }
-        // sat ist descending
-        else {
-            // if next plane partner is not descending, connection is not possible
-            if (rightSat->isAscending()) {
-                // if we were connected to that satellite on right
-                if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
-                }
-                // if we were connected to that satellite on right
-                else if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
-                }
-            } else {
-                connectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
-            }
-        }
-    }
-}
-
-void DtnTopologyControl::updateISLInWalkerStar() {
-    for (size_t index = 0; index < numSatellites; index++) {
-        SatelliteRoutingBase *curSat = satellites.at(index);
-        ASSERT(curSat != nullptr);
-        int satPlane = curSat->getPlane();
-
-        bool isLastPlane = satPlane == planeCount - 1;
-
-        // if last plane stop because we reached the seam
-        if (isLastPlane)
-            break;
-        int rightIndex = (index + satsPerPlane) % numSatellites;
-        SatelliteRoutingBase *nextPlaneSat = satellites.at(rightIndex);
-        ASSERT(nextPlaneSat != nullptr);
-
-        if (curSat->isAscending()) {                                                                                          // sat is moving up
-            if (nextPlaneSat->isAscending() && curSat->isInterPlaneISLEnabled() && nextPlaneSat->isInterPlaneISLEnabled()) {  // they are allowed to connect
-                connectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_RIGHT);
-            } else {  // they are not allowed to have an connection
-                disconnectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_RIGHT);
-            }
-        } else {                                                                                                               // sat is moving down
-            if (nextPlaneSat->isDescending() && curSat->isInterPlaneISLEnabled() && nextPlaneSat->isInterPlaneISLEnabled()) {  // they are allowed to connect
-                connectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_LEFT);
-            } else {  // they are not allowed to have an connection
-                disconnectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_LEFT);
             }
         }
     }
