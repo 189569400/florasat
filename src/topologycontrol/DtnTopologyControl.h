@@ -36,6 +36,7 @@ class DtnTopologyControl : public TopologyControlBase {
     bool isDtnContactStarting(int gsId, int satId, Contact contact);
     bool isDtnContactTakingPlace(int gsId, int satId, Contact contact);
     bool isDtnContactEnding(int gsId, int satId, Contact contact);
+    int getShiftedSatelliteId(int satId);
 };
 
 }  // namespace topologycontrol

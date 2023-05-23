@@ -14,25 +14,21 @@ import flora.mobility.SatMobilityOrchestrator;
 import flora.metrics.MetricsCollector;
 import flora.routing.dtn.contactplan.ContactPlan;
 import inet.visualizer.common.IntegratedVisualizer;
+import flora.networklayer.ConstellationRoutingTable;
+
 
 network DtnSim
 {
     parameters:
         int nrOfGS = default(2);
-        int nrOfGW = default(3);
+        int nrOfGW = default(8);
         @display("bgb=2160,1080;bgi=background_earth,s");
 
     submodules:
-        groundStation[nrOfGS]: GroundStationRouting {
-            @display("p=692.48,340.83;i=device/receiverdish");
-        }
-
-        loRaGW[nrOfGW]: SatelliteRouting {
-            @display("p=695.185,549.115;i=satellit_blue");
-        }
-
+        groundStation[nrOfGS]: GroundStationRouting;
+        loRaGW[nrOfGW]: SatelliteRouting;
         routing: DirectedRouting {
-            @display("p=-128,373.375");
+            @display("p=-128,373.375;i=block/routing");
         }
         
         contactPlan: ContactPlan {
@@ -47,13 +43,14 @@ network DtnSim
             @display("p=-128,573.375");
         }
 
-        fasterSatMobility: SatMobilityOrchestrator {
-            @display("p=-128,673.375");
+        satMobilityOrchestrator: SatMobilityOrchestrator {
+            @display("p=-128,673.375;i=block/rightarrow");
         }
-
-        metricsCollector: MetricsCollector {
-            @display("p=-128,773.375");
+        
+        constellationRoutingTable: ConstellationRoutingTable {
+            @display("p=-128,773.375;i=block/network2");
         }
+        
 
         visualizer: IntegratedVisualizer {
             @display("p=-128,875.0");
