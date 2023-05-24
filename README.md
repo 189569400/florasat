@@ -81,15 +81,15 @@ Currently, we support a single sample scenario comprising 16 satellites in a gri
 
 
 
-	- **Ground Segment**
-		- Ground Station-to-Satellite Link
-			- Cabled (mimick P2P links)
-			- Radio (TD)
-			- Topology control (UD)
-				- Dynamic link creation/destruction
-				- Constellation-based (constraints: min elevation)   
-				- Contact Plan-based (read from topology file)
-			- Dynamic link latency update
+- **Ground Segment**
+	- Ground Station-to-Satellite Link
+		- Cabled (mimick P2P links)
+		- Radio (TD)
+		- Topology control (UD)
+			- Dynamic link creation/destruction
+			- Constellation-based (constraints: min elevation)   
+			- Contact Plan-based (read from topology file)
+		- Dynamic link latency update
 	- Internet
 		- From INET
 	- Network Server
