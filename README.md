@@ -21,6 +21,8 @@ The FLoRaSat simulator is based on an extended version of [FLoRa](https://flora.
 Currently, we support a single sample scenario comprising 16 satellites in a grid-like formation (realistic orbital parameters), passing over a circular region with up to 1500 nodes. However, some flexibility can already be leveraged based on the features listed below.
 
 
+![image info](images/screenshot.jpg)
+
 
 ## Features
 
