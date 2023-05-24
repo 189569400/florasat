@@ -15,9 +15,17 @@
 
 #ifndef __OS3_SatSGP4Mobility_H__
 #define __OS3_SatSGP4Mobility_H__
-
 #include <inet/mobility/base/LineSegmentsMobilityBase.h>
-class Norad;
+
+#include <cmath>
+#include <ctime>
+
+#include "Norad.h"
+#include "libnorad/cJulian.h"
+
+using namespace inet;
+
+namespace flora {
 
 //-----------------------------------------------------
 // Class: SatSGP4Mobility
@@ -26,21 +34,20 @@ class Norad;
 // the position of a satellite module and resets the satellite position when
 // it gets outside the playground.
 //-----------------------------------------------------
-class SatSGP4Mobility : public inet::LineSegmentsMobilityBase
-{
-public:
+class SatSGP4Mobility : public LineSegmentsMobilityBase {
+   public:
     SatSGP4Mobility();
 
     // returns x-position of satellite on playground (not longitude!)
-    virtual double getPositionX() const                  { return lastPosition.x; };
+    virtual double getPositionX() const { return lastPosition.x; };
 
     // returns y-position of satellite on playground (not latitude!)
-    virtual double getPositionY() const                  { return lastPosition.y; };
+    virtual double getPositionY() const { return lastPosition.y; };
 
     // returns the altitude of the satellite.
     virtual double getAltitude() const;
 
-    virtual double getRaan() const;      //raan and inclination required to determine orbital plane of a satellite - used for intersatellite links
+    virtual double getRaan() const;  // raan and inclination required to determine orbital plane of a satellite - used for intersatellite links
     virtual double getInclination() const;
     virtual bool isOnSameOrbitalPlane(double raan, double inclination);
     // returns the elevation for the satellite in degrees
@@ -58,7 +65,7 @@ public:
     // returns satellite longitude
     virtual double getLongitude() const;
 
-protected:
+   protected:
     Norad* noradModule;
     int mapX, mapY;
     double transmitPower;
@@ -80,5 +87,7 @@ protected:
     // implements basic satellite movement on map
     virtual void move();
 };
+
+}  // namespace flora
 
 #endif

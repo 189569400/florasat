@@ -15,31 +15,24 @@
 
 #include "Norad.h"
 
-#include <ctime>
-#include <fstream>
-
-#include "../libnorad/cTLE.h"
-#include "../libnorad/cOrbit.h"
-#include "../libnorad/cSite.h"
-
 using namespace omnetpp;
+
+namespace flora {
+
 Define_Module(Norad);
 
-Norad::Norad()
-{
+Norad::Norad() {
     gap = 0.0;
     tle = nullptr;
     orbit = nullptr;
 }
 
-void Norad::finish()
-{
+void Norad::finish() {
     delete orbit;
     delete tle;
 }
 
-void Norad::initializeMobility(const simtime_t& targetTime)
-{
+void Norad::initializeMobility(const simtime_t& targetTime) {
     std::string filename = par("TLEfile").stringValue();
 
     // read file with TLE data
@@ -47,7 +40,7 @@ void Norad::initializeMobility(const simtime_t& targetTime)
     tleFile.open(filename.c_str());
 
     // Length 100 should be enough since lines are usually 70+'\n' char long
-    char line[100]     = "";
+    char line[100] = "";
     char line1tmp[100] = "";
     char line2tmp[100] = "";
 
@@ -69,8 +62,7 @@ void Norad::initializeMobility(const simtime_t& targetTime)
             line_str = "";
             tleFile.getline(line, 100);
             line_str.append(line);
-        } while (tleFile.good()
-                && line_str.find(satelliteName.c_str()) == std::string::npos);
+        } while (tleFile.good() && line_str.find(satelliteName.c_str()) == std::string::npos);
     }
     tleFile.getline(line1tmp, 100);
     tleFile.getline(line2tmp, 100);
@@ -96,42 +88,36 @@ void Norad::initializeMobility(const simtime_t& targetTime)
         line3.at(line3.find(" (")) = '\n';
     }*/
 
-//    std::size_t found = line3.find("(PRN ");
-//    std::string satName = "PRN-";
-//    satName.push_back(line3.at(found+5));
-//    satName.push_back(line3.at(found+6));
-//    satName += "\nsatellite";
-      //getParentModule()->setName(satName.c_str());
+    //    std::size_t found = line3.find("(PRN ");
+    //    std::string satName = "PRN-";
+    //    satName.push_back(line3.at(found+5));
+    //    satName.push_back(line3.at(found+6));
+    //    satName += "\nsatellite";
+    // getParentModule()->setName(satName.c_str());
 }
 
-void Norad::updateTime(const simtime_t& targetTime)
-{
+void Norad::updateTime(const simtime_t& targetTime) {
     orbit->getPosition((gap + targetTime.dbl()) / 60, &eci);
     geoCoord = eci.toGeo();
 }
 
-double Norad::getLongitude()
-{
+double Norad::getLongitude() {
     return rad2deg(geoCoord.m_Lon);
 }
 
-double Norad::getLatitude()
-{
+double Norad::getLatitude() {
     return rad2deg(geoCoord.m_Lat);
 }
 
-double Norad::getRaan()
-{
+double Norad::getRaan() {
     return raan;
 }
 
-double Norad::getInclination()
-{
+double Norad::getInclination() {
     return inclination;
 }
 
-double Norad::getElevation(const double& refLatitude, const double& refLongitude, const double& refAltitude)
-{
+double Norad::getElevation(const double& refLatitude, const double& refLongitude, const double& refAltitude) {
     cSite siteEquator(refLatitude, refLongitude, refAltitude);
     cCoordTopo topoLook = siteEquator.getLookAngle(eci);
     if (topoLook.m_El == 0.0) {
@@ -140,8 +126,7 @@ double Norad::getElevation(const double& refLatitude, const double& refLongitude
     return rad2deg(topoLook.m_El);
 }
 
-double Norad::getAzimuth(const double& refLatitude, const double& refLongitude, const double& refAltitude)
-{
+double Norad::getAzimuth(const double& refLatitude, const double& refLongitude, const double& refAltitude) {
     cSite siteEquator(refLatitude, refLongitude, refAltitude);
     cCoordTopo topoLook = siteEquator.getLookAngle(eci);
     if (topoLook.m_El == 0.0) {
@@ -150,27 +135,23 @@ double Norad::getAzimuth(const double& refLatitude, const double& refLongitude, 
     return rad2deg(topoLook.m_Az);
 }
 
-double Norad::getAltitude()
-{
+double Norad::getAltitude() {
     geoCoord = eci.toGeo();
     return geoCoord.m_Alt;
 }
 
-double Norad::getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude)
-{
+double Norad::getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude) {
     cSite siteEquator(refLatitude, refLongitude, refAltitude);
     cCoordTopo topoLook = siteEquator.getLookAngle(eci);
     double distance = topoLook.m_Range;
     return distance;
 }
 
-void Norad::handleMessage(cMessage* msg)
-{
+void Norad::handleMessage(cMessage* msg) {
     error("Error in Norad::handleMessage(): This module is not able to handle messages.");
 }
 
-void Norad::setJulian(std::tm* currentTime)
-{
+void Norad::setJulian(std::tm* currentTime) {
     currentJulian = cJulian(currentTime->tm_year + 1900,
                             currentTime->tm_mon + 1,
                             currentTime->tm_mday,
@@ -178,3 +159,4 @@ void Norad::setJulian(std::tm* currentTime)
                             currentTime->tm_min, 0);
 }
 
+}  // namespace flora

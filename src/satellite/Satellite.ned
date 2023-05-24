@@ -19,8 +19,8 @@ import inet.node.inet.INetworkNode;
 import inet.networklayer.common.InterfaceTable;
 import inet.linklayer.acking.AckingWirelessInterface;
 
-import leosatellites.mobility.NoradA;
-import leosatellites.mobility.SatelliteMobility;
+import flora.mobility.NoradA;
+import flora.mobility.SatelliteMobility;
 
 import flora.LoRa.LoRaGWNic;
 import flora.satellite.PacketHandler;

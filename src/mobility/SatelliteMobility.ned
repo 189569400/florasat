@@ -8,7 +8,7 @@ import flora.mobility.SatSGP4Mobility;
 simple SatelliteMobility extends SatSGP4Mobility
 {
     parameters:
-        @class("inet::SatelliteMobility");
+        @class(SatelliteMobility);
         bool displaySpanArea = default(false);
         int effectiveSlant = default(0);
 }

@@ -4,8 +4,6 @@
 	<comment></comment>
 	<projects>
 		<project>inet4.3</project>
-		<project>leosatellites</project>
-		<project>os3</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

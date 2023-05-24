@@ -25,7 +25,8 @@
 #include "../../mobility/SatSGP4Mobility.h"
 #include "../../mobility/GroundStationMobility.h"
 #include "../../mobility/SatelliteMobility.h"
-namespace inet {
+
+namespace flora {
 namespace physicallayer {
 
 Define_Module(SatelliteUnitDiskTransmitter);
@@ -73,4 +74,4 @@ const ITransmission *SatelliteUnitDiskTransmitter::createTransmission(const IRad
 }
 
 } /* namespace physicallayer */
-} /* namespace inet */
+} /* namespace flora */

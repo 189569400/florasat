@@ -18,8 +18,8 @@
 
 #include <omnetpp.h>
 
-#include <string>
 #include <ctime>
+#include <string>
 
 #include "../libnorad/cEci.h"
 #include "../libnorad/cJulian.h"
@@ -27,13 +27,13 @@
 
 using namespace omnetpp;
 
+namespace flora {
+
 // Interface for adapted OS3 Norad Modules - Written by Aiden Valentine
 
-class INorad : public cSimpleModule
-{
-public:
-
-    virtual cJulian getJulian(){return currentJulian;};
+class INorad : public cSimpleModule {
+   public:
+    virtual cJulian getJulian() { return currentJulian; };
     // sets the internal calendar by translating the current gregorian time
     // currentTime: time at which the simulation takes place
     virtual void setJulian(std::tm* currentTime);
@@ -61,19 +61,20 @@ public:
     // returns the altitude
     virtual double getAltitude();
 
-
     // returns the distance to the satellite from a reference point (distance in km)
     virtual double getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude = -9999);
 
-protected:
+   protected:
     virtual void handleMessage(cMessage* msg);
 
-protected:
+   protected:
     cEci eci;
     cJulian currentJulian;
 
     double gap;
     cCoordGeo geoCoord;
 };
+
+}  // namespace flora
 
 #endif

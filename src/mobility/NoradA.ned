@@ -1,7 +1,6 @@
 
 package flora.mobility;
 
-
 // This NED file details the NoradA model which does not use a TLE file so that
 // inter-satellite links can be implemented as well as to allow the simulation
 // of any constellation not bounded by a TLE file. All of the Keplerian parameters

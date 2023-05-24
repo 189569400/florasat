@@ -18,17 +18,21 @@
 
 #include <omnetpp.h>
 
-#include "inet/mobility/static/StationaryMobility.h"    // inet
+#include <cmath>
+
+#include "inet/mobility/static/StationaryMobility.h"  // inet
 
 using namespace inet;
+
+namespace flora {
+
 //-----------------------------------------------------
 // Class: LUTMotionMobility
 //
 // Positions a ground station at a specific lat/long
 //-----------------------------------------------------
-class LUTMotionMobility : public inet::StationaryMobility
-{
-public:
+class LUTMotionMobility : public StationaryMobility {
+   public:
     // returns longitude
     double getLUTPositionX() const;
 
@@ -37,13 +41,15 @@ public:
 
     virtual Coord& getCurrentPosition() override;
 
-protected:
+   protected:
     virtual void initialize(int) override;
 
     virtual void setInitialPosition() override;
 
-    double latitude, longitude;   // Geographic coordinates
-    double mapx, mapy;            // Coordinates on map
+    double latitude, longitude;  // Geographic coordinates
+    double mapx, mapy;           // Coordinates on map
 };
+
+}  // namespace flora
 
 #endif

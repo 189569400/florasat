@@ -18,17 +18,20 @@
 
 #include <omnetpp.h>
 
-#include <string>
 #include <ctime>
+#include <fstream>
+#include <string>
 
 #include "../libnorad/cEci.h"
 #include "../libnorad/cJulian.h"
+#include "../libnorad/cOrbit.h"
+#include "../libnorad/cSite.h"
+#include "../libnorad/cTLE.h"
 #include "../libnorad/ccoord.h"
 
 using namespace omnetpp;
 
-class cTle;
-class cOrbit;
+namespace flora {
 
 //-----------------------------------------------------
 // Class: Norad
@@ -37,9 +40,8 @@ class cOrbit;
 // this class provides the functionality needed to get the positions for satellites according
 // to current tables from web information by providing known data
 //-----------------------------------------------------
-class Norad : public cSimpleModule
-{
-public:
+class Norad : public cSimpleModule {
+   public:
     Norad();
 
     // sets the internal calendar by translating the current gregorian time
@@ -79,14 +81,14 @@ public:
     // returns the distance to the satellite from a reference point (distance in km)
     double getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude = -9999);
 
-protected:
+   protected:
     virtual void handleMessage(cMessage* msg);
 
-private:
+   private:
     cEci eci;
     cJulian currentJulian;
 
-    double inclination; //inclination and raan used to determine orbital plane
+    double inclination;  // inclination and raan used to determine orbital plane
     double raan;
 
     double gap;
@@ -99,5 +101,7 @@ private:
     std::string line2;
     std::string line3;
 };
+
+}  // namespace flora
 
 #endif

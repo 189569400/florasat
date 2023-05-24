@@ -3,23 +3,29 @@
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
+//
 
 #ifndef MOBILITY_SATELLITEMOBILITY_H_
 #define MOBILITY_SATELLITEMOBILITY_H_
 
-#include "inet/common/INETDefs.h"
 #include <inet/mobility/base/LineSegmentsMobilityBase.h>
+
+#include <cmath>
+#include <ctime>
+
 #include "../libnorad/cEcef.h"
+#include "../libnorad/cJulian.h"
 #include "INorad.h"
+#include "NoradA.h"
+#include "inet/common/INETDefs.h"
 
 //-----------------------------------------------------
 // Class: SatelliteMobility
@@ -29,17 +35,20 @@
 // it gets outside the playground. Code taken from OS3 so that the model can
 // work without altering the OS3 code itself.
 //-----------------------------------------------------
-namespace inet {
-class SatelliteMobility : public LineSegmentsMobilityBase
-{
-public:
+
+using namespace inet;
+
+namespace flora {
+
+class SatelliteMobility : public LineSegmentsMobilityBase {
+   public:
     SatelliteMobility();
 
     // returns x-position of satellite on playground (not longitude!)
-    virtual double getPositionX() const                  { return lastPosition.x; };
+    virtual double getPositionX() const { return lastPosition.x; };
 
     // returns y-position of satellite on playground (not latitude!)
-    virtual double getPositionY() const                  { return lastPosition.y; };
+    virtual double getPositionY() const { return lastPosition.y; };
 
     // returns the altitude of the satellite.
     virtual double getAltitude() const;
@@ -66,15 +75,15 @@ public:
     // returns vertical satellite position (y) in canvas
     double getYCanvas(double lat) const;
 
-protected:
+   protected:
     INorad* noradModule;
     int mapX, mapY;
     double transmitPower;
     bool displaySpanArea;
-    cPolygonFigure *polygon;
+    cPolygonFigure* polygon;
     const int nPoints = 51;
-    cCanvas *networkCanvas = nullptr;
-    cMessage *refreshArea = nullptr;
+    cCanvas* networkCanvas = nullptr;
+    cMessage* refreshArea = nullptr;
 
     int effectiveSlant = 0;
 
@@ -100,7 +109,7 @@ protected:
     virtual void move() override;
 
     // move satellite and update span area
-    virtual void handleSelfMessage(cMessage *msg) override;
+    virtual void handleSelfMessage(cMessage* msg) override;
 
     // remove all points from span area polygon
     void removeAllPoints();
@@ -108,5 +117,7 @@ protected:
     // set all points from span area polygon
     void setAllPoints();
 };
-}// namespace inet
+
+}  // namespace flora
+
 #endif

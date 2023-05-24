@@ -3,15 +3,22 @@
 
 #include <omnetpp.h>
 
-#include <string>
+#include <cmath>
 #include <ctime>
+#include <fstream>
+#include <string>
 
 #include "../libnorad/cEci.h"
 #include "../libnorad/cJulian.h"
+#include "../libnorad/cOrbitA.h"
+#include "../libnorad/cSite.h"
+#include "../libnorad/cTLE.h"
 #include "../libnorad/ccoord.h"
 #include "INorad.h"
+
 using namespace omnetpp;
-class cOrbitA;
+
+namespace flora {
 
 //-----------------------------------------------------
 // Class: NoradA
@@ -23,9 +30,8 @@ class cOrbitA;
 // requirement of a TLE file.
 // Modified by Aiden Valentine, original from the OS3 framework
 //-----------------------------------------------------
-class NoradA : public INorad
-{
-public:
+class NoradA : public INorad {
+   public:
     NoradA();
     // Updates the end time of current linear movement for calculation of current position
     // targetTime: End time of current linear movement
@@ -41,19 +47,20 @@ public:
     double getRaan();
     double getInclination();
 
-    const int getSatelliteNumber(){return satelliteIndex;};
-    const int getNumberOfPlanes(){return planes;}
-    const int getSatellitesPerPlane(){return satPerPlane;}
+    const int getSatelliteNumber() { return satelliteIndex; };
+    const int getNumberOfPlanes() { return planes; }
+    const int getSatellitesPerPlane() { return satPerPlane; }
     // Checks if given an index the satellite is a valid inter-satellite link.
     bool isInterSatelliteLink(const int sat2Index);
 
-private:
-
+   private:
     int satelliteIndex;
     int planes;
     int satPerPlane;
 
     cOrbitA* orbit;
 };
+
+}  // namespace flora
 
 #endif
