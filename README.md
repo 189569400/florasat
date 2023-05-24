@@ -99,9 +99,6 @@ Currently, we support a single sample scenario comprising 16 satellites in a gri
 
 ## Installation
 
-
-## Installation
-
 1. Install OpenSSL with `sudo apt-get install libssl-dev`
 
 2. Install [OMNeT++6.0.1](https://doc.omnetpp.org/omnetpp/InstallGuide.pdf). Tips:
