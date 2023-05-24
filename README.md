@@ -1,4 +1,3 @@
-
 # FLoRaSat
 
 FLoRaSat (Framework for LoRa-based Satellite networks) is an Omnet++ based discrete-event simulator to carry out end-to-end satellite IoT simulations based on LoRa and LoRaWAN adaptations for the space domain. 
@@ -27,7 +26,7 @@ Currently, we support a single sample scenario comprising 16 satellites in a gri
 
 (UD = Under Development, TD = To-do roadmap)
 
-- Ground IoT Device
+- **Ground IoT Device**
 	- Platform
 		- Energy model
 		- Clock drift model (TD)
@@ -50,7 +49,7 @@ Currently, we support a single sample scenario comprising 16 satellites in a gri
 
 
 
-- Satellite Gateway
+- **Satellite Gateway**
 	- Platform
 		- Orbital propagation with SGP4 (LEO and GEO) (from leosatellites)
 		- Orbital propagation with SDP4 (GEO) (TD)
@@ -80,7 +79,7 @@ Currently, we support a single sample scenario comprising 16 satellites in a gri
 
 
 
-	- Ground Segment
+	- **Ground Segment**
 		- Ground Station-to-Satellite Link
 			- Cabled (mimick P2P links)
 			- Radio (TD)
