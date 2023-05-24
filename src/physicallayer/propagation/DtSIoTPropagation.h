@@ -19,8 +19,6 @@
 #include "libnorad/cEci.h"
 #include "libnorad/ccoord.h"
 #include "mobility/GroundStationMobility.h"
-#include "mobility/LUTMotionMobility.h"
-#include "mobility/SatSGP4Mobility.h"
 #include "mobility/SatelliteMobility.h"
 #include "mobility/UniformGroundMobility.h"
 

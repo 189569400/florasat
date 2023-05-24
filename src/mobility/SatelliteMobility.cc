@@ -19,7 +19,7 @@ void SatelliteMobility::initialize(int stage) {
     LineSegmentsMobilityBase::initialize(stage);
     noradModule = check_and_cast<INorad*>(getParentModule()->getSubmodule("NoradModule"));
     if (noradModule == nullptr) {
-        error("Error in SatSGP4Mobility::initializeMobility(): Cannot find module Norad.");
+        error("Error in SatelliteMobility::initializeMobility(): Cannot find module Norad.");
     }
 
     // get current time as an integral value holding the num of secs since 00:00, Jan 1 1970 UTC
@@ -30,7 +30,7 @@ void SatelliteMobility::initialize(int stage) {
     mapX = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 0));
     mapY = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 1));
 
-    EV << "initializing SatSGP4Mobility stage " << stage << endl;
+    EV << "initializing SatelliteMobility stage " << stage << endl;
     WATCH(lastPosition);
 
     effectiveSlant = par("effectiveSlant");

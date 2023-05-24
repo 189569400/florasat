@@ -21,8 +21,7 @@
 #include "inet/physicallayer/wireless/unitdisk/UnitDiskPhyHeader_m.h"
 #include "inet/physicallayer/wireless/unitdisk/UnitDiskTransmission.h"
 #include "inet/physicallayer/wireless/unitdisk/UnitDiskTransmitter.h"
-#include "../../mobility/LUTMotionMobility.h"
-#include "../../mobility/SatSGP4Mobility.h"
+#include "../../mobility/GroundStationMobility.h"
 #include "../../mobility/GroundStationMobility.h"
 #include "../../mobility/SatelliteMobility.h"
 
@@ -62,8 +61,8 @@ const ITransmission *SatelliteUnitDiskTransmitter::createTransmission(const IRad
         longLatStartPosition = cCoordGeo(sgp4Mobility->getLatitude(), sgp4Mobility->getLongitude(), sgp4Mobility->getAltitude());
         longLatEndPosition = cCoordGeo(sgp4Mobility->getLatitude(), sgp4Mobility->getLongitude(), sgp4Mobility->getAltitude());
     } else if (GroundStationMobility *lutMobility = dynamic_cast<GroundStationMobility *>(mobility)) {  //The node transmitter is a ground station
-        longLatStartPosition = cCoordGeo(lutMobility->getLUTPositionY(), lutMobility->getLUTPositionX(), 0);
-        longLatEndPosition = cCoordGeo(lutMobility->getLUTPositionY(), lutMobility->getLUTPositionX(), 0);
+        longLatStartPosition = cCoordGeo(lutMobility->getLatitude(), lutMobility->getLongitude(), 0);
+        longLatEndPosition = cCoordGeo(lutMobility->getLatitude(), lutMobility->getLongitude(), 0);
     } else {  //other
         longLatStartPosition = cCoordGeo(0, 0, 0);
         longLatEndPosition = cCoordGeo(0, 0, 0);

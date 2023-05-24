@@ -30,7 +30,7 @@
 //-----------------------------------------------------
 // Class: SatelliteMobility
 //
-// Realizes the SatSGP4 mobility module - provides methods to get and set
+// Realizes the SatelliteMobility mobility module - provides methods to get and set
 // the position of a satellite module and resets the satellite position when
 // it gets outside the playground. Code taken from OS3 so that the model can
 // work without altering the OS3 code itself.

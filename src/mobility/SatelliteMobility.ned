@@ -1,14 +1,15 @@
 package flora.mobility;
 
-import flora.mobility.SatSGP4Mobility;
+import inet.mobility.base.MovingMobilityBase;
 
 //
-// Manages the SatSGP4 Mobility - extension of OS3 mobility model
+// Manages the SatelliteMobility
 //
-simple SatelliteMobility extends SatSGP4Mobility
+simple SatelliteMobility extends MovingMobilityBase
 {
     parameters:
         @class(SatelliteMobility);
+        @display("i=block/cogwheel_s");
         bool displaySpanArea = default(false);
         int effectiveSlant = default(0);
 }
