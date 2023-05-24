@@ -11,36 +11,41 @@ Please consider the the simulator is under active development, and it should **n
 
 ## Installation
 
-- Install [OMNeT++6.0](https://omnetpp.org/)
+1. Install OpenSSL with `sudo apt-get install libssl-dev`
 
-- Install [INETv4.3](https://inet.omnetpp.org/Installation.html)
+2. Install [OMNeT++6.0.1](https://doc.omnetpp.org/omnetpp/InstallGuide.pdf). Tips:
 
-- Install OpenSSL, in Ubuntu use `sudo apt-get install libssl-dev`
+    * Set the omnetpp environment permanently with `echo '[ -f "$HOME/omnetpp-6.0.1/setenv" ] && source "$HOME/omnetpp-6.0.1/setenv"' >> ~/.profile`
 
-- Add INETv4.3 to the environment by executing setinet.sh passing the absolute path to the INET root directory, eg. `sh setinet.sh $HOME/omnetprojects/inet4.3`
+    * Remember to compile with `make -j8` to take advantage of multiple processor cores
 
-- Clone `https://gitlab.inria.fr/jfraire/florasat.git` repo where INET is located and checkout to `dev_repomerge` branch
+    * If **ERROR: /home/diego/omnetpp-6.0.1/bin is not in the path!**, add it by entering `export PATH=$HOME/omnetpp-6.0.1/bin:$PATH`
 
-- Launch OMNeT++ IDE from the terminal with `omnetpp`. Add inet4.3 and florasat projects to the workspace
+    * If **ERROR: make: xdg-desktop-menu: No such file or directory** do `sudo apt install xdg-utils`
+    
+3. Launch omnetpp from the terminal with `omnetpp` and choose a workspace for project (default is `$HOME/omnetpp-6.0.1/samples`)
 
-- Go to florasat project Properties under Project References and select inet4.3
+4. Go to **Help >> Install Simulation Models...** menu and install **INETv4.3.x** in the workspace
 
-- Finally, Build Project florasat
+5. Clone `https://gitlab.inria.fr/jfraire/florasat.git` in the workspace
 
+6. Add INETv4.3 to the environment by executing florasat/setinet.sh passing the absolute path to the INET root directory, eg. `sh setinet.sh $HOME/omnetpp-6.0.1/samples/inet4.3`
 
-**IMPORTANT** FLoRaSat will not with OMNeT++5 due to source code path inconsistency with version OMNeT++6
+7. In omnetpp go to **File >> Open Projects from File System** and add florasat project to the workspace
+
+8. Right-click florasat project and go to *Properties*, under *Project References* select inet4.3 (only)
+
+9. Finally, right-click florasat and Build Project
+
 
 
 ## Run simulations
 
-Multiple scenarios are under development on the framework branch:
-
-- In `/simulations/classic` there is no support for ground station. This scenario is the classic implementation of florasat found in the master branch with the addition of orbital propagation
+Two scenarios are under development:
 
 - In `/simulations/satelliteradio` the satellites/gateways use radio modules for inter satellite communication. This functionality does not work yet but it is open for development
 
 - In `/simulations/satellitewired` the satellites/gateways use direct links for inter satellite communication
-
 
 
 
