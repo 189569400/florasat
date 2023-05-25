@@ -26,10 +26,10 @@ import inet.mobility.contract.IMobility;
 simple UniformGroundMobility extends StationaryMobility
 {
     parameters:
+        @class(UniformGroundMobility);
         double centerLatitude = default(-15.0);
         double centerLongitude = default(-56.0);
         double deploymentRadius = default(200.0);
         initFromDisplayString = false;
         updateFromDisplayString = false;
-        @class(UniformGroundMobility);
 }

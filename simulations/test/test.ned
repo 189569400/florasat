@@ -21,7 +21,7 @@ network TestNetwork
         int nrOfNodes = default(1);
         int nrOfGW = default(1);
         int nrOfGS = default(1);
-        @display("bgb=2160,1080;bgi=background_earth,s");
+        @display("bgb=2160,1080;bgi=earth_color,s");
 
     types:
         channel DatarateChannel2 extends ned.DatarateChannel

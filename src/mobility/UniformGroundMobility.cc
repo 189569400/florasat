@@ -5,20 +5,18 @@
  *      Author: diego
  */
 
-
 #include "UniformGroundMobility.h"
+
+#include <cmath>
+
 #include "libnorad/cEcef.h"
 #include "libnorad/globals.h"
-#include <cmath>
 
 namespace flora {
 
 Define_Module(UniformGroundMobility);
 
-using namespace inet;
-
-UniformGroundMobility::UniformGroundMobility()
-{
+UniformGroundMobility::UniformGroundMobility() {
     longitude = 0.0;
     latitude = 0.0;
     centerLatitude = 0.0;
@@ -28,22 +26,19 @@ UniformGroundMobility::UniformGroundMobility()
     mapy = 0;
 }
 
-void UniformGroundMobility::initialize(int stage)
-{
+void UniformGroundMobility::initialize(int stage) {
     StationaryMobility::initialize(stage);
     EV << "initializing UniformGroundMobility stage " << stage << endl;
-    if (stage == 0)
-    {
+    if (stage == 0) {
         mapx = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 0));
         mapy = std::atoi(getParentModule()->getParentModule()->getDisplayString().getTagArg("bgb", 1));
         centerLatitude = par("centerLatitude");
         centerLongitude = par("centerLongitude");
         deploymentRadius = par("deploymentRadius");
 
-        double r = XKMPER_WGS72;             // earth radius
+        double r = XKMPER_WGS72;  // earth radius
         double randomRadius = deploymentRadius * sqrt(cComponent::uniform(0, 1));
         double randomAngle = cComponent::uniform(0, TWOPI);
-
 
         // reference center point on Earth
         cEcef *P = new cEcef(centerLatitude, centerLongitude, r);
@@ -61,9 +56,8 @@ void UniformGroundMobility::initialize(int stage)
         // get rotation quaternion
         Quaternion *q = new Quaternion(cross, angle);
 
-
-        double xi = (randomRadius/r)*cos(randomAngle)/RADS_PER_DEG; // longitude
-        double yi = (randomRadius/r)*sin(randomAngle)/RADS_PER_DEG; // latitude
+        double xi = (randomRadius / r) * cos(randomAngle) / RADS_PER_DEG;  // longitude
+        double yi = (randomRadius / r) * sin(randomAngle) / RADS_PER_DEG;  // latitude
 
         cEcef *pointEcef = new cEcef(yi, xi, r);
         Coord *pointCoord = new Coord(pointEcef->getX(), pointEcef->getY(), pointEcef->getZ());
@@ -74,7 +68,6 @@ void UniformGroundMobility::initialize(int stage)
         longitude = rotatedEcef->getLongitude();
         latitude = rotatedEcef->getLatitude();
 
-
         delete P;
         delete O;
         delete Px;
@@ -82,39 +75,33 @@ void UniformGroundMobility::initialize(int stage)
         delete pointEcef;
         delete pointCoord;
         delete rotatedEcef;
-
     }
 }
 
-double UniformGroundMobility::getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude) const
-{
-    //could change altitude to real value
+double UniformGroundMobility::getDistance(const double &refLatitude, const double &refLongitude, const double &refAltitude) const {
+    // could change altitude to real value
     cEcef ecefSourceCoord = cEcef(latitude, longitude, 0);
     cEcef ecefDestCoord = cEcef(refLatitude, refLongitude, refAltitude);
     return ecefSourceCoord.getDistance(ecefDestCoord);
 }
 
-double UniformGroundMobility::getLongitude() const
-{
+double UniformGroundMobility::getLongitude() const {
     return longitude;
 }
 
-double UniformGroundMobility::getLatitude() const
-{
+double UniformGroundMobility::getLatitude() const {
     return latitude;
 }
 
-Coord& UniformGroundMobility::getCurrentPosition()
-{
+Coord &UniformGroundMobility::getCurrentPosition() {
     return lastPosition;
 }
 
-void UniformGroundMobility::setInitialPosition()
-{
+void UniformGroundMobility::setInitialPosition() {
     lastPosition.x = ((mapx * longitude) / 360) + (mapx / 2);
     lastPosition.x = static_cast<int>(lastPosition.x) % static_cast<int>(mapx);
     lastPosition.y = ((-mapy * latitude) / 180) + (mapy / 2);
     lastPosition = Coord(lastPosition.x, lastPosition.y, 0);
 }
 
-} // namespace inet
+}  // namespace flora
