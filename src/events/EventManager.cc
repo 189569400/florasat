@@ -40,8 +40,8 @@ void EventManager::processCommand(const cXMLElement *node) {
 }
 
 void EventManager::processSetIslState(const cXMLElement *node) {
-    // validate that topologyControl is a module of this simulation
-    if (topologyControl == nullptr) throw cRuntimeError("Error in EventManager::processSetIslState: topologyControl is nullptr. Command not possible.");
+    // validate that topologyControl is a module in this simulation
+    if (topologyControl == nullptr) throw cRuntimeError("Error in EventManager::processSetIslState: topologyControl is nullptr. Command not possible. Is topology control a sub module of the system module?");
 
     // parse satellite id from node attribute
     int id = getAttributeIntValue(node, ATTR_SATID);
@@ -56,39 +56,25 @@ void EventManager::processSetIslState(const cXMLElement *node) {
 
     const char *dir = node->getAttribute(ATTR_DIR);
     if (dir == nullptr) {
-        if (type == Type::BOTH) {
-            sat->setISLSendState(isldirection::Direction::ISL_LEFT, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_LEFT, state);
-            sat->setISLSendState(isldirection::Direction::ISL_UP, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_UP, state);
-            sat->setISLSendState(isldirection::Direction::ISL_RIGHT, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_RIGHT, state);
-            sat->setISLSendState(isldirection::Direction::ISL_DOWN, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_DOWN, state);
-        } else if (type == Type::SEND) {
+        if (type == Type::SEND || type == Type::BOTH) {
             sat->setISLSendState(isldirection::Direction::ISL_LEFT, state);
             sat->setISLSendState(isldirection::Direction::ISL_UP, state);
             sat->setISLSendState(isldirection::Direction::ISL_RIGHT, state);
             sat->setISLSendState(isldirection::Direction::ISL_DOWN, state);
-        } else if (type == Type::RECV) {
+        }
+        if (type == Type::RECV || type == Type::BOTH) {
             sat->setISLRecvState(isldirection::Direction::ISL_LEFT, state);
             sat->setISLRecvState(isldirection::Direction::ISL_UP, state);
             sat->setISLRecvState(isldirection::Direction::ISL_RIGHT, state);
             sat->setISLRecvState(isldirection::Direction::ISL_DOWN, state);
-        } else {
-            error("Unexpected type %s", type);
         }
     } else {
         isldirection::Direction direction = isldirection::from_str(dir);
-        if (type == Type::BOTH) {
+        if (type == Type::SEND || type == Type::BOTH) {
             sat->setISLSendState(direction, state);
+        }
+        if (type == Type::RECV || type == Type::BOTH) {
             sat->setISLRecvState(direction, state);
-        } else if (type == Type::SEND) {
-            sat->setISLSendState(direction, state);
-        } else if (type == Type::RECV) {
-            sat->setISLRecvState(direction, state);
-        } else {
-            error("Unexpected type %s", type);
         }
     }
     topologyControl->updateTopology();
