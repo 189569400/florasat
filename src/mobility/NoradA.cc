@@ -82,6 +82,21 @@ double NoradA::getInclination() {
 }
 
 /**
+ * Determines whether an satellite is ascending by comparing the actual satellite latitude with a latitude of a point in time in near future.
+ */
+bool NoradA::isAscending()
+{
+    double sim_time = gap + simTime().dbl();
+    cEci eci2 = cEci();
+    eci.setUnitsKm();
+    orbit->getPosition(sim_time / 60, &eci2);
+    double first = rad2deg(eci2.toGeo().m_Lat);
+    orbit->getPosition(sim_time / 60 + 0.25, &eci2);
+    double second = rad2deg(eci2.toGeo().m_Lat);
+    return first < second;
+}
+
+/**
  * Primary method that is used to check whether, given the index of a satellite, whether it is compatible as an inter-
  * satellite link. It starts by checking whether the satellite is a part of the same plane, and if it is whether or not
  * they are adjacent. It then also checks whether, if they are not part of the same plane, whether the satellites are

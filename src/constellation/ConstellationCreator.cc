@@ -107,9 +107,9 @@ void ConstellationCreator::createSatellite(int index, double raan, double meanAn
 
     oldNoradModule->deleteModule();
 
-    cModule *noradModule = cModuleType::get("leosatellites.mobility.NoradA")->create("NoradModule", sat);
+    cModule *noradModule = cModuleType::get("flora.mobility.NoradA")->create("NoradModule", sat);
     if (noradModule == nullptr) {
-        error("Error in ConstellationCreator::CreateSatellite(): Cannot create \"leosatellites.mobility.NoradA\".");
+        error("Error in ConstellationCreator::CreateSatellite(): Cannot create \"flora.mobility.NoradA\".");
     }
     noradModule->par("satIndex").setIntValue(index);
     noradModule->par("baseYear").setIntValue(baseYear);
