@@ -125,6 +125,9 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     void setDownSendState(ISLState newState);
     void setDownRecvState(ISLState newState);
 
+    void setISLSendState(isldirection::Direction direction, ISLState state);
+    void setISLRecvState(isldirection::Direction direction, ISLState state);
+
     /** @brief Returns the elevation from this entity to a reference entity. */
     double getElevation(const PositionAwareBase &other) const;
     /** @brief Returns the azimuth from this entity to a reference entity. */
@@ -152,6 +155,9 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     virtual void finish() override;
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+
+    void setISLState(isldirection::Direction direction, bool send, ISLState state);
+
 #ifndef NDEBUG
     virtual void refreshDisplay() const override;
 #endif

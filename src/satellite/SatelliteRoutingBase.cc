@@ -229,6 +229,34 @@ void SatelliteRoutingBase::setDownRecvState(ISLState newState) {
     downRecvState = newState;
 }
 
+void SatelliteRoutingBase::setISLSendState(isldirection::Direction direction, ISLState state) {
+    setISLState(direction, true, state);
+}
+void SatelliteRoutingBase::setISLRecvState(isldirection::Direction direction, ISLState state) {
+    setISLState(direction, false, state);
+}
+void SatelliteRoutingBase::setISLState(isldirection::Direction direction, bool send, ISLState state) {
+    EV << "[" << satId << "] Set " << to_string(direction) << " to " << to_string(state) << endl;
+    switch (direction) {
+        case isldirection::ISL_LEFT:
+            send ? setLeftSendState(state) : setLeftRecvState(state);
+            break;
+        case isldirection::ISL_UP:
+            send ? setUpSendState(state) : setUpRecvState(state);
+            break;
+        case isldirection::ISL_RIGHT:
+            send ? setRightSendState(state) : setRightRecvState(state);
+            break;
+        case isldirection::ISL_DOWN:
+            send ? setDownSendState(state) : setDownRecvState(state);
+            break;
+        case isldirection::ISL_DOWNLINK:
+            error("Groundlink is not supported.");
+        default:
+            break;
+    }
+}
+
 double SatelliteRoutingBase::getLongitude() const {
     return noradModule->getLongitude();
 }

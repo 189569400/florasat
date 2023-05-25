@@ -18,6 +18,7 @@ import flora.routing.dspr.DsprRouting;
 import flora.mobility.SatMobilityOrchestrator;
 import flora.metrics.MetricsCollector;
 import flora.networklayer.ConstellationRoutingTable;
+import flora.events.EventManager;
 
 @license(LGPL);
 network DsprRoutingIridium
@@ -31,27 +32,31 @@ network DsprRoutingIridium
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
         routing: DsprRouting {
-            @display("p=-128,373.375;i=block/routing");
+            @display("p=25,373.375;i=block/routing");
         }
 
         constellationCreator: ConstellationCreator {
-            @display("p=-128,473.375;i=block/cogwheel");
+            @display("p=25,473.375;i=block/cogwheel");
         }
 
         topologyControl: ConstellationTopologyControl {
-            @display("p=-128,573.375;i=block/network2");
+            @display("p=25,573.375;i=block/network2");
         }
 
         satMobilityOrchestrator: SatMobilityOrchestrator {
-            @display("p=-128,673.375;i=block/rightarrow");
+            @display("p=25,673.375;i=block/rightarrow");
         }
 
         constellationRoutingTable: ConstellationRoutingTable {
-            @display("p=-128,773.375;i=block/network2");
+            @display("p=25,773.375;i=block/network2");
         }
 
         visualizer: IntegratedVisualizer {
-            @display("p=-128,873.375");
+            @display("p=25,873.375");
+        }
+
+        eventManager: EventManager {
+            @display("p=25,973.375");
         }
 
     connections allowunconnected:
