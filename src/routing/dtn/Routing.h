@@ -8,17 +8,20 @@
  *
  */
 
-#ifndef SRC_NODE_NET_ROUTING_H_
-#define SRC_NODE_NET_ROUTING_H_
+#ifndef __FLORA_ROUTING_NET_ROUTING_H_
+#define __FLORA_ROUTING_NET_ROUTING_H_
 
-#include <dtn/node/dtn/ContactPlan.h>
-#include <dtn/node/dtn/SdrModel.h>
+#include <routing/dtn/contactplan/ContactPlan.h>
+#include <routing/dtn/SdrModel.h>
 #include <map>
 #include <queue>
 #include <limits>
 #include <algorithm>
 #include <unordered_set>
-#include "dtn/dtnsim_m.h"
+#include "routing/DtnRoutingHeader_m.h"
+
+namespace flora {
+namespace routing {
 
 using namespace omnetpp;
 using namespace std;
@@ -39,14 +42,14 @@ public:
 	 * Method that will be called by Dtn module when a message to other destination in the
 	 * network  arrives.
 	 */
-	virtual void msgToOtherArrive(BundlePkt * bundle, double simTime) = 0;
+	virtual void msgToOtherArrive(DtnRoutingHeader *bundle, double simTime) = 0;
 
 	/**
 	 * Method that will be called by Dtn module when a message to this node arrives.
 	 *
 	 * @Return - true if bundle must be send to app layer.
 	 */
-	virtual bool msgToMeArrive(BundlePkt * bundle) = 0;
+	virtual bool msgToMeArrive(DtnRoutingHeader *bundle) = 0;
 
 	/**
 	 * Method that will be called by Dtn module when a contact starts.
@@ -79,4 +82,7 @@ protected:
 	SdrModel * sdr_;
 };
 
-#endif /* SRC_NODE_NET_ROUTING_H_ */
+}  // namespace routing
+}  // namespace flora
+
+#endif /* __FLORA_ROUTING_NET_ROUTING_H_ */

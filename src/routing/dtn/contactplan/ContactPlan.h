@@ -1,7 +1,7 @@
-#ifndef CONTACTPLAN_H_
-#define CONTACTPLAN_H_
+#ifndef __FLORA_ROUTING_CONTACTPLAN_H_
+#define __FLORA_ROUTING_CONTACTPLAN_H_
 
-#include "dtn/node/dtn/Contact.h"
+#include "routing/dtn/contactplan/Contact.h"
 #include <omnetpp.h>
 #include <algorithm>
 #include <vector>
@@ -86,4 +86,4 @@ class ContactPlan : public cSimpleModule {
 
 }
 
-#endif /* CONTACTPLAN_H_ */
+#endif /* __FLORA_ROUTING_CONTACTPLAN_H_ */

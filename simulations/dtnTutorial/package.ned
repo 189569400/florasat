@@ -1,10 +1,8 @@
 package flora.simulations.dtnTutorial;
 
-import flora.dtn.node.Node;
-import flora.dtn.central.Central;
 import flora.LoRaPhy.LoRaMedium;
 import flora.LoRa.LoRaNode;
-import flora.ground.GroundStationRouting;
+import flora.ground.DtnGroundStationRouting;
 import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.DtnTopologyControl;
@@ -25,7 +23,7 @@ network DtnSim
         @display("bgb=2160,1080;bgi=background_earth,s");
 
     submodules:
-        groundStation[nrOfGS]: GroundStationRouting;
+        groundStation[nrOfGS]: DtnGroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
         routing: DirectedRouting {
             @display("p=-128,373.375;i=block/routing");
