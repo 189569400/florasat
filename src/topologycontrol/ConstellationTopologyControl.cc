@@ -57,7 +57,7 @@ void ConstellationTopologyControl::updateIntraSatelliteLinks() {
 void ConstellationTopologyControl::updateGroundstationLinks() {
     // iterate over groundstations
     for (size_t gsId = 0; gsId < numGroundStations; gsId++) {
-        GroundStationRouting *gs = groundStations.at(gsId);
+        GroundStationRoutingBase *gs = groundStations.at(gsId);
         ASSERT(gs != nullptr);
         for (size_t satId = 0; satId < numSatellites; satId++) {
             EV << "Check connection between GS(" << gsId << ") and SAT(" << satId << ")" << endl;

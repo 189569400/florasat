@@ -23,35 +23,17 @@
 #include "routing/RoutingHeader_m.h"
 #include "routing/core/DijkstraShortestPath.h"
 #include "topologycontrol/TopologyControlBase.h"
+#include "ground/PacketGeneratorBase.h"
 
 using namespace omnetpp;
 using namespace inet;
 
 namespace flora {
 
-class PacketGenerator : public cSimpleModule {
-   protected:
-    // statistics
-    int numReceived = 0;
-    int numSent = 0;
-    B sentBytes = B(0);
-    B receivedBytes = B(0);
-
-    cHistogram hopCountStats;
-    cOutVector hopCountVector;
-
-    topologycontrol::TopologyControlBase *topologycontrol;
-    routing::RoutingBase *routingModule;
-    networklayer::ConstellationRoutingTable *routingTable;
+class PacketGenerator : public PacketGeneratorBase {
 
    protected:
     virtual void initialize(int stage) override;
-    virtual void finish() override;
-    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-
-    int sentPackets;
-    int groundStationId;
-    int numGroundStations;
 
    protected:
     virtual void handleMessage(cMessage *msg) override;

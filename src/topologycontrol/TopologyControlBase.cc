@@ -99,7 +99,7 @@ void TopologyControlBase::scheduleUpdate() {
     scheduleClockEventAfter(updateIntervalParameter->doubleValue(), updateTimer);
 }
 
-GroundStationRouting *const TopologyControlBase::getGroundstationInfo(int gsId) const {
+GroundStationRoutingBase *const TopologyControlBase::getGroundstationInfo(int gsId) const {
     ASSERT(gsId >= 0 && gsId < numGroundStations);
     return groundStations.at(gsId);
 }
@@ -125,7 +125,7 @@ SatelliteRoutingBase *const TopologyControlBase::findSatByPlaneAndNumberInPlane(
 void TopologyControlBase::loadGroundstations() {
     groundStations.clear();
     for (size_t i = 0; i < numGroundStations; i++) {
-        GroundStationRouting *gs = check_and_cast<GroundStationRouting *>(getParentModule()->getSubmodule("groundStation", i));
+        GroundStationRoutingBase *gs = check_and_cast<GroundStationRoutingBase *>(getParentModule()->getSubmodule("groundStation", i));
         EV << "TC: Loaded Groundstation " << i << endl;
         groundStations.emplace(i, gs);
     }

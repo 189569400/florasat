@@ -25,6 +25,7 @@
 #include "topologycontrol/TopologyControlBase.h"
 #include "routing/dtn/MsgTypes.h"
 #include "routing/DtnRoutingHeader_m.h"
+#include "DtnTransportHeader_m.h"
 
 using namespace omnetpp;
 using namespace inet;

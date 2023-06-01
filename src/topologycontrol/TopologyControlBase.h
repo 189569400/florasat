@@ -13,7 +13,7 @@
 
 #include "core/Utils.h"
 #include "core/WalkerType.h"
-#include "ground/GroundStationRouting.h"
+#include "ground/GroundStationRoutingBase.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "satellite/SatelliteRoutingBase.h"
 #include "topologycontrol/data/GsSatConnection.h"
@@ -37,7 +37,7 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
     std::unordered_map<int, SatelliteRoutingBase *> const &getSatellites() const;
 
     // GS API
-    GroundStationRouting *const getGroundstationInfo(int gsId) const;
+    GroundStationRoutingBase *const getGroundstationInfo(int gsId) const;
 
     // Connections API
     GsSatConnection const &getGroundstationSatConnection(int gsId, int satId) const;
@@ -74,7 +74,7 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
     int numSatellites;
 
     /** @brief Structs that represent groundstations and all satellites in range. */
-    std::unordered_map<int, GroundStationRouting *> groundStations;
+    std::unordered_map<int, GroundStationRoutingBase *> groundStations;
     int numGroundStations;
     int numGroundLinks = 40;
 

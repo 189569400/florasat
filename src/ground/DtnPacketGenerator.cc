@@ -29,31 +29,6 @@ void DtnPacketGenerator::initialize(int stage) {
         WATCH(numReceived);
         WATCH(sentBytes);
         WATCH(receivedBytes);
-
-        // Dtn Code
-        if (par("enable")){
-
-            parseBundlesNumber();
-            parseDestinationsEid();
-            parseSizes();
-            parseStarts();
-            EV << "Bundles Number: " << bundlesNumber.size()
-               << "Destination Eid: " << destinationsEid.size()
-               << "Sizes: " << sizes.size()
-               << "Starts: " << starts.size() << endl;
-            for (unsigned int i = 0; i < bundlesNumber.size(); i++)
-            {
-                TrafficGeneratorMsg * trafficGenMsg = new TrafficGeneratorMsg("trafGenMsg");
-                trafficGenMsg->setSchedulingPriority(TRAFFIC_TIMER);
-                trafficGenMsg->setKind(TRAFFIC_TIMER);
-                trafficGenMsg->setBundlesNumber(bundlesNumber.at(i));
-                trafficGenMsg->setDestinationEid(destinationsEid.at(i));
-                trafficGenMsg->setSize(sizes.at(i));
-                trafficGenMsg->setInterval(par("interval"));
-                trafficGenMsg->setTtl(par("ttl"));
-                scheduleAt(starts.at(i), trafficGenMsg);
-            }
-        }
     }
 }
 
@@ -111,19 +86,25 @@ void DtnPacketGenerator::handleMessage(cMessage *msg) {
     if (msg->arrivedOn("satelliteLink$i")) {
         decapsulate(pkt);
         send(pkt, "transportOut");
-    } else if (pkt->arrivedOn("transportIn")) {
+    } else if (msg->arrivedOn("transportIn")) {
+        auto frame = pkt->peekAtFront<DtnTransportHeader>();
 
-        auto frame = pkt->peekAtFront<TransportHeader>();
-        int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDstIpAddress()));
+        EV << "Bundles Number: " << frame->getBundlesNumber()
+           << "Bundles Destination Id: " << frame->getDestinationEid()
+           << "Bundle Size: " << frame->getSize()
+           << "Bundle Interval: " << frame->getInterval()
+           << "Bundle TTL: " << frame->getTtl() << endl;
 
-        auto satPair = routingModule->calculateFirstAndLastSatellite(groundStationId, dstGs);
-        auto firstSat = satPair.first;
-        auto lastSat = satPair.second;
-
-        encapsulate(pkt, dstGs, firstSat, lastSat);
-
-        int gateIndex = topologycontrol->getGroundstationSatConnection(groundStationId, firstSat).gsGateIndex;
-        send(pkt, "satelliteLink$o", gateIndex);
+//        int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDstIpAddress()));
+//
+//        auto satPair = routingModule->calculateFirstAndLastSatellite(groundStationId, dstGs);
+//        auto firstSat = satPair.first;
+//        auto lastSat = satPair.second;
+//
+//        encapsulate(pkt, dstGs, firstSat, lastSat);
+//
+//        int gateIndex = topologycontrol->getGroundstationSatConnection(groundStationId, firstSat).gsGateIndex;
+//        send(pkt, "satelliteLink$o", gateIndex);
     } else {
         error("Unexpected gate");
     }

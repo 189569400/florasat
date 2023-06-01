@@ -79,7 +79,7 @@ class DtnRoutingHeader extends inet::FieldsChunk {
         
 };
 
-message TrafficGeneratorMsg {
+message TrafficGeneratorMsg{
     int bundlesNumber;
     int destinationEid;
     int size;

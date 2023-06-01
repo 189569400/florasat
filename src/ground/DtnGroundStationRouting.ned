@@ -17,18 +17,12 @@ package flora.ground;
 
 import leosatellites.mobility.GroundStationMobility;
 
-import flora.traffic.UdpTrafficGenerator;
+import flora.traffic.DtnTrafficGenerator;
 
-module DtnGroundStationRouting
+module DtnGroundStationRouting extends GroundStationRoutingBase
 {
     parameters:
         @class(ground::DtnGroundStationRouting);
-        @display("i=device/receiverdish");
-        string localAddress;
-        int numGroundLinks = default(40);
-
-    gates:
-        inout satelliteLink[numGroundLinks] @labels(EtherFrame-conn);
 
     submodules:
         gsMobility: GroundStationMobility {
@@ -38,7 +32,7 @@ module DtnGroundStationRouting
             @display("p=100,500");
         };
 
-        udpTrafficGenerator: UdpTrafficGenerator {
+        udpTrafficGenerator: DtnTrafficGenerator {
             @display("p=500,500");
         };
 

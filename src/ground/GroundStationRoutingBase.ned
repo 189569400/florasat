@@ -19,30 +19,14 @@ import leosatellites.mobility.GroundStationMobility;
 
 import flora.traffic.UdpTrafficGenerator;
 
-module GroundStationRouting extends GroundStationRoutingBase
+module GroundStationRoutingBase
 {
     parameters:
-        @class(ground::GroundStationRouting);
+        @class(ground::GroundStationRoutingBase);
+        @display("i=device/receiverdish");
+        int numGroundLinks = default(40);
+		string localAddress;
 
-    submodules:
-        gsMobility: GroundStationMobility {
-            @display("p=100,200");
-        };
-        packetGenerator: PacketGenerator {
-            @display("p=100,500");
-        };
-
-        udpTrafficGenerator: UdpTrafficGenerator {
-            @display("p=500,500");
-        };
-
-    connections allowunconnected:
-        
-        //GROUNDLINK LINKS (GS TO SATELLITE)
-        for i=0..numGroundLinks-1 {
-            satelliteLink[i] <--> packetGenerator.satelliteLink[i];
-        }
-
-        packetGenerator.transportOut --> udpTrafficGenerator.socketIn;
-        packetGenerator.transportIn <-- udpTrafficGenerator.socketOut;
+    gates:
+        inout satelliteLink[numGroundLinks] @labels(EtherFrame-conn);
 }
