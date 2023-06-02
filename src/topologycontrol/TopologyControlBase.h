@@ -37,13 +37,15 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
     SatelliteRoutingBase *const getSatellite(int satId) const;
     SatelliteRoutingBase *const findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) const;
     std::unordered_map<int, SatelliteRoutingBase *> const &getSatellites() const;
-
     int getNumberOfSatellites() const {
         return numSatellites;
     };
 
     // GS API
     GroundStationRouting *const getGroundstationInfo(int gsId) const;
+    int getNumberOfGroundstations() const {
+        return numGroundStations;
+    };
 
     // Connections API
     GsSatConnection const &getGroundstationSatConnection(int gsId, int satId) const;
