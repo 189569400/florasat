@@ -43,6 +43,9 @@ class SatelliteRouting : public SatelliteRoutingBase, cListener {
     long numDroppedFullQueue;
     cOutVector droppedFullQueueCountStats;
 
+    long numDroppedIfDown;
+    cOutVector droppedIfDownCountStats;
+
     long numReceived;
     cOutVector receivedCountStats;
 };

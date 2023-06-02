@@ -13,7 +13,7 @@ namespace routing {
 Define_Module(RandomRouting);
 
 Direction RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh, SatelliteRouting *callerSat) {
-    Enter_Method("routePacket", rh, callerSat);
+    Enter_Method("routePacket");
     int dstGs = rh->getDestinationGroundstation();
     int callerSatIndex = callerSat->getIndex();
 

@@ -27,10 +27,13 @@ void SatelliteRouting::initialize(int stage) {
         WATCH(numDroppedMaxHop);
         numDroppedFullQueue = 0;
         WATCH(numDroppedFullQueue);
+        numDroppedIfDown = 0;
+        WATCH(numDroppedIfDown);
 
         receivedCountStats.setName("receivedCountStats");
         droppedMaxHopCountStats.setName("droppedMaxHopCountStats");
         droppedFullQueueCountStats.setName("droppedFullQueueCountStats");
+        droppedIfDownCountStats.setName("droppedIfDownCountStats");
     }
 }
 
@@ -64,6 +67,9 @@ void SatelliteRouting::handlePacketDropped(inet::Packet *pkt, inet::PacketDropDe
     } else if (reason->getReason() == PacketDropReason::QUEUE_OVERFLOW) {
         numDroppedFullQueue++;
         droppedFullQueueCountStats.record(numDroppedFullQueue);
+    } else if (reason->getReason() == PacketDropReason::INTERFACE_DOWN) {
+        numDroppedIfDown++;
+        droppedIfDownCountStats.record(numDroppedIfDown);
     } else {
         error("Unhandled drop reason: %d", reason->getReason());
     }

@@ -41,6 +41,7 @@ class PacketHandlerRouting : public cSimpleModule {
     virtual void handleMessage(cMessage *msg) override;
     void routeMessage(Packet *msg);
     void sendMessage(cGate *gate, Packet *pkt);
+    void dropPacket(Packet* msg, PacketDropReason reason);
     cGate *getGate(isldirection::Direction routingResult, int gsId);
 };
 
