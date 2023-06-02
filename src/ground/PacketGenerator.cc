@@ -12,6 +12,7 @@ namespace flora {
 Define_Module(PacketGenerator);
 
 void PacketGenerator::initialize(int stage) {
+    // ActivePacketSinkBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         groundStationId = getParentModule()->getIndex();
         numGroundStations = getSystemModule()->getSubmoduleVectorSize("groundStation");
@@ -28,6 +29,11 @@ void PacketGenerator::initialize(int stage) {
         WATCH(sentBytes);
         WATCH(receivedBytes);
     }
+    // else if (stage == INITSTAGE_QUEUEING) {
+    //     if (provider->canPullSomePacket(inputGate->getPathStartGate())) {
+    //         collectPacket();
+    //     }
+    // }
 }
 
 void PacketGenerator::finish() {
@@ -51,17 +57,46 @@ void PacketGenerator::handleMessage(cMessage *msg) {
         decapsulate(pkt);
         send(pkt, "transportOut");
     } else if (pkt->arrivedOn("transportIn")) {
-        auto frame = pkt->peekAtFront<TransportHeader>();
-        int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDstIpAddress()));
+        auto frame = pkt->peekAtFront<Ipv4Header>();
+        EV_DEBUG << "RCVD: " << frame->getSrcAddress() << "->" << frame->getDestAddress() << endl;
+        // auto frame = pkt->peekAtFront<TransportHeader>();
+        int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDestAddress()));
+
+        EV_DEBUG << "Send to " << dstGs << endl;
 
         auto satPair = routingModule->calculateFirstAndLastSatellite(groundStationId, dstGs);
         auto firstSat = satPair.first;
         auto lastSat = satPair.second;
-
-        encapsulate(pkt, dstGs, firstSat, lastSat);
-
         int gateIndex = topologycontrol->getGroundstationSatConnection(groundStationId, firstSat).gsGateIndex;
-        send(pkt, "satelliteLink$o", gateIndex);
+
+        cGate *satLink = gate("satelliteLink$o", gateIndex);
+        if (satLink->getTransmissionChannel()->isBusy()) {
+            auto &tag = pkt->addTagIfAbsent<GroundLinkTag>();
+            tag->setDstGs(dstGs);
+            tag->setFirstSat(firstSat);
+            tag->setLastSat(lastSat);
+            tag->setGateIndex(gateIndex);
+            scheduleAt(satLink->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+        } else {
+            encapsulate(pkt, dstGs, firstSat, lastSat);
+            send(pkt, satLink);
+        }
+    } else if (msg->isSelfMessage()) {
+        auto &tag = pkt->getTag<GroundLinkTag>();
+        auto gateIndex = tag->getGateIndex();
+        cGate *satLink = gate("satelliteLink$o", gateIndex);
+        if (satLink->getTransmissionChannel()->isBusy()) {
+            scheduleAt(satLink->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+        } else if (!satLink->isConnectedOutside()) {
+            send(pkt, "transportIn");
+        } else {
+            auto dstGs = tag->getDstGs();
+            auto firstSat = tag->getFirstSat();
+            auto lastSat = tag->getLastSat();
+            pkt->removeTag<GroundLinkTag>();
+            encapsulate(pkt, dstGs, firstSat, lastSat);
+            send(pkt, satLink);
+        }
     } else {
         error("Unexpected gate");
     }
@@ -95,6 +130,8 @@ void PacketGenerator::decapsulate(Packet *packet) {
 
     auto lengthField = header->getLength();
     auto rcvdBytes = header->getChunkLength() + lengthField;
+
+    EV_DEBUG << lengthField << " vs. " << packet->getDataLength() << endl;
 
     VALIDATE(packet->getDataLength() == lengthField);  // if the packet is correct
 

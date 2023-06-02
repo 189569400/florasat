@@ -16,41 +16,46 @@ void ConstellationRoutingTable::initialize(int stage) {
     if (stage == INITSTAGE_LOCAL) {
         int numGs = getSystemModule()->getSubmoduleVectorSize("groundStation");
         for (size_t i = 0; i < numGs; i++) {
-            cModule* gs = getSystemModule()->getSubmodule("groundStation", i);
-            auto address = L3Address(gs->par("localAddress").stringValue());
-            addEntry(i, address);
+            cModule* pg = getSystemModule()->getSubmodule("groundStation", i)->getSubmodule("packetGenerator");
+            auto serving = pg->par("serving").stringValue();
+            cStringTokenizer tokenizer(serving);
+            const char* token;
+            while ((token = tokenizer.nextToken()) != nullptr) {
+                L3Address result = L3Address(token);
+                addEntry(result, i);
+            }
         }
     }
 }
 
-void ConstellationRoutingTable::addEntry(int gsId, L3Address address) {
-    if (entries.find(gsId) != entries.end()) {
-        error("Error in ConstellationRoutingTable::addEntry: Entry for %d already present.", gsId);
+void ConstellationRoutingTable::addEntry(L3Address address, int gsId) {
+    if (entries.find(address) != entries.end()) {
+        error("Error in ConstellationRoutingTable::addEntry: Entry for %s already present.", address.str().c_str());
     }
-    entries.emplace(gsId, address);
+    entries.emplace(address, gsId);
 }
 
-void ConstellationRoutingTable::removeEntry(int gsId, L3Address address) {
-    if (entries.find(gsId) == entries.end()) {
-        error("Error in ConstellationRoutingTable::addEntry: Entry for %d not present.", gsId);
+void ConstellationRoutingTable::removeEntry(L3Address address, int gsId) {
+    if (entries.find(address) == entries.end()) {
+        error("Error in ConstellationRoutingTable::addEntry: Entry for %s not present.", address.str().c_str());
     }
-    entries.erase(gsId);
+    entries.erase(address);
 }
 
 L3Address ConstellationRoutingTable::getAddressOfGroundstation(int gsId) {
-    if (entries.find(gsId) == entries.end()) {
-        error("Error in ConstellationRoutingTable::getAddressOfGroundstation: Entry for %d not present.", gsId);
-    }
-    return entries.at(gsId);
-}
-
-int ConstellationRoutingTable::getGroundstationFromAddress(L3Address address) {
     for (auto t : entries) {
-        if (t.second == address) {
+        if (t.second == gsId) {
             return t.first;
         }
     }
-    throw new cRuntimeError("Error in ConstellationRoutingTable::getGroundstationFromAddress: Entry for %s not present.", address.str().c_str());
+    throw new cRuntimeError("Error in ConstellationRoutingTable::getGroundstationFromAddress: Entry for %d not present.", gsId);
+}
+
+int ConstellationRoutingTable::getGroundstationFromAddress(L3Address address) {
+    if (entries.find(address) == entries.end()) {
+        error("Error in ConstellationRoutingTable::getAddressOfGroundstation: Entry for %s not present.", address.str().c_str());
+    }
+    return entries.at(address);
 }
 
 }  // namespace networklayer

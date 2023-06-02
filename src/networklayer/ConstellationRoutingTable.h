@@ -10,7 +10,7 @@
 
 #include <omnetpp.h>
 
-#include <unordered_map>
+#include <map>
 
 #include "inet/networklayer/common/L3Address.h"
 
@@ -22,11 +22,11 @@ namespace networklayer {
 
 class ConstellationRoutingTable : public cSimpleModule {
    protected:
-    std::unordered_map<int, L3Address> entries;
+    std::map<L3Address, int> entries;
 
    public:
-    void addEntry(int gsId, L3Address address);
-    void removeEntry(int gsId, L3Address address);
+    void addEntry(L3Address address, int gsId);
+    void removeEntry(L3Address address, int gsId);
     L3Address getAddressOfGroundstation(int gsId);
     int getGroundstationFromAddress(L3Address address);
 

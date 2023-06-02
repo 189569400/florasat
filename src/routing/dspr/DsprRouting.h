@@ -14,6 +14,7 @@
 
 #include "core/utils/VectorUtils.h"
 #include "inet/common/packet/Packet.h"
+#include "routing/ForwardingTable.h"
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
 #include "routing/core/DijkstraShortestPath.h"
@@ -23,8 +24,8 @@ namespace routing {
 
 class DsprRouting : public RoutingBase {
    public:
-    void initRouting(inet::Packet *pkt, cModule *callerSat) override;
-    ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) override;
+    virtual void handleTopologyChange() override;
+    Direction routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting *callerSat) override;
 };
 
 }  // namespace routing

@@ -117,22 +117,18 @@ bool SatelliteRoutingBase::hasDownSat() const {
 
 void SatelliteRoutingBase::setLeftSat(SatelliteRoutingBase* newSat) {
     ASSERT(newSat != nullptr);
-    ASSERT(leftSatellite == nullptr);
     leftSatellite = newSat;
 }
 void SatelliteRoutingBase::setUpSat(SatelliteRoutingBase* newSat) {
     ASSERT(newSat != nullptr);
-    ASSERT(upSatellite == nullptr);
     upSatellite = newSat;
 }
 void SatelliteRoutingBase::setRightSat(SatelliteRoutingBase* newSat) {
     ASSERT(newSat != nullptr);
-    ASSERT(rightSatellite == nullptr);
     rightSatellite = newSat;
 }
 void SatelliteRoutingBase::setDownSat(SatelliteRoutingBase* newSat) {
     ASSERT(newSat != nullptr);
-    ASSERT(downSatellite == nullptr);
     downSatellite = newSat;
 }
 

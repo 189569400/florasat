@@ -23,17 +23,6 @@ namespace flora {
 namespace satellite {
 
 class SatelliteRouting : public SatelliteRoutingBase, cListener {
-   private:
-    // stats
-    long numDroppedMaxHop;
-    cOutVector droppedMaxHopCountStats;
-
-    long numDroppedFullQueue;
-    cOutVector droppedFullQueueCountStats;
-
-    long numReceived;
-    cOutVector receivedCountStats;
-
    public:
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
@@ -45,6 +34,17 @@ class SatelliteRouting : public SatelliteRoutingBase, cListener {
    private:
     void handlePacketDropped(inet::Packet *pkt, inet::PacketDropDetails *reason);
     void handlePacketReceived(inet::Packet *pkt);
+
+   private:
+    // stats
+    long numDroppedMaxHop;
+    cOutVector droppedMaxHopCountStats;
+
+    long numDroppedFullQueue;
+    cOutVector droppedFullQueueCountStats;
+
+    long numReceived;
+    cOutVector receivedCountStats;
 };
 
 }  // namespace satellite

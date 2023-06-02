@@ -15,13 +15,14 @@
 
 package flora.ground;
 
-import inet.applications.contract.IApp;
+import inet.queueing.queue.PacketQueue;
 
 simple PacketGenerator
 {
     parameters:
         @display("i=block/app");
         int numGroundLinks = default(40);
+        string serving;
 
         @signal[packetSent](type=inet::Packet);
         @signal[packetReceived](type=inet::Packet);

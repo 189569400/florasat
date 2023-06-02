@@ -17,37 +17,59 @@ package flora.ground;
 
 import flora.mobility.GroundStationMobility;
 import flora.traffic.UdpTrafficGenerator;
+import flora.networklayer.Ipv4Interceptor;
 
-module GroundStationRouting
+import inet.node.ethernet.Eth1G;
+import inet.node.ethernet.Eth10G;
+import inet.node.ethernet.Eth100M;
+import inet.common.MessageDispatcher;
+import inet.linklayer.ethernet.EthernetInterface;
+import inet.networklayer.common.InterfaceTable;
+import inet.networklayer.ipv4.Ipv4;
+import inet.transportlayer.tcp.Tcp;
+import inet.node.base.NetworkLayerNodeBase;
+import inet.networklayer.contract.INetworkLayer;
+
+module GroundStationRouting extends NetworkLayerNodeBase
 {
     parameters:
+        forwarding = true;
+        hasIpv4 = true;
         @class(ground::GroundStationRouting);
         @display("i=device/receiverdish");
-        string localAddress;
         int numGroundLinks = default(40);
+        string routerAddr;
 
     gates:
-        inout satelliteLink[numGroundLinks] @labels(EtherFrame-conn);
+        inout satelliteLink[numGroundLinks] @labels(GlFrame-conn);
 
     submodules:
         gsMobility: GroundStationMobility {
-            @display("p=100,200");
-        };
-        packetGenerator: PacketGenerator {
-            @display("p=100,500");
+            @display("p=125,400");
         };
 
-        udpTrafficGenerator: UdpTrafficGenerator {
-            @display("p=500,500");
+        packetGenerator: PacketGenerator {
+            @display("p=875,376;q=queue");
         };
+
+        ipv4Interceptor: Ipv4Interceptor {
+            parameters:
+                networkProtocolModule = "^.ipv4.ip";
+                @display("p=950,376");
+        }
+
+        // udpTrafficGenerator: UdpTrafficGenerator {
+        //     @display("p=500,500");
+        // };
 
     connections allowunconnected:
-        
+        packetGenerator.transportOut --> nl.in++;
+        packetGenerator.transportIn <-- ipv4Interceptor.pgOut;
+
+
         //GROUNDLINK LINKS (GS TO SATELLITE)
         for i=0..numGroundLinks-1 {
             satelliteLink[i] <--> packetGenerator.satelliteLink[i];
         }
 
-        packetGenerator.transportOut --> udpTrafficGenerator.socketIn;
-        packetGenerator.transportIn <-- udpTrafficGenerator.socketOut;
 }

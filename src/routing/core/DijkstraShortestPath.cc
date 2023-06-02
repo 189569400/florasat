@@ -11,12 +11,11 @@ namespace flora {
 namespace routing {
 namespace core {
 
-DijkstraResult runDijkstra(int src, const std::unordered_map<int, SatelliteRoutingBase*>& constellation, int dst, bool earlyAbort) {
-    int size = constellation.size();
+DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost, int dst, bool earlyAbort) {
+    int size = cost.size();
     ASSERT(src >= 0 && src < size);
     ASSERT(!earlyAbort || dst >= 0 && dst < size);
 
-    std::vector<std::vector<double>> cost;
     std::vector<double> distance;
     std::vector<int> prev;
     std::vector<bool> visited;
@@ -25,26 +24,6 @@ DijkstraResult runDijkstra(int src, const std::unordered_map<int, SatelliteRouti
         distance.push_back(INF);
         prev.push_back(-1);
         visited.push_back(false);
-        std::vector<double> v;
-        for (size_t j = 0; j < size; j++) {
-            v.push_back(INF);
-        }
-        cost.emplace_back(v);
-
-        const SatelliteRoutingBase* sat = constellation.at(i);
-        ASSERT(sat != nullptr);
-        if (sat->hasLeftSat()) {
-            cost[i][sat->getLeftSatId()] = sat->getLeftSatDistance();
-        }
-        if (sat->hasUpSat()) {
-            cost[i][sat->getUpSatId()] = sat->getUpSatDistance();
-        }
-        if (sat->hasRightSat()) {
-            cost[i][sat->getRightSatId()] = sat->getRightSatDistance();
-        }
-        if (sat->hasDownSat()) {
-            cost[i][sat->getDownSatId()] = sat->getDownSatDistance();
-        }
     }
 
     distance[src] = 0;
@@ -62,9 +41,7 @@ DijkstraResult runDijkstra(int src, const std::unordered_map<int, SatelliteRouti
         visited[nearest] = true;
 
         // EARLY ABORT
-        if (earlyAbort && nearest == dst) {
-            break;
-        }
+        if (earlyAbort && nearest == dst) break;
 
         for (size_t j = 0; j < size; j++) {
             if (cost[nearest][j] != INF && distance[j] > distance[nearest] + cost[nearest][j]) {
@@ -98,6 +75,48 @@ std::vector<int> reconstructPath(int src, int dest, std::vector<int> prev) {
     std::vector<int> v(std::make_move_iterator(path.begin()),
                        std::make_move_iterator(path.end()));
     return v;
+}
+
+const std::vector<std::vector<double>> buildCostMatrix(const std::unordered_map<int, SatelliteRoutingBase*>& constellation) {
+    std::vector<std::vector<double>> cost;
+    size_t size = constellation.size();
+
+    for (size_t i = 0; i < size; i++) {
+        std::vector<double> v;
+        for (size_t j = 0; j < size; j++) {
+            v.push_back(INF);
+        }
+        const SatelliteRoutingBase* sat = constellation.at(i);
+        if (sat->hasLeftSat()) {
+            v[sat->getLeftSatId()] = sat->getLeftSatDistance();
+        }
+        if (sat->hasUpSat()) {
+            v[sat->getUpSatId()] = sat->getUpSatDistance();
+        }
+        if (sat->hasRightSat()) {
+            v[sat->getRightSatId()] = sat->getRightSatDistance();
+        }
+        if (sat->hasDownSat()) {
+            v[sat->getDownSatId()] = sat->getDownSatDistance();
+        }
+#ifndef NDEBUG
+        EV_DEBUG << i << " costs: ";
+        auto begin = v.begin();
+        auto end = v.end();
+        bool first = true;
+        for (; begin != end; begin++) {
+            if (!first)
+                EV_DEBUG << ", ";
+            auto val = std::lround(*begin);
+            auto print = val == INF ? "INF" : std::to_string(val);
+            EV_DEBUG << print;
+            first = false;
+        }
+        EV_DEBUG << endl;
+#endif
+        cost.emplace_back(v);
+    }
+    return cost;
 }
 
 }  // namespace core

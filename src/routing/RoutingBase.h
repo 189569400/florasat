@@ -16,6 +16,7 @@
 #include "core/utils/VectorUtils.h"
 #include "inet/common/packet/Packet.h"
 #include "routing/core/DijkstraShortestPath.h"
+#include "satellite/SatelliteRouting.h"
 #include "topologycontrol/TopologyControlBase.h"
 
 namespace flora {
@@ -30,16 +31,16 @@ class RoutingBase : public cSimpleModule {
     topologycontrol::TopologyControlBase *topologyControl = nullptr;
 
    public:
-    virtual void initRouting(Packet *pkt, cModule *callerSat);
+    virtual void handleTopologyChange(){};
+    virtual void handlePacket(inet::Packet *pkt, SatelliteRouting *callerSat){};
+    virtual Direction routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting *callerSat) = 0;
     virtual std::pair<int, int> calculateFirstAndLastSatellite(int srcGs, int dstGs);
-    virtual ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) = 0;
+    int getGroundlinkIndex(int satelliteId, int groundstationId);
 
    protected:
     virtual void initialize(int stage) override;
     int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-    bool hasConnection(cModule *satellite, ISLDirection side);
     std::set<int> const &getConnectedSatellites(int groundStationId) const;
-    int getGroundlinkIndex(int satelliteId, int groundstationId);
 };
 
 }  // namespace routing

@@ -10,18 +10,21 @@
 
 #include "TopologyControlBase.h"
 #include "core/Timer.h"
+#include "routing/RoutingBase.h"
 
 using namespace omnetpp;
 using namespace flora::satellite;
 using namespace flora::core;
 
 namespace flora {
+
 namespace topologycontrol {
 
 class ConstellationTopologyControl : public TopologyControlBase {
    protected:
     virtual void initialize(int stage) override;
     virtual void updateTopology() override;
+    virtual void trackTopologyChange() override;
 
    private:
     void updateIntraSatelliteLinks();
@@ -29,6 +32,9 @@ class ConstellationTopologyControl : public TopologyControlBase {
     void updateGroundstationLinks();
     void updateISLInWalkerDelta();
     void updateISLInWalkerStar();
+
+   protected:
+    routing::RoutingBase* routing;
 };
 
 }  // namespace topologycontrol

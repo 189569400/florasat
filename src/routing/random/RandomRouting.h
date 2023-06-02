@@ -20,7 +20,7 @@ namespace routing {
 
 class RandomRouting : public RoutingBase {
    public:
-    ISLDirection routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) override;
+    Direction routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting* callerSat) override;
 };
 
 }  // namespace routing

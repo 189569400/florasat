@@ -21,6 +21,7 @@ import flora.mobility.SatMobility;
 module SatelliteRoutingBase
 {
     parameters:
+        @networkNode();
         @class(satellite::SatelliteRoutingBase);
         @display("p=695.185,549.115;i=satellit_blue");
         int numGroundLinks = default(40);

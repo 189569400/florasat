@@ -16,6 +16,7 @@ void ConstellationTopologyControl::initialize(int stage) {
     TopologyControlBase::initialize(stage);
 
     // Constellation related initialization
+    routing = check_and_cast<routing::RoutingBase *>(getSystemModule()->getSubmodule("routing"));
 }
 
 void ConstellationTopologyControl::updateTopology() {
@@ -26,7 +27,7 @@ void ConstellationTopologyControl::updateTopology() {
     updateInterSatelliteLinks();
     updateGroundstationLinks();
 
-    EV << "TC: Calculation took " << timer.getTime() / 1000 / 1000 << "ms" << endl;
+    EV_DEBUG << "TC: Calculation took " << timer.getTime() / 1000 / 1000 << "ms" << endl;
     // if there was any change to the topology, track current contacts
     if (topologyChanged)
         trackTopologyChange();
@@ -235,5 +236,14 @@ void ConstellationTopologyControl::updateISLInWalkerStar() {
         }
     }
 }
+
+void ConstellationTopologyControl::trackTopologyChange() {
+    EV << "Topology change" << endl;
+    // notify routing module about topology change.
+    // Not all algorithms are required to react to this, if they are purely dynamic.
+    // This call can be used to simulate pre-planned routing tables.
+    routing->handleTopologyChange();
+}
+
 }  // namespace topologycontrol
 }  // namespace flora

@@ -14,6 +14,8 @@
 #include <deque>
 #include <unordered_map>
 
+#include "core/utils/VectorUtils.h"
+
 #include "satellite/SatelliteRoutingBase.h"
 
 using namespace omnetpp;
@@ -30,9 +32,11 @@ struct DijkstraResult {
     std::vector<int> prev;
 };
 
-DijkstraResult runDijkstra(int src, const std::unordered_map<int, SatelliteRoutingBase*>& constellation, int dst = -1, bool earlyAbort = false);
+DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost, int dst = -1, bool earlyAbort = false);
 
 std::vector<int> reconstructPath(int src, int dest, std::vector<int> prev);
+
+const std::vector<std::vector<double>> buildCostMatrix(const std::unordered_map<int, SatelliteRoutingBase*>& constellation);
 
 }  // namespace core
 }  // namespace routing

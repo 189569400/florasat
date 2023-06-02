@@ -10,15 +10,17 @@
 
 #include <omnetpp.h>
 
-#include "ChannelBusyHeader_m.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/Simsignals.h"
 #include "mobility/INorad.h"
 #include "mobility/NoradA.h"
+#include "routing/ForwardingTable.h"
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
+#include "topologycontrol/TopologyControlBase.h"
 
 using namespace omnetpp;
+using namespace flora::topologycontrol;
 
 namespace flora {
 namespace satellite {
@@ -28,7 +30,9 @@ class PacketHandlerRouting : public cSimpleModule {
     int satIndex = -1;
     int maxHops = -1;
 
-    routing::RoutingBase *routing = nullptr;
+    SatelliteRouting* parentModule = nullptr;          // cached pointer
+    routing::RoutingBase *routing = nullptr;     // cached pointer
+    TopologyControlBase *tc = nullptr;           // cached pointer
     cMessage *selfMsg = nullptr;
 
    protected:
@@ -37,9 +41,7 @@ class PacketHandlerRouting : public cSimpleModule {
     virtual void handleMessage(cMessage *msg) override;
     void routeMessage(Packet *msg);
     void sendMessage(cGate *gate, Packet *pkt);
-    cGate *getGate(isldirection::ISLDirection routingResult);
-    bool checkMaxHopCountReached(Packet *pkt);
-    void handlePacketMetadata(inet::Ptr<RoutingHeader> frame);
+    cGate *getGate(isldirection::Direction routingResult, int gsId);
 };
 
 }  // namespace satellite

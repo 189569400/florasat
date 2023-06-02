@@ -29,7 +29,7 @@ void SatMobility::handleSelfMessage(cMessage* message) {
 }
 
 void SatMobility::updatePosition(SimTime currentTime) {
-    INorad* norad = check_and_cast<INorad*>(getParentModule()->getSubmodule("NoradModule"));
+    INorad* norad = (INorad*)(getParentModule()->getSubmodule("NoradModule"));
     norad->updateTime(currentTime);
     lastPosition.x = currentPosition.x;
     lastPosition.y = currentPosition.y;
@@ -69,22 +69,22 @@ double SatMobility::getYCanvas(double lat) const {
 }
 
 const inet::Coord& SatMobility::getCurrentPosition() {
-    updatePosition(simTime());
+    // updatePosition(simTime());
     return currentPosition;
 }
 
 const inet::Coord& SatMobility::getCurrentVelocity() {
-    updatePosition(simTime());
+    // updatePosition(simTime());
     return velocity;
 }
 
 const inet::Quaternion& SatMobility::getCurrentAngularPosition() {
-    updatePosition(simTime());
+    // updatePosition(simTime());
     return currentOrientation;
 }
 
 const inet::Quaternion& SatMobility::getCurrentAngularVelocity() {
-    updatePosition(simTime());
+    // updatePosition(simTime());
     return angularVelocity;
 }
 

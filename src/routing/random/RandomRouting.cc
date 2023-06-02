@@ -12,32 +12,29 @@ namespace routing {
 
 Define_Module(RandomRouting);
 
-ISLDirection RandomRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) {
-    int destinationGroundStation = frame->getDestinationGroundstation();
+Direction RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh, SatelliteRouting *callerSat) {
+    Enter_Method("routePacket", rh, callerSat);
+    int dstGs = rh->getDestinationGroundstation();
     int callerSatIndex = callerSat->getIndex();
 
     // check if connected to destination groundstation
-    int groundlinkIndex = RoutingBase::getGroundlinkIndex(callerSatIndex, destinationGroundStation);
+    int groundlinkIndex = RoutingBase::getGroundlinkIndex(callerSatIndex, dstGs);
     if (groundlinkIndex != -1) {
-        if (RoutingBase::hasConnection(callerSat, ISLDirection(Direction::ISL_DOWNLINK, groundlinkIndex))) {
-            return ISLDirection(Direction::ISL_DOWNLINK, groundlinkIndex);
-        } else {
-            error("Error in RandomRouting::RoutePacket: There should be a connection between groundstation and satellite but is not connected.");
-        }
+        return Direction::ISL_DOWNLINK;
     }
 
     // if not connected to destination find random
     int gate = intrand(4);
-    if (gate == 0 && RoutingBase::hasConnection(callerSat, ISLDirection(Direction::ISL_DOWN, -1))) {
-        return ISLDirection(Direction::ISL_DOWN, -1);
-    } else if (gate == 1 && RoutingBase::hasConnection(callerSat, ISLDirection(Direction::ISL_UP, -1))) {
-        return ISLDirection(Direction::ISL_UP, -1);
-    } else if (gate == 2 && RoutingBase::hasConnection(callerSat, ISLDirection(Direction::ISL_LEFT, -1))) {
-        return ISLDirection(Direction::ISL_LEFT, -1);
-    } else if (gate == 3 && RoutingBase::hasConnection(callerSat, ISLDirection(Direction::ISL_RIGHT, -1))) {
-        return ISLDirection(Direction::ISL_RIGHT, -1);
+    if (gate == 0 && callerSat->hasLeftSat()) {
+        return Direction::ISL_LEFT;
+    } else if (gate == 1 && callerSat->hasUpSat()) {
+        return Direction::ISL_UP;
+    } else if (gate == 2 && callerSat->hasRightSat()) {
+        return Direction::ISL_RIGHT;
+    } else if (gate == 3 && callerSat->hasDownSat()) {
+        return Direction::ISL_DOWN;
     }
-    return routePacket(frame, callerSat);
+    return routePacket(rh, callerSat);
 }
 
 }  // namespace routing

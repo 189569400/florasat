@@ -12,60 +12,57 @@ namespace routing {
 
 Define_Module(DsprRouting);
 
-void DsprRouting::initRouting(inet::Packet *pkt, cModule *callerSat) {
-    auto frame = pkt->removeAtFront<RoutingHeader>();
-    int srcSat = frame->getFirstSatellite();
-    int dstSat = frame->getLastSatellite();
-#ifndef NDEBUG
-    EV << "<><><><><><><><>" << endl;
-    EV << "Initialize routing from " << srcSat << "->" << dstSat << endl;
-#endif
+void DsprRouting::handleTopologyChange() {
+    auto costMatrix = core::buildCostMatrix(topologyControl->getSatellites());
+    for (size_t sId = 0; sId < topologyControl->getNumberOfSatellites(); sId++) {
+        auto sat = topologyControl->getSatellite(sId);
+        auto forwardingTable = check_and_cast<ForwardingTable *>(sat->getSubmodule("forwardingTable"));
+        forwardingTable->clearRoutes();
+        // run dijkstra to get shortest path to all satellites
+        core::DijkstraResult result = core::runDijkstra(sId, costMatrix);
+        for (size_t gsId = 0; gsId < topologyControl->getNumberOfGroundstations(); gsId++) {
+            auto gs = topologyControl->getGroundstationInfo(gsId);
+            // get lastSatellite with shortest distance + groundlink distance
+            int shortestDistanceSat = -1;
+            int shortestDistance = 999999999;
+            for (auto pLastSat : gs->getSatellites()) {
+                // add distance between sat and gs for selecting optimal last satellites
+                double distance = result.distances[pLastSat] + gs->getDistance(*sat);
+                if (shortestDistance > distance) {
+                    shortestDistance = distance;
+                    shortestDistanceSat = pLastSat;
+                }
+            }
 
-    core::DijkstraResult result = core::runDijkstra(srcSat, topologyControl->getSatellites(), dstSat, true);
-    std::vector<int> path = core::reconstructPath(srcSat, dstSat, result.prev);
-    for (auto t : path) {
-        frame->appendPath(t);
-    }
-    pkt->insertAtFront(frame);
+            ASSERT(shortestDistanceSat != -1);
+
+            // update forwarding table accordingly
+            if (shortestDistanceSat == sId) {
+                forwardingTable->setRoute(gsId, isldirection::ISL_DOWNLINK);
+            } else {
+                int nextSatId = core::reconstructPath(sId, shortestDistanceSat, result.prev)[1];
+                if (sat->hasLeftSat() && sat->getLeftSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::ISL_LEFT);
+                } else if (sat->hasUpSat() && sat->getUpSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::ISL_UP);
+                } else if (sat->hasRightSat() && sat->getRightSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::ISL_RIGHT);
+                } else if (sat->hasDownSat() && sat->getDownSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::ISL_DOWN);
+                } else {
+                    error("Path not found.");
+                }
+            }
+        }
 #ifndef NDEBUG
-    EV << "Path: [" << flora::core::utils::vector::toString(path.begin(), path.end()) << "]" << endl;
-    EV << "<><><><><><><><>" << endl;
+        forwardingTable->printForwardingTable();
 #endif
+    }
 }
 
-ISLDirection DsprRouting::routePacket(inet::Ptr<RoutingHeader> frame, cModule *callerSat) {
-    int callerSatId = callerSat->getIndex();
-    int lastSatId = frame->getLastSatellite();
-
-    // last satellite reached
-    if (callerSatId == lastSatId) {
-        flora::topologycontrol::GsSatConnection gsSatConnection = topologyControl->getGroundstationSatConnection(frame->getDestinationGroundstation(), lastSatId);
-        return ISLDirection(Direction::ISL_DOWNLINK, gsSatConnection.satGateIndex);
-    }
-
-    if (frame->getPathArraySize() == 0) throw new cRuntimeError("Error in DsprRouting::routePacket: Next hop was not found.");
-    frame->erasePath(0);
-    int nextSatId = frame->getPath(0);
-
-#ifndef NDEBUG
-    std::vector<int> remRoute;
-    for (size_t i = 1; i < frame->getPathArraySize(); i++) {
-        remRoute.emplace_back(frame->getPath(i));
-    }
-    EV << "(Sat " << callerSatId << ") Next hop: " << nextSatId << "; Remaining Path: [" << flora::core::utils::vector::toString(remRoute.begin(), remRoute.end()) << "]" << endl;
-#endif
-
-    auto callerSatModule = topologyControl->getSatellite(callerSatId);
-    if (callerSatModule->hasLeftSat() && callerSatModule->getLeftSatId() == nextSatId) {
-        return ISLDirection(Direction::ISL_LEFT, -1);
-    } else if (callerSatModule->hasUpSat() && callerSatModule->getUpSatId() == nextSatId) {
-        return ISLDirection(Direction::ISL_UP, -1);
-    } else if (callerSatModule->hasRightSat() && callerSatModule->getRightSatId() == nextSatId) {
-        return ISLDirection(Direction::ISL_RIGHT, -1);
-    } else if (callerSatModule->hasDownSat() && callerSatModule->getDownSatId() == nextSatId) {
-        return ISLDirection(Direction::ISL_DOWN, -1);
-    }
-    throw new cRuntimeError("Error in DsprRouting::routePacket: Next routing direction was not available in satellite.");
+Direction DsprRouting::routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting *callerSat) {
+    auto forwardingTable = check_and_cast<ForwardingTable *>(callerSat->getSubmodule("forwardingTable"));
+    return forwardingTable->getNextHop(rh->getDestinationGroundstation());
 }
 
 }  // namespace routing

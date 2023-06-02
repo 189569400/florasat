@@ -15,6 +15,8 @@
 
 package flora.satellite;
 
+import inet.node.inet.INetworkNode;
+import flora.routing.ForwardingTable;
 import flora.satellite.SatelliteRoutingBase;
 import flora.satellite.PacketHandlerRouting;
 import flora.satellite.queue.ActivePacketConsumer;
@@ -26,6 +28,10 @@ module SatelliteRouting extends SatelliteRoutingBase
         @class(satellite::SatelliteRouting);
 
     submodules:
+        forwardingTable: ForwardingTable {
+            @display("p=500,100");
+        }
+
         packetHandler: PacketHandlerRouting {
             @display("p=700,100");
         }

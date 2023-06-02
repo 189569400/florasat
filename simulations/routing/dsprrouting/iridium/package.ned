@@ -2,11 +2,17 @@ package flora.simulations.routing.dsprrouting.iridium;
 
 import inet.node.inet.Router;
 import inet.node.inet.StandardHost;
+import inet.node.inet.INetworkNode;
 import inet.node.ethernet.Eth1G;
+import inet.node.internetcloud.InternetCloud;
+import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.EthernetSwitch;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.visualizer.common.IntegratedVisualizer;
+import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
+import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 
 import flora.LoRaPhy.LoRaMedium;
 import flora.LoRa.LoRaNode;
@@ -20,6 +26,7 @@ import flora.metrics.MetricsCollector;
 import flora.networklayer.ConstellationRoutingTable;
 import flora.events.EventManager;
 
+
 @license(LGPL);
 network DsprRoutingIridium
 {
@@ -31,6 +38,11 @@ network DsprRoutingIridium
     submodules:
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
+
+        configurator: Ipv4NetworkConfigurator {
+            @display("p=25,273.375;i=block/routing");
+        }; // network autoconfiguration
+
         routing: DsprRouting {
             @display("p=25,373.375;i=block/routing");
         }
@@ -51,13 +63,22 @@ network DsprRoutingIridium
             @display("p=25,773.375;i=block/network2");
         }
 
-        visualizer: IntegratedVisualizer {
+        visualizer: IntegratedCanvasVisualizer {
             @display("p=25,873.375");
         }
 
-        eventManager: EventManager {
-            @display("p=25,973.375");
-        }
+        // eventManager: EventManager {
+        //     @display("p=25,973.375");
+        // }
+
+        client[nrOfGS]: StandardHost;
+        router[nrOfGS]: Router;
 
     connections allowunconnected:
+        //GROUNDLINK LINKS (GS TO SATELLITE)
+        for i=0..nrOfGS-1 {
+            client[i].ethg++ <--> Eth1G <--> router[i].ethg++;
+            router[i].ethg++ <--> Eth1G <--> groundStation[i].ethg++;
+        }
+        
 }
