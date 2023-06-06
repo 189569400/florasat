@@ -53,7 +53,7 @@ void DtnTopologyControl::updateIntraSatelliteLinks() {
                 int shiftedCurSatId = getShiftedSatelliteId(curSat->getId());
                 int shiftedOtherSatId = getShiftedSatelliteId(otherSat->getId());
                 if (isDtnContactStarting(shiftedCurSatId, shiftedOtherSatId, contactsBetweenSats.at(satContactIndex))){
-                    connectSatellites(curSat, otherSat, isldirection::Direction::ISL_UP);
+                    connectSatellites(curSat, otherSat, isldirection::ISLDirection::UP);
                 }
             }
         }
@@ -147,7 +147,7 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
 
     int freeIndexSat = -1;
     for (size_t i = 0; i < numGroundLinks; i++) {
-        const cGate *gate = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, i).first;
+        const cGate *gate = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, i).first;
         if (!gate->isConnectedOutside()) {
             freeIndexSat = i;
             break;
@@ -159,8 +159,8 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
 
     cGate *uplinkO = gs->getOutputGate(freeIndexGs);
     cGate *uplinkI = gs->getInputGate(freeIndexGs);
-    cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
-    cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
+    cGate *downlinkO = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, freeIndexSat).first;
+    cGate *downlinkI = sat->getInputGate(isldirection::ISLDirection::GROUNDLINK, freeIndexSat).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
     updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
     gsSatConnections.emplace(std::pair<int, int>(gsId, satId), GsSatConnection(gsId, satId, freeIndexGs, freeIndexSat));
@@ -178,7 +178,7 @@ void DtnTopologyControl::unlinkGroundStationToSatDtn(int gsId, int satId) {
     SatelliteRoutingBase *sat = satellites.at(satId);
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
     cGate *uplink= gs->getOutputGate(connection.gsGateIndex);
-    cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+    cGate *downlink = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, connection.satGateIndex).first;
     deleteChannel(uplink);
     deleteChannel(downlink);
     gsSatConnections.erase(std::pair<int, int>(gsId, satId));
@@ -198,8 +198,8 @@ void DtnTopologyControl::updateLinkGroundStationToSatDtn(int gsId, int satId) {
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
     cGate *uplinkO = gs->getOutputGate(connection.gsGateIndex);
     cGate *uplinkI = gs->getInputGate(connection.gsGateIndex);
-    cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
-    cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+    cGate *downlinkO = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, connection.satGateIndex).first;
+    cGate *downlinkI = sat->getInputGate(isldirection::ISLDirection::GROUNDLINK, connection.satGateIndex).first;
     updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
     updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
 }
@@ -224,15 +224,15 @@ void DtnTopologyControl::updateInterSatelliteLinks() {
                 SatelliteRoutingBase *otherSat = satellites.at(contact.getDestinationEid()- numGroundStations);
                 if (isDtnContactStarting(contact.getSourceEid(), contact.getDestinationEid(), contact)) {
                     if (curSat->isAscending()) {
-                        connectSatellites(curSat, otherSat, isldirection::Direction::ISL_RIGHT);
+                        connectSatellites(curSat, otherSat, isldirection::ISLDirection::RIGHT);
                     } else {
-                        connectSatellites(curSat, otherSat, isldirection::Direction::ISL_LEFT);
+                        connectSatellites(curSat, otherSat, isldirection::ISLDirection::LEFT);
                     }
                 } else if (isDtnContactEnding(contact.getSourceEid(), contact.getDestinationEid(), contact)) {
                     if (curSat->hasRightSat() && curSat->getRightSatId() == otherSat->getId()) {
-                        disconnectSatellites(curSat, otherSat, isldirection::Direction::ISL_RIGHT);
+                        disconnectSatellites(curSat, otherSat, isldirection::ISLDirection::RIGHT);
                     } else if (curSat->hasLeftSat() && curSat->getLeftSatId() == otherSat->getId()) {
-                        disconnectSatellites(curSat, otherSat, isldirection::Direction::ISL_LEFT);
+                        disconnectSatellites(curSat, otherSat, isldirection::ISLDirection::LEFT);
                     }
                 }
             }

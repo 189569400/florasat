@@ -34,17 +34,17 @@ class ForwardingTable : public cSimpleModule {
     /** @brief Returns the module that contains the ForwardingTable. Nullptr if none.*/
     cModule *getHostModule();
 
-    void setRoute(int gsId, isldirection::Direction dir);
+    void setRoute(int gsId, isldirection::ISLDirection dir);
     void removeRoute(int gsId);
     void clearRoutes();
 
-    isldirection::Direction getNextHop(int gsId);
+    isldirection::ISLDirection getNextHop(int gsId);
 
    protected:
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 
    private:
-    std::unordered_map<int, isldirection::Direction> routes;
+    std::unordered_map<int, isldirection::ISLDirection> routes;
 };
 
 }  // namespace flora

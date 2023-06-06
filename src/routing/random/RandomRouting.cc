@@ -12,7 +12,7 @@ namespace routing {
 
 Define_Module(RandomRouting);
 
-Direction RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh, SatelliteRouting *callerSat) {
+ISLDirection RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh, SatelliteRouting *callerSat) {
     Enter_Method("routePacket");
     int dstGs = rh->getDestinationGroundstation();
     int callerSatIndex = callerSat->getIndex();
@@ -20,7 +20,7 @@ Direction RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh, S
     // check if connected to destination groundstation
     int groundlinkIndex = RoutingBase::getGroundlinkIndex(callerSatIndex, dstGs);
     if (groundlinkIndex != -1) {
-        return Direction::ISL_DOWNLINK;
+        return ISLDirection::GROUNDLINK;
     }
 
     // if not connected to destination find random

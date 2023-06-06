@@ -57,19 +57,19 @@ void EventManager::processSetIslState(const cXMLElement *node) {
     const char *dir = node->getAttribute(ATTR_DIR);
     if (dir == nullptr) {
         if (type == Type::SEND || type == Type::BOTH) {
-            sat->setISLSendState(isldirection::Direction::ISL_LEFT, state);
-            sat->setISLSendState(isldirection::Direction::ISL_UP, state);
-            sat->setISLSendState(isldirection::Direction::ISL_RIGHT, state);
-            sat->setISLSendState(isldirection::Direction::ISL_DOWN, state);
+            sat->setISLSendState(isldirection::ISLDirection::LEFT, state);
+            sat->setISLSendState(isldirection::ISLDirection::UP, state);
+            sat->setISLSendState(isldirection::ISLDirection::RIGHT, state);
+            sat->setISLSendState(isldirection::ISLDirection::DOWN, state);
         }
         if (type == Type::RECV || type == Type::BOTH) {
-            sat->setISLRecvState(isldirection::Direction::ISL_LEFT, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_UP, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_RIGHT, state);
-            sat->setISLRecvState(isldirection::Direction::ISL_DOWN, state);
+            sat->setISLRecvState(isldirection::ISLDirection::LEFT, state);
+            sat->setISLRecvState(isldirection::ISLDirection::UP, state);
+            sat->setISLRecvState(isldirection::ISLDirection::RIGHT, state);
+            sat->setISLRecvState(isldirection::ISLDirection::DOWN, state);
         }
     } else {
-        isldirection::Direction direction = isldirection::from_str(dir);
+        isldirection::ISLDirection direction = isldirection::from_str(dir);
         if (type == Type::SEND || type == Type::BOTH) {
             sat->setISLSendState(direction, state);
         }

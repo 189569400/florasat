@@ -139,12 +139,12 @@ void TopologyControlBase::loadSatellites() {
     }
 }
 
-void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction) {
+void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::ISLDirection direction) {
     ASSERT(first != nullptr);
     ASSERT(second != nullptr);
-    ASSERT(direction != isldirection::ISL_DOWNLINK);
+    ASSERT(direction != isldirection::GROUNDLINK);
 
-    isldirection::Direction counterDirection = isldirection::getCounterDirection(direction);
+    isldirection::ISLDirection counterDirection = isldirection::getCounterDirection(direction);
 
     cGate *firstOut = first->getOutputGate(direction).first;
     cGate *firstIn = first->getInputGate(direction).first;
@@ -170,7 +170,7 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
     // 3. Check if it is a new connection and if yes, signal topology change.
     // 4. Save the new satellite pair.
     switch (direction) {
-        case isldirection::Direction::ISL_LEFT:
+        case isldirection::ISLDirection::LEFT:
             // 1.
             if (second->hasRightSat() && second->getRightSatId() != first->getId()) {
                 disconnectSatellites(second, second->getRightSat(), counterDirection);
@@ -189,7 +189,7 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
             first->setLeftSat(second);
             second->setRightSat(first);
             break;
-        case isldirection::Direction::ISL_UP:
+        case isldirection::ISLDirection::UP:
             // 1.
             if (second->hasDownSat() && second->getDownSatId() != first->getId()) {
                 disconnectSatellites(second, second->getDownSat(), counterDirection);
@@ -208,7 +208,7 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
             first->setUpSat(second);
             second->setDownSat(first);
             break;
-        case isldirection::Direction::ISL_RIGHT:
+        case isldirection::ISLDirection::RIGHT:
             // 1.
             if (second->hasLeftSat() && second->getLeftSatId() != first->getId()) {
                 disconnectSatellites(second, second->getLeftSat(), counterDirection);
@@ -227,7 +227,7 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
             first->setRightSat(second);
             second->setLeftSat(first);
             break;
-        case isldirection::Direction::ISL_DOWN:
+        case isldirection::ISLDirection::DOWN:
             // 1.
             if (second->hasUpSat() && second->getUpSatId() != first->getId()) {
                 disconnectSatellites(second, second->getUpSat(), counterDirection);
@@ -252,8 +252,8 @@ void TopologyControlBase::connectSatellites(SatelliteRoutingBase *first, Satelli
     }
 }
 
-void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction) {
-    ASSERT(direction != isldirection::ISL_DOWNLINK);
+void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::ISLDirection direction) {
+    ASSERT(direction != isldirection::GROUNDLINK);
 
 #ifndef NDEBUG
     EV << "Disconnect " << first->getId() << " and " << second->getId() << " on " << to_string(direction) << endl;
@@ -271,19 +271,19 @@ void TopologyControlBase::disconnectSatellites(SatelliteRoutingBase *first, Sate
     topologyChanged = true;
 
     switch (direction) {
-        case isldirection::Direction::ISL_LEFT:
+        case isldirection::ISLDirection::LEFT:
             first->removeLeftSat();
             second->removeRightSat();
             break;
-        case isldirection::Direction::ISL_UP:
+        case isldirection::ISLDirection::UP:
             first->removeUpSat();
             second->removeDownSat();
             break;
-        case isldirection::Direction::ISL_RIGHT:
+        case isldirection::ISLDirection::RIGHT:
             first->removeRightSat();
             second->removeLeftSat();
             break;
-        case isldirection::Direction::ISL_DOWN:
+        case isldirection::ISLDirection::DOWN:
             first->removeDownSat();
             second->removeUpSat();
             break;

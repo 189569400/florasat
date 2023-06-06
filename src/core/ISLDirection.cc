@@ -11,53 +11,51 @@ namespace flora {
 namespace core {
 namespace isldirection {
 
-Direction getCounterDirection(Direction dir) {
+ISLDirection getCounterDirection(ISLDirection dir) {
     switch (dir) {
-        case Direction::ISL_LEFT:
-            return Direction::ISL_RIGHT;
-        case Direction::ISL_UP:
-            return Direction::ISL_DOWN;
-        case Direction::ISL_RIGHT:
-            return Direction::ISL_LEFT;
-        case Direction::ISL_DOWN:
-            return Direction::ISL_UP;
+        case ISLDirection::LEFT:
+            return ISLDirection::RIGHT;
+        case ISLDirection::UP:
+            return ISLDirection::DOWN;
+        case ISLDirection::RIGHT:
+            return ISLDirection::LEFT;
+        case ISLDirection::DOWN:
+            return ISLDirection::UP;
         default:
             throw omnetpp::cRuntimeError("Error in ISLDrection::connectToSatellite: (%d) %s is not supported here.", dir, to_string(dir).c_str());
     }
 }
 
-Direction from_str(const char *text) {
+ISLDirection from_str(const char *text) {
     if (!strcasecmp(text, Constants::ISL_LEFT_NAME))
-        return Direction::ISL_LEFT;
+        return ISLDirection::LEFT;
     else if (!strcasecmp(text, Constants::ISL_UP_NAME))
-        return Direction::ISL_UP;
+        return ISLDirection::UP;
     else if (!strcasecmp(text, Constants::ISL_RIGHT_NAME))
-        return Direction::ISL_RIGHT;
+        return ISLDirection::RIGHT;
     else if (!strcasecmp(text, Constants::ISL_DOWN_NAME))
-        return Direction::ISL_DOWN;
-    else if (!strcasecmp(text, Constants::ISL_DOWN_NAME))
-        return Direction::ISL_DOWN;
+        return ISLDirection::DOWN;
     else if (!strcasecmp(text, Constants::SAT_GROUNDLINK_NAME))
-        return Direction::ISL_DOWNLINK;
+        return ISLDirection::GROUNDLINK;
     else
         throw cRuntimeError("Unknown text constant: %s", text);
 }
 
-std::ostream &operator<<(std::ostream &ss, const Direction &direction) {
+std::ostream &operator<<(std::ostream &ss, const ISLDirection &direction) {
     switch (direction) {
-        case Direction::ISL_LEFT:
+        case ISLDirection::LEFT:
             ss << Constants::ISL_LEFT_NAME;
             break;
-        case Direction::ISL_UP:
+        case ISLDirection::UP:
             ss << Constants::ISL_UP_NAME;
             break;
-        case Direction::ISL_RIGHT:
+        case ISLDirection::RIGHT:
             ss << Constants::ISL_RIGHT_NAME;
             break;
-        case Direction::ISL_DOWN:
+        case ISLDirection::DOWN:
             ss << Constants::ISL_DOWN_NAME;
             break;
-        case Direction::ISL_DOWNLINK:
+        case ISLDirection::GROUNDLINK:
             ss << Constants::SAT_GROUNDLINK_NAME;
             break;
         default:
@@ -66,7 +64,7 @@ std::ostream &operator<<(std::ostream &ss, const Direction &direction) {
     return ss;
 }
 
-std::string to_string(const Direction &dir) {
+std::string to_string(const ISLDirection &dir) {
     std::ostringstream ss;
     ss << dir;
     return ss.str();

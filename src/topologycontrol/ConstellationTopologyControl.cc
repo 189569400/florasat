@@ -50,7 +50,7 @@ void ConstellationTopologyControl::updateIntraSatelliteLinks() {
             ASSERT(otherSat != nullptr);
 
             // connect the satellites
-            connectSatellites(curSat, otherSat, isldirection::Direction::ISL_UP);
+            connectSatellites(curSat, otherSat, isldirection::ISLDirection::UP);
         }
     }
 }
@@ -73,7 +73,7 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
                 if (isOldConnection) {
                     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
                     cGate *uplink = gs->getOutputGate(connection.gsGateIndex);
-                    cGate *downlink = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+                    cGate *downlink = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, connection.satGateIndex).first;
                     deleteChannel(uplink);
                     deleteChannel(downlink);
                     gsSatConnections.erase(std::pair<int, int>(gsId, satId));
@@ -90,8 +90,8 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
                 GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
                 cGate *uplinkO = gs->getOutputGate(connection.gsGateIndex);
                 cGate *uplinkI = gs->getInputGate(connection.gsGateIndex);
-                cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
-                cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, connection.satGateIndex).first;
+                cGate *downlinkO = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, connection.satGateIndex).first;
+                cGate *downlinkI = sat->getInputGate(isldirection::ISLDirection::GROUNDLINK, connection.satGateIndex).first;
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
                 updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
             }
@@ -111,7 +111,7 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
 
                 int freeIndexSat = -1;
                 for (size_t i = 0; i < numGroundLinks; i++) {
-                    const cGate *gate = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, i).first;
+                    const cGate *gate = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, i).first;
                     if (!gate->isConnectedOutside()) {
                         freeIndexSat = i;
                         break;
@@ -123,8 +123,8 @@ void ConstellationTopologyControl::updateGroundstationLinks() {
 
                 cGate *uplinkO = gs->getOutputGate(freeIndexGs);
                 cGate *uplinkI = gs->getInputGate(freeIndexGs);
-                cGate *downlinkO = sat->getOutputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
-                cGate *downlinkI = sat->getInputGate(isldirection::Direction::ISL_DOWNLINK, freeIndexSat).first;
+                cGate *downlinkO = sat->getOutputGate(isldirection::ISLDirection::GROUNDLINK, freeIndexSat).first;
+                cGate *downlinkI = sat->getInputGate(isldirection::ISLDirection::GROUNDLINK, freeIndexSat).first;
                 updateOrCreateChannel(uplinkO, downlinkI, delay, groundlinkDatarate);
                 updateOrCreateChannel(downlinkO, uplinkI, delay, groundlinkDatarate);
                 gsSatConnections.emplace(std::pair<int, int>(gsId, satId), GsSatConnection(gsId, satId, freeIndexGs, freeIndexSat));
@@ -169,14 +169,14 @@ void ConstellationTopologyControl::updateISLInWalkerDelta() {
             if (rightSat->isDescending()) {
                 // if we were connected to that satellite on right
                 if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
+                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
                 }
                 // if we were connected to that satellite on left
                 else if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
+                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
                 }
             } else {
-                connectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
+                connectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
             }
         }
         // sat ist descending
@@ -185,14 +185,14 @@ void ConstellationTopologyControl::updateISLInWalkerDelta() {
             if (rightSat->isAscending()) {
                 // if we were connected to that satellite on right
                 if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
+                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
                 }
                 // if we were connected to that satellite on right
                 else if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::Direction::ISL_RIGHT);
+                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
                 }
             } else {
-                connectSatellites(curSat, rightSat, isldirection::Direction::ISL_LEFT);
+                connectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
             }
         }
     }
@@ -219,20 +219,20 @@ void ConstellationTopologyControl::updateISLInWalkerStar() {
         if (!curSat->isInterPlaneISLEnabled() || !nextPlaneSat->isInterPlaneISLEnabled() || curSatIsAscending != nextPlaneSatIsAscending) {
             // if we were connected to that satellite on right
             if (curSat->hasRightSat() && curSat->getRightSatId() == nextPlaneSat->getId()) {
-                disconnectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_RIGHT);
+                disconnectSatellites(curSat, nextPlaneSat, isldirection::ISLDirection::RIGHT);
             }
             // if we were connected to that satellite on left
             else if (curSat->hasLeftSat() && curSat->getLeftSatId() == nextPlaneSat->getId()) {
-                disconnectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_LEFT);
+                disconnectSatellites(curSat, nextPlaneSat, isldirection::ISLDirection::LEFT);
             }
         }
         // sats are moving up
         else if (curSatIsAscending) {
-            connectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_RIGHT);
+            connectSatellites(curSat, nextPlaneSat, isldirection::ISLDirection::RIGHT);
         }
         // sats are moving down
         else {
-            connectSatellites(curSat, nextPlaneSat, isldirection::Direction::ISL_LEFT);
+            connectSatellites(curSat, nextPlaneSat, isldirection::ISLDirection::LEFT);
         }
     }
 }

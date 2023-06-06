@@ -62,14 +62,14 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     /** @brief Gives the number in the plane. The first sat in any plane has number 0.*/
     int getNumberInPlane() const { return satNumberInPlane; }
 
-    std::pair<cGate *, ISLState> getInputGate(isldirection::Direction direction, int index = -1);
-    std::pair<cGate *, ISLState> getOutputGate(isldirection::Direction direction, int index = -1);
-    std::pair<cGate *, ISLState> getGate(isldirection::Direction direction, cGate::Type type, int index);
+    std::pair<cGate *, ISLState> getInputGate(isldirection::ISLDirection direction, int index = -1);
+    std::pair<cGate *, ISLState> getOutputGate(isldirection::ISLDirection direction, int index = -1);
+    std::pair<cGate *, ISLState> getGate(isldirection::ISLDirection direction, cGate::Type type, int index);
     /** @brief Connects the satellite to the other satellite. The return value indicates whether the connection is new or the channel params were updated.*/
-    bool connect(SatelliteRoutingBase *other, isldirection::Direction direction);
+    bool connect(SatelliteRoutingBase *other, isldirection::ISLDirection direction);
 
     /** @brief Disconnects the satellite on the given direction. The return value indicates whether the connection was deleted or did not exist.*/
-    bool disconnect(isldirection::Direction direction);
+    bool disconnect(isldirection::ISLDirection direction);
     //  /** @brief Connects the satellite via right Inter-Plane ISL to the other satellite. The return value indicates whether the connection is new or the channel params were updated.*/
     //  bool connectRight(SatelliteRoutingBase *other);
 
@@ -125,8 +125,8 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     void setDownSendState(ISLState newState);
     void setDownRecvState(ISLState newState);
 
-    void setISLSendState(isldirection::Direction direction, ISLState state);
-    void setISLRecvState(isldirection::Direction direction, ISLState state);
+    void setISLSendState(isldirection::ISLDirection direction, ISLState state);
+    void setISLRecvState(isldirection::ISLDirection direction, ISLState state);
 
     /** @brief Returns the elevation from this entity to a reference entity. */
     double getElevation(const PositionAwareBase &other) const;
@@ -156,7 +156,7 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 
-    void setISLState(isldirection::Direction direction, bool send, ISLState state);
+    void setISLState(isldirection::ISLDirection direction, bool send, ISLState state);
 
 #ifndef NDEBUG
     virtual void refreshDisplay() const override;

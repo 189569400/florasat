@@ -35,7 +35,7 @@ void ForwardingTable::printForwardingTable() const {
     EV << "\n";
 }
 
-void ForwardingTable::setRoute(int gsId, isldirection::Direction dir) {
+void ForwardingTable::setRoute(int gsId, isldirection::ISLDirection dir) {
     Enter_Method("setRoute", gsId, dir);
     routes.emplace(gsId, dir);
 }
@@ -50,7 +50,7 @@ void ForwardingTable::clearRoutes() {
     routes.clear();
 }
 
-isldirection::Direction ForwardingTable::getNextHop(int gsId) {
+isldirection::ISLDirection ForwardingTable::getNextHop(int gsId) {
     Enter_Method("getNextHop", gsId);
     return routes.at(gsId);
 }

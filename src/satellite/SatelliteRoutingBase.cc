@@ -64,35 +64,35 @@ void SatelliteRoutingBase::refreshDisplay() const {
 }
 #endif
 
-std::pair<cGate*, ISLState> SatelliteRoutingBase::getInputGate(isldirection::Direction direction, int index) {
+std::pair<cGate*, ISLState> SatelliteRoutingBase::getInputGate(isldirection::ISLDirection direction, int index) {
     return getGate(direction, cGate::Type::INPUT, index);
 }
 
-std::pair<cGate*, ISLState> SatelliteRoutingBase::getOutputGate(isldirection::Direction direction, int index) {
+std::pair<cGate*, ISLState> SatelliteRoutingBase::getOutputGate(isldirection::ISLDirection direction, int index) {
     return getGate(direction, cGate::Type::OUTPUT, index);
 }
 
-std::pair<cGate*, ISLState> SatelliteRoutingBase::getGate(isldirection::Direction direction, cGate::Type type, int index) {
+std::pair<cGate*, ISLState> SatelliteRoutingBase::getGate(isldirection::ISLDirection direction, cGate::Type type, int index) {
     cGate* gate;
     ISLState state;
     switch (direction) {
-        case isldirection::Direction::ISL_LEFT:
+        case isldirection::ISLDirection::LEFT:
             gate = gateHalf(Constants::ISL_LEFT_NAME, type, -1);
             state = type == cGate::Type::OUTPUT ? getLeftSendState() : getLeftRecvState();
             break;
-        case isldirection::Direction::ISL_UP:
+        case isldirection::ISLDirection::UP:
             gate = gateHalf(Constants::ISL_UP_NAME, type, -1);
             state = type == cGate::Type::OUTPUT ? getUpSendState() : getUpRecvState();
             break;
-        case isldirection::Direction::ISL_RIGHT:
+        case isldirection::ISLDirection::RIGHT:
             gate = gateHalf(Constants::ISL_RIGHT_NAME, type, -1);
             state = type == cGate::Type::OUTPUT ? getRightSendState() : getRightRecvState();
             break;
-        case isldirection::Direction::ISL_DOWN:
+        case isldirection::ISLDirection::DOWN:
             gate = gateHalf(Constants::ISL_DOWN_NAME, type, -1);
             state = type == cGate::Type::OUTPUT ? getDownSendState() : getDownRecvState();
             break;
-        case isldirection::Direction::ISL_DOWNLINK:
+        case isldirection::ISLDirection::GROUNDLINK:
             gate = gateHalf(Constants::SAT_GROUNDLINK_NAME, type, index);
             state = ISLState::WORKING;
             break;
@@ -225,28 +225,28 @@ void SatelliteRoutingBase::setDownRecvState(ISLState newState) {
     downRecvState = newState;
 }
 
-void SatelliteRoutingBase::setISLSendState(isldirection::Direction direction, ISLState state) {
+void SatelliteRoutingBase::setISLSendState(isldirection::ISLDirection direction, ISLState state) {
     setISLState(direction, true, state);
 }
-void SatelliteRoutingBase::setISLRecvState(isldirection::Direction direction, ISLState state) {
+void SatelliteRoutingBase::setISLRecvState(isldirection::ISLDirection direction, ISLState state) {
     setISLState(direction, false, state);
 }
-void SatelliteRoutingBase::setISLState(isldirection::Direction direction, bool send, ISLState state) {
+void SatelliteRoutingBase::setISLState(isldirection::ISLDirection direction, bool send, ISLState state) {
     EV << "[" << satId << "] Set " << to_string(direction) << " to " << to_string(state) << endl;
     switch (direction) {
-        case isldirection::ISL_LEFT:
+        case isldirection::LEFT:
             send ? setLeftSendState(state) : setLeftRecvState(state);
             break;
-        case isldirection::ISL_UP:
+        case isldirection::UP:
             send ? setUpSendState(state) : setUpRecvState(state);
             break;
-        case isldirection::ISL_RIGHT:
+        case isldirection::RIGHT:
             send ? setRightSendState(state) : setRightRecvState(state);
             break;
-        case isldirection::ISL_DOWN:
+        case isldirection::DOWN:
             send ? setDownSendState(state) : setDownRecvState(state);
             break;
-        case isldirection::ISL_DOWNLINK:
+        case isldirection::GROUNDLINK:
             error("Groundlink is not supported.");
         default:
             break;

@@ -38,17 +38,17 @@ void DsprRouting::handleTopologyChange() {
 
             // update forwarding table accordingly
             if (shortestDistanceSat == sId) {
-                forwardingTable->setRoute(gsId, isldirection::ISL_DOWNLINK);
+                forwardingTable->setRoute(gsId, isldirection::GROUNDLINK);
             } else {
                 int nextSatId = core::reconstructPath(sId, shortestDistanceSat, result.prev)[1];
                 if (sat->hasLeftSat() && sat->getLeftSatId() == nextSatId) {
-                    forwardingTable->setRoute(gsId, isldirection::ISL_LEFT);
+                    forwardingTable->setRoute(gsId, isldirection::LEFT);
                 } else if (sat->hasUpSat() && sat->getUpSatId() == nextSatId) {
-                    forwardingTable->setRoute(gsId, isldirection::ISL_UP);
+                    forwardingTable->setRoute(gsId, isldirection::UP);
                 } else if (sat->hasRightSat() && sat->getRightSatId() == nextSatId) {
-                    forwardingTable->setRoute(gsId, isldirection::ISL_RIGHT);
+                    forwardingTable->setRoute(gsId, isldirection::RIGHT);
                 } else if (sat->hasDownSat() && sat->getDownSatId() == nextSatId) {
-                    forwardingTable->setRoute(gsId, isldirection::ISL_DOWN);
+                    forwardingTable->setRoute(gsId, isldirection::DOWN);
                 } else {
                     error("Path not found.");
                 }

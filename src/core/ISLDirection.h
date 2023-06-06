@@ -18,30 +18,21 @@ namespace flora {
 namespace core {
 namespace isldirection {
 
-enum Direction {
-    ISL_LEFT,
-    ISL_UP,
-    ISL_RIGHT,
-    ISL_DOWN,
-    ISL_DOWNLINK
+enum ISLDirection {
+    LEFT,
+    UP,
+    RIGHT,
+    DOWN,
+    GROUNDLINK
 };
 
-Direction getCounterDirection(Direction dir);
+ISLDirection getCounterDirection(ISLDirection dir);
 
-Direction from_str(const char* text);
+ISLDirection from_str(const char* text);
 
-std::ostream &operator<<(std::ostream &ss, const Direction &direction);
+std::ostream &operator<<(std::ostream &ss, const ISLDirection &direction);
 
-std::string to_string(const Direction &dir);
-
-struct ISLDirection {
-    Direction direction;
-    int gateIndex;
-
-    ISLDirection(Direction direction, int gateIndex)
-        : direction(direction),
-          gateIndex(gateIndex){};
-};
+std::string to_string(const ISLDirection &dir);
 
 }  // namespace isldirection
 }  // namespace core

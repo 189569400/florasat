@@ -66,12 +66,12 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
     /** Used to connect a satellite pair with the given direction as the output direction of the first satellite.
      * The input gate is the output gate of the second satellite on the counter direction.
      */
-    void connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
+    void connectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::ISLDirection direction);
 
     /** Used to connect a satellite pair with the given direction as the output direction of the first satellite.
      * The input gate is the output gate of the second satellite on the counter direction.
      */
-    void disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::Direction direction);
+    void disconnectSatellites(SatelliteRoutingBase *first, SatelliteRoutingBase *second, isldirection::ISLDirection direction);
 
     /** @brief Creates a one-way connection between the outGate and the inGate.
      * Considers the ISLStates of the gates and only connects if they are both working.
