@@ -14,7 +14,7 @@ Define_Module(RandomRouting);
 
 ISLDirection RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh, SatelliteRouting *callerSat) {
     Enter_Method("routePacket");
-    int dstGs = rh->getDestinationGroundstation();
+    int dstGs = rh->getDstGs();
     int callerSatIndex = callerSat->getIndex();
 
     // check if connected to destination groundstation
@@ -24,17 +24,20 @@ ISLDirection RandomRouting::routePacket(inet::Ptr<const flora::RoutingHeader> rh
     }
 
     // if not connected to destination find random
-    int gate = intrand(4);
-    if (gate == 0 && callerSat->hasLeftSat()) {
-        return Direction::ISL_LEFT;
-    } else if (gate == 1 && callerSat->hasUpSat()) {
-        return Direction::ISL_UP;
-    } else if (gate == 2 && callerSat->hasRightSat()) {
-        return Direction::ISL_RIGHT;
-    } else if (gate == 3 && callerSat->hasDownSat()) {
-        return Direction::ISL_DOWN;
+    while (true) {
+        int gate = intrand(4);
+        if (gate == 0 && callerSat->hasLeftSat()) {
+            return ISLDirection::LEFT;
+        } else if (gate == 1 && callerSat->hasUpSat()) {
+            return ISLDirection::UP;
+        } else if (gate == 2 && callerSat->hasRightSat()) {
+            return ISLDirection::RIGHT;
+        } else if (gate == 3 && callerSat->hasDownSat()) {
+            return ISLDirection::DOWN;
+        } else {
+            error("No route found.");
+        }
     }
-    return routePacket(rh, callerSat);
 }
 
 }  // namespace routing

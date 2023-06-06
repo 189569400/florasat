@@ -31,10 +31,43 @@ class RoutingBase : public cSimpleModule {
     topologycontrol::TopologyControlBase *topologyControl = nullptr;
 
    public:
+    /**
+     * Handler that is called on all preplannable topology changes.
+     * E.g., is not called if ISL connection does no longer work.
+     * Can be used to simulate preplanned data.
+     *
+     * -> Base implementation is intentionally blank.
+     */
     virtual void handleTopologyChange(){};
-    virtual void handlePacket(inet::Packet *pkt, SatelliteRouting *callerSat){};
-    virtual Direction routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting *callerSat) = 0;
+
+    /**
+     * Method to calculate suitable first and last satellites based on DSPA.
+     */
     virtual std::pair<int, int> calculateFirstAndLastSatellite(int srcGs, int dstGs);
+
+    /**
+     * Most important method for routing modules, must be implemented by all subclasses.
+     * Given a pointer to a RoutingHeader and the caller satellite, decides the next direction.
+     */
+    virtual ISLDirection routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting *callerSat) = 0;
+
+    /**
+     * Handler for messages exchanged between satellites to organize congestion controll, etc.
+     *
+     * -> Base implementation is intentionally blank, as not all algorithms are dynamic.
+     */
+    virtual void handleMessage(inet::Packet *pkt, SatelliteRouting *callerSat){};
+
+    /**
+     * Handler called if the packet handler dropps a packet.
+     * Returns a pointer to a packet that is broadcasted afterwards.
+     * Will do nothing if nullptr is returned.
+     *
+     * -> Base implementation is intentionally blank, as not all algorithms are dynamic.
+     */
+    virtual inet::Packet *handlePacketDrop(inet::Packet *pkt, SatelliteRouting *callerSat, inet::PacketDropReason reason) { return nullptr; };
+
+    /** @brief Returns the index of a groundlink inside the groundlink gate vector.*/
     int getGroundlinkIndex(int satelliteId, int groundstationId);
 
    protected:

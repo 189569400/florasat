@@ -8,22 +8,26 @@ using namespace inet;
 
 namespace flora;
 
+enum ToS {
+    LOW = 0;
+    NORMAL = 1;
+    HIGH = 2;
+};
+
+enum Type {
+    G2G = 0;
+    S2S = 1;
+    SBroadcast = 2;
+};
+
 class RoutingHeader extends inet::FieldsChunk {
-    int sequenceNumber;
-    int numHop = 0;
-    int firstSatellite;
-    int lastSatellite;
-    int sourceGroundstation;
-    int destinationGroundstation;
-    inet::B length;
-    int path[];
-
-    // timestamp of message creation
-    simtime_t originTime;
-    // timestamp of message reception
-    simtime_t receptionTime;
-
-    // satellite ids in route + timestamps when packet arrived at satellites
-    int route[];
-    simtime_t timestamps[];
+    ToS tos;
+    Type type;
+    inet::B totalLength;
+    int ident;
+    int TTL;
+    int srcSat;
+    int dstSat;
+    int srcGs;
+    int dstGs;
 }

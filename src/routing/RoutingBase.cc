@@ -36,16 +36,16 @@ std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int d
     EV_DEBUG << "<><><><><><><><>" << endl;
     EV_DEBUG << "Calculate first and last sat. Distances " << srcGs << "->" << dstGs << ":" << endl;
 
-    auto costMatrix = routing::core::buildCostMatrix(topologyControl->getSatellites());
+    auto costMatrix = core::dspa::buildShortestPathCostMatrix(topologyControl->getSatellites());
 
     for (auto pFirstSat : srcGsInfo->getSatellites()) {
-        routing::core::DijkstraResult result = routing::core::runDijkstra(pFirstSat, costMatrix);
+        core::dspa::DijkstraResult result = core::dspa::runDijkstra(pFirstSat, costMatrix);
         for (auto pLastSat : dstGsInfo->getSatellites()) {
             auto distance = result.distances[pLastSat];
             auto glDistance = dstGsInfo->getDistance(*topologyControl->getSatellite(pLastSat));
 
 #ifndef NDEBUG
-            auto path = routing::core::reconstructPath(pFirstSat, pLastSat, result.prev);
+            auto path = core::dspa::reconstructPath(pFirstSat, pLastSat, result.prev);
             EV_DEBUG << "Distance(" << pFirstSat << "," << pLastSat << ") = " << distance << " + " << glDistance << "; Route: [" << flora::core::utils::vector::toString(path.begin(), path.end()) << "]" << endl;
 #endif
 

@@ -10,11 +10,12 @@
 namespace flora {
 namespace routing {
 namespace core {
+namespace dspa {
 
-DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost, int dst, bool earlyAbort) {
+DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost, int dst) {
     int size = cost.size();
     ASSERT(src >= 0 && src < size);
-    ASSERT(!earlyAbort || dst >= 0 && dst < size);
+    ASSERT(dst == -1 || (dst >= 0 && dst < size));
 
     std::vector<double> distance;
     std::vector<int> prev;
@@ -41,7 +42,7 @@ DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost,
         visited[nearest] = true;
 
         // EARLY ABORT
-        if (earlyAbort && nearest == dst) break;
+        if (nearest == dst) break;
 
         for (size_t j = 0; j < size; j++) {
             if (cost[nearest][j] != INF && distance[j] > distance[nearest] + cost[nearest][j]) {
@@ -64,10 +65,10 @@ DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost,
     return DijkstraResult{vDistance, vPrev};
 }
 
-std::vector<int> reconstructPath(int src, int dest, std::vector<int> prev) {
+std::vector<int> reconstructPath(int src, int dst, std::vector<int> prev) {
     std::deque<int> path;
-    path.push_back(dest);
-    int it = dest;
+    path.push_back(dst);
+    int it = dst;
     while (it != src) {
         it = prev[it];
         path.push_front(it);
@@ -77,7 +78,7 @@ std::vector<int> reconstructPath(int src, int dest, std::vector<int> prev) {
     return v;
 }
 
-const std::vector<std::vector<double>> buildCostMatrix(const std::unordered_map<int, SatelliteRoutingBase*>& constellation) {
+const std::vector<std::vector<double>> buildShortestPathCostMatrix(const std::unordered_map<int, SatelliteRoutingBase*>& constellation) {
     std::vector<std::vector<double>> cost;
     size_t size = constellation.size();
 
@@ -119,6 +120,7 @@ const std::vector<std::vector<double>> buildCostMatrix(const std::unordered_map<
     return cost;
 }
 
+}  // namespace dspa
 }  // namespace core
 }  // namespace routing
 }  // namespace flora

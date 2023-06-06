@@ -21,7 +21,6 @@
 #include "inet/networklayer/contract/INetfilter.h"
 #include "inet/networklayer/ipv4/Ipv4Header_m.h"
 #include "inet/queueing/base/ActivePacketSinkBase.h"
-#include "metrics/MetricsCollector.h"
 #include "networklayer/ConstellationRoutingTable.h"
 #include "routing/RoutingBase.h"
 #include "routing/RoutingHeader_m.h"
@@ -50,7 +49,6 @@ class PacketGenerator : public cSimpleModule {
     B sentBytes = B(0);
     B receivedBytes = B(0);
 
-    int sentPackets;
     int groundStationId;
     int numGroundStations;
 

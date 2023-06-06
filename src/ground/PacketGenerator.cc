@@ -58,11 +58,11 @@ void PacketGenerator::handleMessage(cMessage *msg) {
         send(pkt, "transportOut");
     } else if (pkt->arrivedOn("transportIn")) {
         auto frame = pkt->peekAtFront<Ipv4Header>();
-        EV_DEBUG << "RCVD: " << frame->getSrcAddress() << "->" << frame->getDestAddress() << endl;
+        EV << "RCVD: " << frame->getSrcAddress() << "->" << frame->getDestAddress() << endl;
         // auto frame = pkt->peekAtFront<TransportHeader>();
         int dstGs = routingTable->getGroundstationFromAddress(L3Address(frame->getDestAddress()));
 
-        EV_DEBUG << "Send to " << dstGs << endl;
+        EV << "Send to " << dstGs << endl;
 
         auto satPair = routingModule->calculateFirstAndLastSatellite(groundStationId, dstGs);
         auto firstSat = satPair.first;
@@ -104,36 +104,38 @@ void PacketGenerator::handleMessage(cMessage *msg) {
 
 void PacketGenerator::encapsulate(Packet *packet, int dstGs, int firstSat, int lastSat) {
     auto header = makeShared<RoutingHeader>();
-    header->setChunkLength(B(8));
-    header->setSequenceNumber(sentPackets);
-    header->setLength(packet->getTotalLength());
-    header->setSourceGroundstation(groundStationId);
-    header->setDestinationGroundstation(dstGs);
-    header->setFirstSatellite(firstSat);
-    header->setLastSatellite(lastSat);
-    header->setOriginTime(simTime());
+    header->setTos(ToS::LOW);
+    header->setType(Type::G2G);
+    header->setIdent(numSent);
+    header->setTTL(51);
+    header->setSrcGs(groundStationId);
+    header->setDstGs(dstGs);
+    header->setSrcSat(firstSat);
+    header->setDstSat(lastSat);
+    header->setChunkLength(B(20));
+    header->setTotalLength(packet->getTotalLength() + B(20));
+
     packet->insertAtFront(header);
 
     numSent++;
-    sentBytes += (header->getChunkLength() + header->getLength());
+    sentBytes += header->getTotalLength();
     emit(packetSentSignal, packet);
 }
 
 void PacketGenerator::decapsulate(Packet *packet) {
     auto header = packet->popAtFront<RoutingHeader>();
-    if (header->getDestinationGroundstation() != groundStationId) {
+    if (header->getDstGs() != groundStationId) {
         error("Packet was routed to wrong destination.");
     }
 
-    hopCountVector.record(header->getNumHop());
-    hopCountStats.collect(header->getNumHop());
+    // hopCountVector.record(header->getNumHop());
+    // hopCountStats.collect(header->getNumHop());
 
-    auto lengthField = header->getLength();
-    auto rcvdBytes = header->getChunkLength() + lengthField;
+    auto rcvdBytes = header->getTotalLength();
 
-    EV_DEBUG << lengthField << " vs. " << packet->getDataLength() << endl;
+    EV_DEBUG << rcvdBytes << " vs. " << packet->getDataLength() << endl;
 
-    VALIDATE(packet->getDataLength() == lengthField);  // if the packet is correct
+    VALIDATE(packet->getDataLength() == rcvdBytes - B(20));  // if the packet is correct
 
     numReceived++;
     receivedBytes += rcvdBytes;

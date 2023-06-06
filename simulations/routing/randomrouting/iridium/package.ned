@@ -16,7 +16,6 @@ import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.ConstellationTopologyControl;
 import flora.routing.random.RandomRouting;
 import flora.mobility.SatMobilityOrchestrator;
-import flora.metrics.MetricsCollector;
 import flora.networklayer.ConstellationRoutingTable;
 
 @license(LGPL);

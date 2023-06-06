@@ -19,7 +19,6 @@ import inet.node.inet.INetworkNode;
 import flora.routing.ForwardingTable;
 import flora.satellite.SatelliteRoutingBase;
 import flora.satellite.PacketHandlerRouting;
-import flora.satellite.queue.ActivePacketConsumer;
 import inet.queueing.queue.DropTailQueue;
 
 module SatelliteRouting extends SatelliteRoutingBase
@@ -40,16 +39,11 @@ module SatelliteRouting extends SatelliteRoutingBase
 			@display("p=900,100");
 		}
 
-        queueConsumer: ActivePacketConsumer {
-            @display("p=1100,100");
-        }
-		
     connections allowunconnected:
         
         // queueing
-        packetHandler.queueOut --> queue.in;
-        queue.out --> queueConsumer.in;
-        queueConsumer.out --> packetHandler.queueIn;
+        packetHandler.out --> queue.in;
+        queue.out --> packetHandler.in;
 
         // internal connections
         packetHandler.down1  <--> down;

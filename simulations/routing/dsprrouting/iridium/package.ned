@@ -22,7 +22,6 @@ import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.ConstellationTopologyControl;
 import flora.routing.dspr.DsprRouting;
 import flora.mobility.SatMobilityOrchestrator;
-import flora.metrics.MetricsCollector;
 import flora.networklayer.ConstellationRoutingTable;
 import flora.events.EventManager;
 
@@ -67,9 +66,9 @@ network DsprRoutingIridium
             @display("p=25,873.375");
         }
 
-        // eventManager: EventManager {
-        //     @display("p=25,973.375");
-        // }
+        eventManager: EventManager {
+            @display("p=25,973.375");
+        }
 
         client[nrOfGS]: StandardHost;
         router[nrOfGS]: Router;

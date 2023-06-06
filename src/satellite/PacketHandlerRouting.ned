@@ -15,17 +15,21 @@
 
 package flora.satellite;
 
-import inet.queueing.sink.ActivePacketSink;
+import inet.queueing.base.PacketSinkBase;
+import inet.queueing.contract.IActivePacketSink;
 
-simple PacketHandlerRouting
+simple PacketHandlerRouting extends PacketSinkBase like IActivePacketSink
 {
     parameters:
+        displayStringTextFormat = default("processed %p pk (%l)\ndropped %d pk");
         @class(satellite::PacketHandlerRouting);
         @display("i=block/app");
         int maxHops = default(50);
 
         @signal[packetSent](type=inet::Packet);
         @signal[packetReceived](type=inet::Packet);
+
+        volatile double processingDelay @unit(s);
 
     gates:        
         // ISL gates
@@ -34,8 +38,8 @@ simple PacketHandlerRouting
         inout up1;
         inout down1;
         
-        input queueIn;
-        output queueOut;
+        input in @labels(pull);
+        output out;
 
         // GroundStation gates
         inout groundLink1[40] @labels(GroundStationGate);
