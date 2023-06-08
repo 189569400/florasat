@@ -263,6 +263,16 @@ double SatelliteRoutingBase::getAltitude() const {
     return noradModule->getAltitude();
 }
 
+double SatelliteRoutingBase::getNumberOfPlanes() const {
+    return noradModule->getNumberOfPlanes();
+}
+double SatelliteRoutingBase::getSatsPerPlane() const {
+    return noradModule->getSatellitesPerPlane();
+}
+double SatelliteRoutingBase::getRAAN() const {
+    return noradModule->getRaan();
+}
+
 double SatelliteRoutingBase::getElevation(const PositionAwareBase& other) const {
     return ((INorad*)noradModule)->getElevation(other.getLatitude(), other.getLongitude(), other.getAltitude());
 }

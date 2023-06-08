@@ -128,6 +128,12 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     void setISLSendState(isldirection::ISLDirection direction, ISLState state);
     void setISLRecvState(isldirection::ISLDirection direction, ISLState state);
 
+    /** @brief Returns number of planes. */
+    double getNumberOfPlanes() const;
+    /** @brief Returns number of sats per plane. */
+    double getSatsPerPlane() const;
+    /** @brief Returns the RAAN of this entity. */
+    double getRAAN() const;
     /** @brief Returns the elevation from this entity to a reference entity. */
     double getElevation(const PositionAwareBase &other) const;
     /** @brief Returns the azimuth from this entity to a reference entity. */
