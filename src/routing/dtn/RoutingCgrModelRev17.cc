@@ -1,5 +1,9 @@
 #include <routing/dtn/RoutingCgrModelRev17.h>
 
+
+namespace flora {
+namespace routing {
+
 // This function initializes the routing class:
 // To this end, local eid_, the total number of nodes nodeNum_,
 // a pointer to local storage sdr_, and a contact plan are set.
@@ -37,7 +41,7 @@ RoutingCgrModelRev17::~RoutingCgrModelRev17() {
 // version Ids corresponds with the contact Id where the bundle
 // is expected to be forwarded. This mimic ION behaviour. Other
 // implementations do enqueue bundles on a per neighbour-node basis.
-void RoutingCgrModelRev17::routeAndQueueBundle(BundlePkt * bundle, double simTime) {
+void RoutingCgrModelRev17::routeAndQueueBundle(DtnRoutingHeader *bundle, double simTime) {
 
 	// Disable cout if degug disabled
 	if (printDebug_ == false)
@@ -53,7 +57,7 @@ void RoutingCgrModelRev17::routeAndQueueBundle(BundlePkt * bundle, double simTim
 	tableEntriesExplored = 0;
 
 	cout << "TIME: " << simTime_ << "s, NODE: " << eid_ << ", routing bundle : " << bundle->getSourceEid() << "-"
-			<< bundle->getDestinationEid() << " (" << bundle->getByteLength() << "Bytes)" << endl;
+			<< bundle->getDestinationEid() << " (" << B(bundle->getChunkLength()).get() << "Bytes)" << endl;
 
 	// If no extensionBlock, run cgr each time a bundle is dispatched
 	if (routingType_.find("extensionBlock:off") != std::string::npos)
@@ -113,7 +117,7 @@ void RoutingCgrModelRev17::routeAndQueueBundle(BundlePkt * bundle, double simTim
 						// Only check first contact volume
 						if ((*hop)->getSourceEid() == eid_)
 							if (contactPlan_->getContactById((*hop)->getId())->getResidualVolume()
-									< bundle->getByteLength()) {
+									< B(bundle->getChunkLength()).get()) {
 								// Not enough residual capacity from local view of the path
 								ebRouteIsValid = false;
 								break;
@@ -122,7 +126,7 @@ void RoutingCgrModelRev17::routeAndQueueBundle(BundlePkt * bundle, double simTim
 					if (routingType_.find("volumeAware:allContacts") != std::string::npos)
 						// Check all contacts volume
 						if (contactPlan_->getContactById((*hop)->getId())->getResidualVolume()
-								< bundle->getByteLength()) {
+								< B(bundle->getChunkLength()).get()) {
 							// Not enough residual capacity from local view of the path
 							ebRouteIsValid = false;
 							break;
@@ -162,7 +166,7 @@ void RoutingCgrModelRev17::routeAndQueueBundle(BundlePkt * bundle, double simTim
 // Initially it checks if the route table is up-to-date and update it
 // if it is out of date (by running a new Dijkstra search for the
 // corresponding neighbor).
-void RoutingCgrModelRev17::cgrForward(BundlePkt * bundle) {
+void RoutingCgrModelRev17::cgrForward(DtnRoutingHeader *bundle) {
 	// If contact plan was changed, empty route list
 	if (contactPlan_->getLastEditTime() > routeTableLastEditTime)
 		this->clearRouteTable();
@@ -441,7 +445,7 @@ void RoutingCgrModelRev17::cgrForward(BundlePkt * bundle) {
 		}
 
 		// Depleted route condition
-		if (routeTable_.at(terminusNode).at(0).residualVolume < bundle->getByteLength()) {
+		if (routeTable_.at(terminusNode).at(0).residualVolume < B(bundle->getChunkLength()).get()) {
 			// Make sure that the capacity-limiting contact is marked as depleted
 			vector<Contact *>::iterator hop;
 			for (hop = routeTable_.at(terminusNode).at(0).hops.begin();
@@ -497,7 +501,7 @@ void RoutingCgrModelRev17::cgrForward(BundlePkt * bundle) {
 				needRecalculation = true;
 
 			// Depleted route condition
-			if (routeTable_.at(terminusNode).at(1).residualVolume < bundle->getByteLength()) {
+			if (routeTable_.at(terminusNode).at(1).residualVolume < B(bundle->getChunkLength()).get()) {
 				// Make sure that the capacity-limiting contact is marked as depleted
 				vector<Contact *>::iterator hop;
 				for (hop = routeTable_.at(terminusNode).at(1).hops.begin();
@@ -563,7 +567,7 @@ void RoutingCgrModelRev17::cgrForward(BundlePkt * bundle) {
 				needRecalculation = true;
 
 			// Depleted route condition
-			if (routeTable_.at(terminusNode).at(r).residualVolume < bundle->getByteLength()) {
+			if (routeTable_.at(terminusNode).at(r).residualVolume < B(bundle->getChunkLength()).get()) {
 				// Make sure that the capacity-limiting contact is marked as depleted
 				vector<Contact *>::iterator hop;
 				for (hop = routeTable_.at(terminusNode).at(r).hops.begin();
@@ -612,7 +616,7 @@ void RoutingCgrModelRev17::cgrForward(BundlePkt * bundle) {
 		// but on allPaths routing types.
 
 		// criteria 1) filter route: capacity is depleted
-		if (routeTable_.at(terminusNode).at(r).residualVolume < bundle->getByteLength()) {
+		if (routeTable_.at(terminusNode).at(r).residualVolume < B(bundle->getChunkLength()).get()) {
 			routeTable_.at(terminusNode).at(r).filtered = true;
 			cout << "setting filtered true due to capacity to route next hop = "
 					<< routeTable_.at(terminusNode).at(r).nextHop << endl;
@@ -658,7 +662,7 @@ void RoutingCgrModelRev17::cgrForward(BundlePkt * bundle) {
 // This function enqueues the bundle in the best found path.
 // To this end, it updates contacts volume depending on the volume-awareness
 // type configured for the routing routine.
-void RoutingCgrModelRev17::cgrEnqueue(BundlePkt * bundle, CgrRoute *bestRoute) {
+void RoutingCgrModelRev17::cgrEnqueue(DtnRoutingHeader *bundle, CgrRoute *bestRoute) {
 
 	if (bestRoute->nextHop != NO_ROUTE_FOUND && !bestRoute->filtered) {
 
@@ -680,7 +684,7 @@ void RoutingCgrModelRev17::cgrEnqueue(BundlePkt * bundle, CgrRoute *bestRoute) {
 			if (routingType_.find("volumeAware:allContacts") != std::string::npos) {
 				// Update residualVolume of all this route hops
 				for (vector<Contact *>::iterator hop = bestRoute->hops.begin(); hop != bestRoute->hops.end(); ++hop) {
-					(*hop)->setResidualVolume((*hop)->getResidualVolume() - bundle->getByteLength());
+					(*hop)->setResidualVolume((*hop)->getResidualVolume() - B(bundle->getChunkLength()).get());
 
 					// This should never happen. We'ĺl temporarily leave
 					// this exit code 1 here to detect potential issues
@@ -714,7 +718,7 @@ void RoutingCgrModelRev17::cgrEnqueue(BundlePkt * bundle, CgrRoute *bestRoute) {
 			if (routingType_.find("volumeAware:1stContact") != std::string::npos) {
 				// Update residualVolume of the first hop
 				bestRoute->hops[0]->setResidualVolume(
-						bestRoute->hops[0]->getResidualVolume() - bundle->getByteLength());
+						bestRoute->hops[0]->getResidualVolume() - B(bundle->getChunkLength()).get());
 
 				// Update residualVolume of all routes that uses the updated hops (including those
 				// routes that leads to other destinations). This is a very expensive routine
@@ -759,7 +763,7 @@ void RoutingCgrModelRev17::cgrEnqueue(BundlePkt * bundle, CgrRoute *bestRoute) {
 }
 
 // This function is the Dijkstra search over the network graph, not the contact graph.
-void RoutingCgrModelRev17::findNextBestRoute(vector<int> suppressedContactIds, int terminusNode, CgrRoute * route) {
+void RoutingCgrModelRev17::findNextBestRoute(vector<int> suppressedContactIds, int terminusNode, CgrRoute *route) {
 	// increment metrics counter
 	dijkstraCalls++;
 
@@ -1007,3 +1011,6 @@ int RoutingCgrModelRev17::getRouteTableEntriesCreated() {
 int RoutingCgrModelRev17::getRouteTableEntriesExplored() {
 	return tableEntriesExplored;
 }
+
+}  // namespace routing
+}  // namespace flora

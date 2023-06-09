@@ -15,8 +15,18 @@
 
 package flora.ground;
 
-simple PacketGenerator extends PacketGeneratorBase
+import leosatellites.mobility.GroundStationMobility;
+
+import flora.traffic.UdpTrafficGenerator;
+
+module GroundStationRoutingBase
 {
-   parameters:
-       @class(ground::PacketGenerator);
+    parameters:
+        @class(ground::GroundStationRoutingBase);
+        @display("i=device/receiverdish");
+        int numGroundLinks = default(40);
+		string localAddress;
+
+    gates:
+        inout satelliteLink[numGroundLinks] @labels(EtherFrame-conn);
 }

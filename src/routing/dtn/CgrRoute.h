@@ -1,12 +1,19 @@
+/*
+ * CgrRoute.h
+ *
+ * Created on: May 27, 2023
+ *     Author: Sebastian Montoya
+ */
 
-#ifndef SRC_NODE_DTN_ROUTING_CGRROUTE_H_
-#define SRC_NODE_DTN_ROUTING_CGRROUTE_H_
 
-#include <dtn/node/dtn/Contact.h>
+#ifndef __FLORA_ROUTING_CGRROUTE_H_
+#define __FLORA_ROUTING_CGRROUTE_H_
+
+#include <routing/dtn/contactplan/Contact.h>
 #include <vector>
 
-using namespace std;
-
+namespace flora {
+namespace routing {
 
 #define NO_ROUTE_FOUND (-1)
 #define EMPTY_ROUTE (-2)
@@ -25,4 +32,7 @@ typedef struct
 	vector<Contact *> hops;	 	// Contact list
 } CgrRoute;
 
-#endif /* SRC_NODE_DTN_ROUTING_CGRROUTE_H_ */
+}  // namespace routing
+}  // namespace flora
+
+#endif /* __FLORA_ROUTING_CGRROUTE_H_ */

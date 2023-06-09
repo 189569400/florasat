@@ -1,17 +1,21 @@
-#ifndef SRC_NODE_DTN_ROUTING_ROUTINGCGRMODELREV17_H_
-#define SRC_NODE_DTN_ROUTING_ROUTINGCGRMODELREV17_H_
+#ifndef __FLORA_ROUTING_ROUTINGCGRMODELREV17_H_
+#define __FLORA_ROUTING_ROUTINGCGRMODELREV17_H_
 
 #include <routing/dtn/CgrRoute.h>
 #include <routing/dtn/RoutingDeterministic.h>
 
 #define	MAX_SPEED_MPH	(150000)
 
+
+namespace flora {
+namespace routing {
+
 class RoutingCgrModelRev17: public RoutingDeterministic {
 public:
-	RoutingCgrModelRev17(int eid, int nodeNum, SdrModel * sdr, ContactPlan * localContactPlan,
-			ContactPlan * globalContactPlan, string routingType, bool printDebug);
+	RoutingCgrModelRev17(int eid, int nodeNum, SdrModel *sdr, ContactPlan *localContactPlan,
+			ContactPlan *globalContactPlan, string routingType, bool printDebug);
 	virtual ~RoutingCgrModelRev17();
-	virtual void routeAndQueueBundle(BundlePkt *bundle, double simTime);
+	virtual void routeAndQueueBundle(DtnRoutingHeader *bundle, double simTime);
 
 	// stats recollection
 	int getDijkstraCalls();
@@ -45,10 +49,10 @@ private:
 		bool suppressed;			// Dijkstra exploration: suppressed
 	} Work;
 
-	void cgrForward(BundlePkt * bundle);
-	void cgrEnqueue(BundlePkt * bundle, CgrRoute * bestRoute);
+	void cgrForward(DtnRoutingHeader *bundle);
+	void cgrEnqueue(DtnRoutingHeader *bundle, CgrRoute *bestRoute);
 
-	void findNextBestRoute(vector<int> suppressedContactIds, int terminusNode, CgrRoute * route);
+	void findNextBestRoute(vector<int> suppressedContactIds, int terminusNode, CgrRoute *route);
 
 	void clearRouteTable();
 	void printRouteTable(int terminusNode);
@@ -56,4 +60,7 @@ private:
 	void printContactPlan();
 };
 
-#endif /* SRC_NODE_DTN_ROUTING_ROUTINGCGRMODELREV17_H_ */
+}  // namespace routing
+}  // namespace flora
+
+#endif /* __FLORA_ROUTING_ROUTINGCGRMODELREV17_H_ */

@@ -1,5 +1,10 @@
 #include "routing/dtn/RoutingDeterministic.h"
 
+namespace flora {
+namespace routing {
+
+
+
 RoutingDeterministic::RoutingDeterministic(int eid, SdrModel * sdr, ContactPlan * contactPlan)
 	:Routing(eid,sdr)
 {
@@ -10,13 +15,13 @@ RoutingDeterministic::~RoutingDeterministic()
 {
 }
 
-void RoutingDeterministic::msgToOtherArrive(BundlePkt * bundle, double simTime)
+void RoutingDeterministic::msgToOtherArrive(DtnRoutingHeader *bundle, double simTime)
 {
 	// Route and enqueue bundle
 	routeAndQueueBundle(bundle, simTime);
 }
 
-bool RoutingDeterministic::msgToMeArrive(BundlePkt * bundle)
+bool RoutingDeterministic::msgToMeArrive(DtnRoutingHeader *bundle)
 {
 	return true;
 }
@@ -45,7 +50,7 @@ void RoutingDeterministic::contactEnd(Contact *c)
 {
 	while (sdr_->isBundleForContact(c->getId()))
 	{
-		BundlePkt* bundle = sdr_->getNextBundleForContact(c->getId());
+	    DtnRoutingHeader* bundle = sdr_->getNextBundleForContact(c->getId());
 		sdr_->popNextBundleForContact(c->getId());
 
 		//emit(dtnBundleReRouted, true);
@@ -53,6 +58,9 @@ void RoutingDeterministic::contactEnd(Contact *c)
 	}
 }
 
+
+} // nampespace routing
+} // namespace flora
 
 
 

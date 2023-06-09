@@ -1,12 +1,12 @@
 /*
- * GroundStationRouting.h
+ * DtnGroundStationRouting.h
  *
- *  Created on: May 19, 2023
- *      Author: Robin Ohs
+ *  Created on: May 30, 2023
+ *      Author: Sebastian Montoya
  */
 
-#ifndef __FLORA_GROUND_GROUNDSTATIONROUTING_H_
-#define __FLORA_GROUND_GROUNDSTATIONROUTING_H_
+#ifndef __FLORA_GROUND_DTNGROUNDSTATIONROUTING_H_
+#define __FLORA_GROUND_DTNGROUNDSTATIONROUTING_H_
 
 #include <omnetpp.h>
 
@@ -25,7 +25,7 @@ using namespace flora::core;
 namespace flora {
 namespace ground {
 
-class GroundStationRouting : public GroundStationRoutingBase {
+class DtnGroundStationRouting : public GroundStationRoutingBase {
    protected:
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
@@ -34,4 +34,4 @@ class GroundStationRouting : public GroundStationRoutingBase {
 }  // namespace ground
 }  // namespace flora
 
-#endif  // __FLORA_GROUND_GROUNDSTATIONROUTING_H_
+#endif  // __FLORA_GROUND_DTNGROUNDSTATIONROUTING_H_

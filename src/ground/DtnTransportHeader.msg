@@ -12,11 +12,16 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
+import inet.common.INETDefs;
+import inet.common.packet.chunk.Chunk;
 
-package flora.ground;
+namespace inet;
 
-simple PacketGenerator extends PacketGeneratorBase
-{
-   parameters:
-       @class(ground::PacketGenerator);
+class DtnTransportHeader extends FieldsChunk
+ {
+    int bundlesNumber;
+    int destinationEid;
+    int size;
+    double ttl;
+    double interval;
 }

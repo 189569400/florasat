@@ -20,37 +20,43 @@
  * class must implement routeAndQueueBundle method since routing policies are routing scheme dependents.
  */
 
-#ifndef SRC_NODE_DTN_ROUTING_ROUTINGDETERMINISTIC_H_
-#define SRC_NODE_DTN_ROUTING_ROUTINGDETERMINISTIC_H_
+#ifndef __FLORA_ROUTING_ROUTINGDETERMINISTIC_H_
+#define __FLORA_ROUTING_ROUTINGDETERMINISTIC_H_
 
 #include <routing/dtn/Routing.h>
+
+namespace flora {
+namespace routing {
 
 class RoutingDeterministic: public Routing
 {
 public:
-	RoutingDeterministic(int eid, SdrModel * sdr, ContactPlan * contactPlan);
+	RoutingDeterministic(int eid, SdrModel *sdr, ContactPlan *contactPlan);
 	virtual ~RoutingDeterministic();
 
-	virtual void msgToOtherArrive(BundlePkt * bundle, double simTime);
+	virtual void msgToOtherArrive(DtnRoutingHeader *bundle, double simTime);
 
-	virtual bool msgToMeArrive(BundlePkt * bundle);
+	virtual bool msgToMeArrive(DtnRoutingHeader *bundle);
 
 	virtual void contactStart(Contact *c);
 
 	virtual void contactEnd(Contact *c);
 
-	virtual void successfulBundleForwarded(long bundleId, Contact * contact,  bool sentToDestination);
+	virtual void successfulBundleForwarded(long bundleId, Contact *contact,  bool sentToDestination);
 
-	virtual void updateContactPlan(Contact* c);
+	virtual void updateContactPlan(Contact *c);
 
-	virtual void  refreshForwarding(Contact * c);
+	virtual void  refreshForwarding(Contact *c);
 
 	// This is a pure virtual method (all deterministic routing must at least
 	// implement this function)
-	virtual void routeAndQueueBundle(BundlePkt *bundle, double simTime) = 0;
+	virtual void routeAndQueueBundle(DtnRoutingHeader *bundle, double simTime) = 0;
 
 protected:
 	ContactPlan * contactPlan_;
 };
 
-#endif /* SRC_NODE_DTN_ROUTING_ROUTINGDETERMINISTIC_H_ */
+}  // namespace routing
+}  // namespace flora
+
+#endif /* __FLORA_ROUTING_ROUTINGDETERMINISTIC_H_ */

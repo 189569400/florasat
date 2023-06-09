@@ -129,7 +129,7 @@ bool DtnTopologyControl::isDtnContactEnding(int gsId, int satId, Contact contact
  * @param satInfo contains data related to a Satellite
  */
 void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
-    GroundStationRouting *gs = groundStations.at(gsId);
+    GroundStationRoutingBase *gs = groundStations.at(gsId);
     SatelliteRoutingBase *sat = satellites.at(satId);
     double delay = sat->getDistance(*gs) * groundlinkDelay; // delay of the channel between satellite and groundstation (ms)
     EV << "Create channel between GS " << gsId << " and SAT " << satId << endl;
@@ -174,7 +174,7 @@ void DtnTopologyControl::linkGroundStationToSatDtn(int gsId, int satId) {
  * @param satInfo contains data related to a Satellite
  */
 void DtnTopologyControl::unlinkGroundStationToSatDtn(int gsId, int satId) {
-    GroundStationRouting *gs = groundStations.at(gsId);
+    GroundStationRoutingBase *gs = groundStations.at(gsId);
     SatelliteRoutingBase *sat = satellites.at(satId);
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));
     cGate *uplink= gs->getOutputGate(connection.gsGateIndex);
@@ -192,7 +192,7 @@ void DtnTopologyControl::unlinkGroundStationToSatDtn(int gsId, int satId) {
  * @param satInfo contains data related to a Satellite
  */
 void DtnTopologyControl::updateLinkGroundStationToSatDtn(int gsId, int satId) {
-    GroundStationRouting *gs = groundStations.at(gsId);
+    GroundStationRoutingBase *gs = groundStations.at(gsId);
     SatelliteRoutingBase *sat = satellites.at(satId);
     double delay = sat->getDistance(*gs) * groundlinkDelay; // delay of the channel between nearest satellite and groundstation (ms)
     GsSatConnection &connection = gsSatConnections.at(std::pair<int, int>(gsId, satId));

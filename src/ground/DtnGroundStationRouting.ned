@@ -15,23 +15,24 @@
 
 package flora.ground;
 
-import flora.mobility.GroundStationMobility;
-import flora.traffic.UdpTrafficGenerator;
+import leosatellites.mobility.GroundStationMobility;
 
-module GroundStationRouting extends GroundStationRoutingBase
+import flora.traffic.DtnTrafficGenerator;
+
+module DtnGroundStationRouting extends GroundStationRoutingBase
 {
     parameters:
-        @class(ground::GroundStationRouting);
+        @class(ground::DtnGroundStationRouting);
 
     submodules:
         gsMobility: GroundStationMobility {
             @display("p=100,200");
         };
-        packetGenerator: PacketGenerator {
+        packetGenerator: DtnPacketGenerator {
             @display("p=100,500");
         };
 
-        udpTrafficGenerator: UdpTrafficGenerator {
+        udpTrafficGenerator: DtnTrafficGenerator {
             @display("p=500,500");
         };
 

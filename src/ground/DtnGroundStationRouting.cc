@@ -5,14 +5,14 @@
  *     Author: Robin Ohs
  */
 
-#include "GroundStationRouting.h"
+#include "DtnGroundStationRouting.h"
 
 namespace flora {
 namespace ground {
 
-Define_Module(GroundStationRouting);
+Define_Module(DtnGroundStationRouting);
 
-void GroundStationRouting::initialize(int stage) {
+void DtnGroundStationRouting::initialize(int stage) {
     GroundStationRoutingBase::initialize(stage);
 }
 
