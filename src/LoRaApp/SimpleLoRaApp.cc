@@ -23,6 +23,12 @@ namespace flora {
 
 Define_Module(SimpleLoRaApp);
 
+SimpleLoRaApp::~SimpleLoRaApp()
+{
+    cancelAndDelete(endAckTime);
+    cancelAndDelete(sendUplink);
+}
+
 void SimpleLoRaApp::initialize(int stage)
 {
     cSimpleModule::initialize(stage);
@@ -46,9 +52,9 @@ void SimpleLoRaApp::initialize(int stage)
         endAckTime = new cMessage("acknowledgment Timeout"); //signal to notice about end of ACK time
         sendUplink = new cMessage("sendMeasurements");
 
-        synchronizer = new cMessage("Ask for device local time"); //signal for future use
-        joining = new cMessage("Try to reach GW"); //signal for future use
-        joiningAns = new cMessage("Can't reach GW ? .."); //signal for future use
+        //synchronizer = new cMessage("Ask for device local time"); //signal for future use
+        //joining = new cMessage("Try to reach GW"); //signal for future use
+        //joiningAns = new cMessage("Can't reach GW ? .."); //signal for future use
 
         // Schedule first packet
         scheduleAt(simTime() + timeToFirstPacket, sendUplink);

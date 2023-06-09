@@ -102,8 +102,8 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
     // transmitter is a node or a ground station with a defined position
     else if (GroundStationMobility *lutMobility = dynamic_cast<GroundStationMobility *>(mobility))
     {
-        longLatStartPosition = cCoordGeo(lutMobility->getLUTPositionY(), lutMobility->getLUTPositionX(), 0);
-        longLatEndPosition = cCoordGeo(lutMobility->getLUTPositionY(), lutMobility->getLUTPositionX(), 0);
+        longLatStartPosition = cCoordGeo(lutMobility->getLatitude(), lutMobility->getLongitude(), 0);
+        longLatEndPosition = cCoordGeo(lutMobility->getLatitude(), lutMobility->getLongitude(), 0);
     }
     // other, should never reach this point
     else

@@ -12,18 +12,17 @@
 
 #include "inet/mobility/static/StationaryMobility.h"
 
-namespace flora {
-
 using namespace inet;
+
+namespace flora {
 
 //-----------------------------------------------------
 // Class: UniformGroundMobility
 //
 // Positions a LoRa node on ground at a specific lat/long
 //-----------------------------------------------------
-class UniformGroundMobility : public inet::StationaryMobility
-{
-public:
+class UniformGroundMobility : public StationaryMobility {
+   public:
     UniformGroundMobility();
 
     double getLongitude() const;
@@ -33,45 +32,16 @@ public:
     // returns the Euclidean distance from ground station to reference point - Implemented by Aiden Valentine
     virtual double getDistance(const double& refLatitude, const double& refLongitude, const double& refAltitude = -9999) const;
 
-
-protected:
+   protected:
     virtual void initialize(int) override;
     virtual void setInitialPosition() override;
 
-    double latitude, longitude;               // Geographic coordinates
-    double centerLatitude, centerLongitude;   // Central reference point
-    double deploymentRadius;                  // Radius in degrees
-    double mapx, mapy;                        // size of canvas map
+    double latitude, longitude;              // Geographic coordinates
+    double centerLatitude, centerLongitude;  // Central reference point
+    double deploymentRadius;                 // Radius in degrees
+    double mapx, mapy;                       // size of canvas map
 };
 
-} // namespace inet
+}  // namespace flora
 
 #endif /* MOBILITY_UNIFORMGROUNDMOBILITY_H_ */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

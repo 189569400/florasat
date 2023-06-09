@@ -1,0 +1,15 @@
+<!--This has no real use and is more of an example-->
+<scenario>
+    <set-isl-state t="0.05s" satid="20" dir="right" type="send" value="DISABLED" />
+    <set-isl-state t="0.06s" satid="20" dir="right" type="recv" value="DISABLED" />
+    <set-isl-state t="0.065s" satid="20" dir="right" value="WORKING" />
+    <set-isl-state t="0.07s" satid="20" dir="left" value="DISABLED" />
+    <set-isl-state t="0.08s" satid="20" dir="left" type="recv" value="WORKING" />
+    <set-isl-state t="0.09s" satid="20" dir="left" value="WORKING" />
+    <at t="0.1s">
+        <set-isl-state satid="20" value="DISABLED" />
+    </at>
+    <at t="0.15s">
+        <set-isl-state satid="20" value="WORKING" />
+    </at>
+</scenario>

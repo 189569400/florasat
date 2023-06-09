@@ -26,6 +26,23 @@ Direction getCounterDirection(Direction dir) {
     }
 }
 
+Direction from_str(const char *text) {
+    if (!strcasecmp(text, Constants::ISL_LEFT_NAME))
+        return Direction::ISL_LEFT;
+    else if (!strcasecmp(text, Constants::ISL_UP_NAME))
+        return Direction::ISL_UP;
+    else if (!strcasecmp(text, Constants::ISL_RIGHT_NAME))
+        return Direction::ISL_RIGHT;
+    else if (!strcasecmp(text, Constants::ISL_DOWN_NAME))
+        return Direction::ISL_DOWN;
+    else if (!strcasecmp(text, Constants::ISL_DOWN_NAME))
+        return Direction::ISL_DOWN;
+    else if (!strcasecmp(text, Constants::SAT_GROUNDLINK_NAME))
+        return Direction::ISL_DOWNLINK;
+    else
+        throw cRuntimeError("Unknown text constant: %s", text);
+}
+
 std::ostream &operator<<(std::ostream &ss, const Direction &direction) {
     switch (direction) {
         case Direction::ISL_LEFT:

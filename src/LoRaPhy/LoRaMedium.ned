@@ -30,6 +30,7 @@ module LoRaMedium extends RadioMedium
         backgroundNoise.typename = "DimensionalBackgroundNoise";
         
         rangeFilter = "communicationRange";
+        radioModeFilter = true;
 
         // Reflects the thermal noise for the receiver sensitivity
         // TODO couple with sensitivity

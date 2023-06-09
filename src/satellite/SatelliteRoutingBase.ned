@@ -15,7 +15,7 @@
 
 package flora.satellite;
 
-import leosatellites.mobility.NoradA;
+import flora.mobility.NoradA;
 import flora.mobility.SatMobility;
 
 module SatelliteRoutingBase

@@ -15,10 +15,22 @@ std::ostream &operator<<(std::ostream &ss, const ISLState &state) {
         case ISLState::WORKING:
             ss << Constants::ISL_STATE_WORKING;
             break;
+        case ISLState::DISABLED:
+            ss << Constants::ISL_STATE_DISABLED;
+            break;
         default:
             throw omnetpp::cRuntimeError("Error in ISLState::string operator");
     }
     return ss;
+}
+
+ISLState from_str(const char *text) {
+    if (!strcasecmp(text, Constants::ISL_STATE_WORKING))
+        return ISLState::WORKING;
+    else if (!strcasecmp(text, Constants::ISL_STATE_DISABLED))
+        return ISLState::DISABLED;
+    else
+        throw cRuntimeError("Unknown text constant: %s", text);
 }
 
 std::string to_string(const ISLState &state) {

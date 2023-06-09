@@ -12,6 +12,8 @@
 
 #include "core/Constants.h"
 
+using namespace omnetpp;
+
 namespace flora {
 namespace core {
 namespace isldirection {
@@ -25,6 +27,8 @@ enum Direction {
 };
 
 Direction getCounterDirection(Direction dir);
+
+Direction from_str(const char* text);
 
 std::ostream &operator<<(std::ostream &ss, const Direction &direction);
 

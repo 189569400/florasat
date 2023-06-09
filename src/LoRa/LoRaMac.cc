@@ -68,6 +68,7 @@ LoRaMac::~LoRaMac()
     cancelAndDelete(endDelay_2);
     cancelAndDelete(endListening_2);
     cancelAndDelete(mediumStateChange);
+    cancelAndDelete(beginTXslot);
 }
 
 /****************************************************************
@@ -167,6 +168,29 @@ void LoRaMac::initialize(int stage)
             if (!strcmp(usedClass,"S"))
                 isClassS = true;
         }
+
+
+
+        // FSA Game parameters
+        FSAGame = par("FSAGame");
+        if (FSAGame)
+        {
+            realNodeNumber = par("realNodeNumber");
+            int id = (realNodeNumber-5) / 10;
+            double b = 1 - (1.0/maxClassSslots);
+            std::list<double>::iterator it = estimations.begin();
+            advance(it, id);
+            double nodeEstimation = *it;
+
+            if (nodeEstimation <= -1.0/log(b))
+                a = 1;
+            else
+                a = -1 / (nodeEstimation*log(b));
+
+            //std::cout << "a= " << a << "; realNodeNumber= " << realNodeNumber << "; nodeEstimation= " << nodeEstimation << endl;
+        }
+
+
 
         // state variables
         fsm.setName("LoRaMac State Machine");
@@ -1042,9 +1066,12 @@ bool LoRaMac::isForUs(const Ptr<const LoRaMacFrame> &frame)
 // possible implementation of an uplink transmission policy
 bool LoRaMac::timeToTrasmit()
 {
+    // if it holds FSA Game condition
+    if (FSAGame && dblrand()>a)
+        return false;
+
     // if not in beacon guard period and
     // if there is a queued message and
-    // if it is the corresponding slot
     if (!beaconGuard && !txQueue->isEmpty())
     {
         popTxQueue();

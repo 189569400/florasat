@@ -31,10 +31,10 @@ module LoRaMac extends CsmaCaMac
         int listening2Time = default(1);
         
         // beacon parameters
-        int beaconStart = default(1);
-        int beaconPeriodTime = default(128);
+        double beaconStart = default(1);
+        double beaconPeriodTime = default(128);
         double beaconReservedTime = default(2.120);
-        int beaconGuardTime = default(3);
+        double beaconGuardTime = default(3);
         
         // class B parameters
         double classBslotTime = default(0.030);
@@ -44,6 +44,10 @@ module LoRaMac extends CsmaCaMac
         // class S parameters
         double maxToA = default(1.8);
         double clockThreshold = default(0.010);
+        
+        // FSA Game parameters
+        bool FSAGame = default(false);
+        int realNodeNumber = default(0);
         
         bitrate = 250bps;
         @class(LoRaMac);

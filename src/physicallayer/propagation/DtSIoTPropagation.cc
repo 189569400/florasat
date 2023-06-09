@@ -6,32 +6,8 @@
  */
 
 #include "DtSIoTPropagation.h"
-#include "inet/physicallayer/wireless/common/signal/Arrival.h"
 
-#include "physicallayer/unitdisk/SatelliteUnitDiskTransmission.h"
-#include "physicallayer/apskradio/SatelliteApskScalarTransmission.h"
-
-#include "mobility/SatSGP4Mobility.h"
-#include "mobility/LUTMotionMobility.h"
-#include "mobility/GroundStationMobility.h"
-#include "mobility/SatelliteMobility.h"
-#include "mobility/UniformGroundMobility.h"
-
-#include "libnorad/ccoord.h"
-#include "libnorad/cEci.h"
-#include "libnorad/cEcef.h"
-#include <math.h>
-
-#include "LoRa/LoRaRadio.h"
-#include "LoRaPhy/LoRaTransmission.h"
-
-//namespace inet {
-
-//namespace flora {
-
-//using namespace inet;
-
-using namespace flora;
+namespace flora {
 
 Define_Module(DtSIoTPropagation);
 
@@ -39,12 +15,10 @@ Define_Module(DtSIoTPropagation);
  * Contructor for the SatellitePropagation model. It must also call the constructor for the
  * PropagationBase to be compatible with the radio medium models of INET.
  */
-DtSIoTPropagation::DtSIoTPropagation() :
-    PropagationBase(),
-    ignoreMovementDuringTransmission(false),
-    ignoreMovementDuringPropagation(false),
-    ignoreMovementDuringReception(false)
-{
+DtSIoTPropagation::DtSIoTPropagation() : PropagationBase(),
+                                         ignoreMovementDuringTransmission(false),
+                                         ignoreMovementDuringPropagation(false),
+                                         ignoreMovementDuringReception(false) {
 }
 
 /**
@@ -52,8 +26,7 @@ DtSIoTPropagation::DtSIoTPropagation() :
  *that enable further customisation of the model. The same implementation is used within the
  *INET ConstantSpeedPropagation, which this model is based off.
  */
-void DtSIoTPropagation::initialize(int stage)
-{
+void DtSIoTPropagation::initialize(int stage) {
     PropagationBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         ignoreMovementDuringTransmission = par("ignoreMovementDuringTransmission");
@@ -71,14 +44,12 @@ void DtSIoTPropagation::initialize(int stage)
  * that when INET does adapt the propagation models of INET, the SatellitePropagation model should be robust enough to
  * easily adapt.
  */
-const Coord DtSIoTPropagation::computeArrivalPosition(const simtime_t time, const Coord position, IMobility *mobility) const
-{
+const Coord DtSIoTPropagation::computeArrivalPosition(const simtime_t time, const Coord position, IMobility *mobility) const {
     // TODO: return mobility->getPosition(time);
     throw cRuntimeError("Movement approximation is not implemented");
 }
 
-std::ostream& DtSIoTPropagation::printToStream(std::ostream& stream, int level, int evFlags) const
-{
+std::ostream &DtSIoTPropagation::printToStream(std::ostream &stream, int level, int evFlags) const {
     stream << "SatellitePropagation";
     if (level <= PRINT_LEVEL_TRACE)
         stream << ", ignoreMovementDuringTransmission = " << ignoreMovementDuringTransmission
@@ -95,57 +66,49 @@ std::ostream& DtSIoTPropagation::printToStream(std::ostream& stream, int level, 
  * This transmission model encapsulates the coordinates so that the corresponding receiver nodes getDistance method can use the
  * coordinates and get the actual distance.
  */
-const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmission, IMobility *mobility) const
-{
+const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmission, IMobility *mobility) const {
     arrivalComputationCount++;
     const simtime_t startTime = transmission->getStartTime();
     const simtime_t endTime = transmission->getEndTime();
 
-    const Coord startPosition = transmission->getStartPosition();   //antenna position when the transmitter has started the transmission
+    const Coord startPosition = transmission->getStartPosition();  // antenna position when the transmitter has started the transmission
     const Coord endPosition = transmission->getEndPosition();
 
-    double distance = 0; //m
+    double distance = 0;  // m
 
     // for ISL transmissions
-    if (const SatelliteUnitDiskTransmission *satUnitTransmission = dynamic_cast<const SatelliteUnitDiskTransmission*>(transmission))
-    {
-        if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility*>(mobility))
+    if (const SatelliteUnitDiskTransmission *satUnitTransmission = dynamic_cast<const SatelliteUnitDiskTransmission *>(transmission)) {
+        if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility *>(mobility))
             distance = receiverSatMobility->getDistance(satUnitTransmission->getStartLongLatPosition().m_Lat,
-                       satUnitTransmission->getStartLongLatPosition().m_Lon, satUnitTransmission->getStartLongLatPosition().m_Alt)*1000;  //OS3 uses KM for all measurements
+                                                        satUnitTransmission->getStartLongLatPosition().m_Lon, satUnitTransmission->getStartLongLatPosition().m_Alt) *
+                       1000;  // OS3 uses KM for all measurements
     }
 
     // for LoRa transmissions
-    else if (const LoRaTransmission *loraTransmission = dynamic_cast<const LoRaTransmission*>(transmission))
-    {
-        if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility*>(mobility))
-        {
+    else if (const LoRaTransmission *loraTransmission = dynamic_cast<const LoRaTransmission *>(transmission)) {
+        if (const SatelliteMobility *receiverSatMobility = dynamic_cast<const SatelliteMobility *>(mobility)) {
             distance = receiverSatMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
-                    loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt)*1000;  //OS3 uses KM for all measurements
+                                                        loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt) *
+                       1000;  // OS3 uses KM for all measurements
             EV << "\nDISTANCE FROM NODE IN POSITION (" << loraTransmission->getStartLongLatPosition().m_Lat << ", " << loraTransmission->getStartLongLatPosition().m_Lon
-                    << ") TO SATELLITE IN POSITION (" << receiverSatMobility->getLatitude() << ", " << receiverSatMobility->getLongitude()
-                    << ") IS: " << distance/1000 << " km" << endl;
-        }
-        else if (const UniformGroundMobility *receiverGroundMobility = dynamic_cast<const UniformGroundMobility*>(mobility))
-        {
+               << ") TO SATELLITE IN POSITION (" << receiverSatMobility->getLatitude() << ", " << receiverSatMobility->getLongitude()
+               << ") IS: " << distance / 1000 << " km" << endl;
+        } else if (const UniformGroundMobility *receiverGroundMobility = dynamic_cast<const UniformGroundMobility *>(mobility)) {
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
-                    loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
-            //EV << "HERE" << endl;
-        }
-        else if (const GroundStationMobility *receiverGroundMobility = dynamic_cast<const GroundStationMobility*>(mobility))
+                                                           loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
+            // EV << "HERE" << endl;
+        } else if (const GroundStationMobility *receiverGroundMobility = dynamic_cast<const GroundStationMobility *>(mobility))
             distance = receiverGroundMobility->getDistance(loraTransmission->getStartLongLatPosition().m_Lat,
-                    loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
-    }
-    else
+                                                           loraTransmission->getStartLongLatPosition().m_Lon, loraTransmission->getStartLongLatPosition().m_Alt);
+    } else
         EV_ERROR << "OTHER TRANSMITTER DETECTED";
 
-    const Coord startArrivalPosition = ignoreMovementDuringPropagation ? mobility->getCurrentPosition() :
-            computeArrivalPosition(startTime, startPosition, mobility);
-    const simtime_t startPropagationTime =  distance / propagationSpeed.get();
+    const Coord startArrivalPosition = ignoreMovementDuringPropagation ? mobility->getCurrentPosition() : computeArrivalPosition(startTime, startPosition, mobility);
+    const simtime_t startPropagationTime = distance / propagationSpeed.get();
     const simtime_t startArrivalTime = startTime + startPropagationTime;
     const Quaternion startArrivalOrientation = mobility->getCurrentAngularPosition();
 
-    if (ignoreMovementDuringReception)
-    {
+    if (ignoreMovementDuringReception) {
         const Coord endArrivalPosition = startArrivalPosition;
         const simtime_t endPropagationTime = startPropagationTime;
         const simtime_t endArrivalTime = endTime + startPropagationTime;
@@ -153,12 +116,11 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
         const simtime_t headerDuration = transmission->getHeaderDuration();
         const simtime_t dataDuration = transmission->getDataDuration();
         const Quaternion endArrivalOrientation = mobility->getCurrentAngularPosition();
-        return new Arrival(startPropagationTime, endPropagationTime, startArrivalTime, endArrivalTime,preambleDuration,
-                headerDuration, dataDuration, startArrivalPosition, endArrivalPosition, startArrivalOrientation, endArrivalOrientation);
+        return new Arrival(startPropagationTime, endPropagationTime, startArrivalTime, endArrivalTime, preambleDuration,
+                           headerDuration, dataDuration, startArrivalPosition, endArrivalPosition, startArrivalOrientation, endArrivalOrientation);
     }
 
-    else
-    {
+    else {
         const Coord endArrivalPosition = computeArrivalPosition(endTime, endPosition, mobility);
         const simtime_t endPropagationTime = endPosition.distance(endArrivalPosition) / propagationSpeed.get();
         const simtime_t endArrivalTime = endTime + endPropagationTime;
@@ -167,15 +129,8 @@ const IArrival *DtSIoTPropagation::computeArrival(const ITransmission *transmiss
         const simtime_t dataDuration = transmission->getDataDuration();
         const Quaternion endArrivalOrientation = mobility->getCurrentAngularPosition();
         return new Arrival(startPropagationTime, endPropagationTime, startArrivalTime, endArrivalTime, preambleDuration,
-                headerDuration, dataDuration, startArrivalPosition, endArrivalPosition, startArrivalOrientation, endArrivalOrientation);
+                           headerDuration, dataDuration, startArrivalPosition, endArrivalPosition, startArrivalOrientation, endArrivalOrientation);
     }
 }
 
-
-//} // namespace physicallayer
-
-//} // namespace inet
-
-//} // namespace flora
-
-
+}  // namespace flora
