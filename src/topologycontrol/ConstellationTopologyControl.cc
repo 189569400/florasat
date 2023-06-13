@@ -162,39 +162,40 @@ void ConstellationTopologyControl::updateISLInWalkerDelta() {
         SatelliteRoutingBase *rightSat = (satPlane != planeCount - 1)
                                              ? findSatByPlaneAndNumberInPlane(satPlane + 1, curSat->getNumberInPlane())
                                              : findSatByPlaneAndNumberInPlane(0, (curSat->getNumberInPlane() + interPlaneSpacing) % satsPerPlane);
+        // SatelliteRoutingBase *rightSat = findSatByPlaneAndNumberInPlane((satPlane + 1) % planeCount, curSat->getNumberInPlane());
         ASSERT(rightSat != nullptr);
-
-        if (curSat->isAscending()) {
-            // if next plane partner is descending, connection is not possible
-            if (rightSat->isDescending()) {
-                // if we were connected to that satellite on right
-                if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
-                }
-                // if we were connected to that satellite on left
-                else if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
-                }
-            } else {
-                connectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
-            }
-        }
-        // sat ist descending
-        else {
-            // if next plane partner is not descending, connection is not possible
-            if (rightSat->isAscending()) {
-                // if we were connected to that satellite on right
-                if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
-                }
-                // if we were connected to that satellite on right
-                else if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
-                    disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
-                }
-            } else {
-                connectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
-            }
-        }
+        connectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
+        // if (curSat->isAscending()) {
+        //     // if next plane partner is descending, connection is not possible
+        //     if (rightSat->isDescending()) {
+        //         // // if we were connected to that satellite on right
+        //         // if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
+        //         //     disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
+        //         // }
+        //         // // if we were connected to that satellite on left
+        //         // else if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
+        //         //     disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
+        //         // }
+        //     } else {
+        //     }
+        //     connectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
+        // }
+        // // sat ist descending
+        // else {
+        //     // if next plane partner is not descending, connection is not possible
+        //     if (rightSat->isAscending()) {
+        //         // // if we were connected to that satellite on right
+        //         // if (curSat->hasLeftSat() && curSat->getLeftSatId() == rightSat->getId()) {
+        //         //     disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
+        //         // }
+        //         // // if we were connected to that satellite on right
+        //         // else if (curSat->hasRightSat() && curSat->getRightSatId() == rightSat->getId()) {
+        //         //     disconnectSatellites(curSat, rightSat, isldirection::ISLDirection::RIGHT);
+        //         // }
+        //     } else {
+        //     }
+        //     connectSatellites(curSat, rightSat, isldirection::ISLDirection::LEFT);
+        // }
     }
 }
 
