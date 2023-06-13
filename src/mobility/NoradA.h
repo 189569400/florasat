@@ -44,6 +44,7 @@ class NoradA : public INorad {
     // targetTime: End time of current linear movement
     virtual void initializeMobility(const simtime_t& targetTime);
 
+    double getMnAnomaly();
     double getRaan();
     double getInclination();
     bool isAscending();

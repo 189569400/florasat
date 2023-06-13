@@ -70,6 +70,13 @@ void NoradA::initializeMobility(const simtime_t& targetTime) {
 /**
  * Get the RAAN of a node. Use to determine the orbital plane of the satellite.
  */
+double NoradA::getMnAnomaly() {
+    return orbit->mnAnomaly();
+}
+
+/**
+ * Get the RAAN of a node. Use to determine the orbital plane of the satellite.
+ */
 double NoradA::getRaan() {
     return orbit->RAAN();
 }
