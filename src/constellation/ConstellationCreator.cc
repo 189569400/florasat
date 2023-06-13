@@ -43,14 +43,14 @@ void ConstellationCreator::initialize() {
     satsPerPlane = satCount / planeCount;
 
     // Validate DATA
-    VALIDATE(interPlaneSpacing <= planeCount - 1 && interPlaneSpacing >= 0);
+    VALIDATE(interPlaneSpacing >= 0 && interPlaneSpacing < planeCount);
     VALIDATE(altitude > 0);
     VALIDATE(raanSpread == 180 || raanSpread == 360);
     VALIDATE(satCount > 0);
     VALIDATE(planeCount > 0);
     VALIDATE(satsPerPlane > 0);
     VALIDATE(satsPerPlane * planeCount == satCount);
-    
+
     createSatellites();
 }
 
@@ -58,14 +58,18 @@ void ConstellationCreator::createSatellites() {
     double raanDelta = raanSpread / planeCount;                   // ΔΩ = 2𝜋/𝑃 in [0,2𝜋]
     double phaseDifference = 360.0 / satsPerPlane;                // ΔΦ = 2𝜋/Q in [0,2𝜋]
     double phaseOffset = (360.0 * interPlaneSpacing) / satCount;  // Δ𝑓 = 2𝜋𝐹/𝑃𝑄 in [0,2𝜋[
-
+    VALIDATE(raanDelta >= 0 && raanDelta <= 360.0);
+    VALIDATE(phaseDifference >= 0 && phaseDifference <= 360.0);
+    VALIDATE(phaseOffset >= 0 && phaseOffset < 360.0);
     // iterate over planes
     for (size_t plane = 0; plane < planeCount; plane++) {
         // create plane satellites
         double raan = raanDelta * plane;
+        VALIDATE(raan >= 0 && raan < 360.0);
         for (size_t planeSat = 0; planeSat < satsPerPlane; planeSat++) {
             int index = planeSat + plane * satsPerPlane;
             double meanAnomaly = std::fmod(plane * phaseOffset + planeSat * phaseDifference, 360.0);
+            VALIDATE(meanAnomaly >= 0 && meanAnomaly < 360.0);
             createSatellite(index, raan, meanAnomaly, plane);
         }
     }
