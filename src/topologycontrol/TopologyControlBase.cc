@@ -60,8 +60,15 @@ void TopologyControlBase::initialize(int stage) {
 
         // calculated properties
         satsPerPlane = numSatellites / planeCount;
+        raanDelta = (walkerType == WalkerType::DELTA ? 360 : 180) / planeCount;     // ΔΩ = 2𝜋/𝑃 in [0,2𝜋]
+        phaseDiff = 360.0 / satsPerPlane;                                           // ΔΦ = 2𝜋/Q in [0,2𝜋]
+        phaseOffset = (360.0 * interPlaneSpacing) / numSatellites;                  // Δ𝑓 = 2𝜋𝐹/𝑃𝑄 in [0,2𝜋[
+        // std::cout << "ΔΩ=" << raanDelta << "; ΔΦ=" << phaseDiff << "; Δf=" << phaseOffset << endl; 
 
         // validate state
+        VALIDATE(raanDelta >= 0.0 && raanDelta <= 360.0);
+        VALIDATE(phaseDiff >= 0.0 && phaseDiff <= 360.0);
+        VALIDATE(phaseOffset >= 0.0 && phaseOffset < 360.0);
         VALIDATE(walkerType != WalkerType::UNINITIALIZED);
         VALIDATE(numGroundLinks > 0);
         VALIDATE(interPlaneSpacing <= planeCount - 1 && interPlaneSpacing >= 0);
@@ -117,8 +124,17 @@ GsSatConnection const &TopologyControlBase::getGroundstationSatConnection(int gs
     return gsSatConnections.at(std::pair<int, int>(gsId, satId));
 }
 
-SatelliteRoutingBase *const TopologyControlBase::findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) const {
+int TopologyControlBase::calculateSatelliteId(int plane, int numberInPlane) const {
+    ASSERT(plane >= 0 && plane < planeCount);
+    ASSERT(numberInPlane >= 0 && numberInPlane < satsPerPlane);
+    
     int id = plane * satsPerPlane + numberInPlane;
+    ASSERT(id >= 0 && id < numSatellites);
+    return id;
+}
+
+SatelliteRoutingBase *const TopologyControlBase::findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) const {
+    int id = calculateSatelliteId(plane, numberInPlane);
     return satellites.at(id);
 }
 

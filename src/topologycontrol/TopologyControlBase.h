@@ -35,11 +35,19 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
 
     // Sat API
     SatelliteRoutingBase *const getSatellite(int satId) const;
+    int calculateSatelliteId(int plane, int numberInPlane) const;
     SatelliteRoutingBase *const findSatByPlaneAndNumberInPlane(int plane, int numberInPlane) const;
     std::unordered_map<int, SatelliteRoutingBase *> const &getSatellites() const;
-    int getNumberOfSatellites() const {
-        return numSatellites;
-    };
+    int getInterPlaneSpacing() const { return interPlaneSpacing; };
+    int getNumberOfSatellites() const { return numSatellites; };
+    /** @brief ΔΩ = 2𝜋/𝑃 in [0,2𝜋]. */
+    double getRaanDelta() const { return raanDelta; };
+    /** @brief ΔΦ = 2𝜋/Q in [0,2𝜋]. */
+    double getPhaseDiff() const { return phaseDiff; };
+    /** @brief Δ𝑓 = 2𝜋𝐹/𝑃𝑄 in [0,2𝜋[. */
+    double getPhaseOffset() const { return phaseOffset; };
+    int getSatsPerPlane() const { return satsPerPlane; };
+    int getPlaneCount() const { return planeCount; };
 
     // GS API
     GroundStationRouting *const getGroundstationInfo(int gsId) const;
@@ -117,6 +125,9 @@ class TopologyControlBase : public ClockUserModuleMixin<cSimpleModule> {
     double minimumElevation;
 
     WalkerType::WalkerType walkerType;
+    double raanDelta;
+    double phaseDiff;
+    double phaseOffset;
     int interPlaneSpacing;
     int planeCount;
     int satsPerPlane;
