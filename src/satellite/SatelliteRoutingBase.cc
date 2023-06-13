@@ -270,7 +270,11 @@ double SatelliteRoutingBase::getSatsPerPlane() const {
     return noradModule->getSatellitesPerPlane();
 }
 double SatelliteRoutingBase::getRAAN() const {
-    return noradModule->getRaan();
+    return rad2deg(noradModule->getRaan());
+}
+
+double SatelliteRoutingBase::getMnAnomaly() const {
+    return rad2deg(noradModule->getMnAnomaly());
 }
 
 double SatelliteRoutingBase::getElevation(const PositionAwareBase& other) const {

@@ -132,6 +132,8 @@ class SatelliteRoutingBase : public cSimpleModule, public PositionAwareBase {
     double getNumberOfPlanes() const;
     /** @brief Returns number of sats per plane. */
     double getSatsPerPlane() const;
+    /** @brief Returns the mean anomaly of this entity. */
+    double getMnAnomaly() const;
     /** @brief Returns the RAAN of this entity. */
     double getRAAN() const;
     /** @brief Returns the elevation from this entity to a reference entity. */
