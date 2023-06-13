@@ -9,9 +9,8 @@ import flora.satellite.SatelliteRouting;
 import flora.constellation.ConstellationCreator;
 import flora.topologycontrol.DtnTopologyControl;
 import flora.routing.random.RandomRouting;
-import flora.routing.directed.DirectedRouting;
+import flora.routing.dspr.DsprRouting;
 import flora.mobility.SatMobilityOrchestrator;
-import flora.metrics.MetricsCollector;
 import flora.routing.dtn.contactplan.ContactPlan;
 import inet.visualizer.common.IntegratedVisualizer;
 import flora.networklayer.ConstellationRoutingTable;
@@ -27,7 +26,7 @@ network DtnSim
     submodules:
         groundStation[nrOfGS]: GroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
-        routing: DirectedRouting {
+        routing: DsprRouting {
             @display("p=-128,373.375;i=block/routing");
         }
         
