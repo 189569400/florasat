@@ -1,28 +1,25 @@
 /*
- * MinimumHopCount.h
+ * MinHopCount.h
  *
- * Created on: Jun 07, 2023
+ * Created on: Jun 09, 2023
  *     Author: Robin Ohs
  */
 
-#ifndef __FLORA_ROUTING_CORE_MINIMUMHOPCOUNT_H_
-#define __FLORA_ROUTING_CORE_MINIMUMHOPCOUNT_H_
+#ifndef __FLORA_ROUTING_CORE_MINHOPCOUNT_H_
+#define __FLORA_ROUTING_CORE_MINHOPCOUNT_H_
 
-#include <cmath>
-
-#include "core/PositionAwareBase.h"
+#include "core/utils/VectorUtils.h"
 #include "satellite/SatelliteRoutingBase.h"
+#include "topologycontrol/TopologyControlBase.h"
 
-using namespace flora::core;
 using namespace flora::satellite;
 
 namespace flora {
 namespace routing {
 namespace core {
-namespace mhca {
 
-/** @brief fmod which returns remainder in set [0,360[ */
-double fpmod(double dividend);
+/** @brief fmod which returns remainder in set [0,divisor[ */
+double fpmod(double dividend, double divisor = 360.0);
 
 /** @brief Rounds half away from zero. E.g., roundC(3.5) = 4, roundC(-2.5) = 3; */
 double roundCom(double x);
@@ -44,10 +41,8 @@ struct MinIntraPlaneHopsRes {
 MinIntraPlaneHopsRes minIntraPlaneHops(MinInterPlaneHopsRes interPlaneHops, double uSrc, double uDst, double phaseDiff, double f);
 
 struct MinHopsRes {
-    int leftUp;
-    int leftDown;
-    int rightUp;
-    int rightDown;
+    MinInterPlaneHopsRes interPlaneHops;
+    MinIntraPlaneHopsRes intraPlaneHops;
 };
 /** @brief Calculates the minimal hops for all directions. */
 MinHopsRes minHops(double uSrc, double raanSrc, double uDst, double raanDst, double raanDiff, double phaseDiff, double f);
@@ -60,9 +55,8 @@ MinHopsRes minHops(double uSrc, double raanSrc, double uDst, double raanDst, dou
 // Phase difference:    ΔΦ = 2𝜋/Q € [0,2𝜋]      -> difference in arg of latitude
 // Phase offset:        Δf = 2𝜋F/PQ € [0,2𝜋[    -> difference in arg of latitude between horizontal neighbours
 
-}  // namespace mhca
 }  // namespace core
 }  // namespace routing
 }  // namespace flora
 
-#endif  // __FLORA_ROUTING_CORE_MINIMUMHOPCOUNT_H_
+#endif  // __FLORA_ROUTING_CORE_MINHOPCOUNT_H_
