@@ -47,9 +47,7 @@ class DiscoRouting : public RoutingBase {
     SendInformationRes getSendInformation(const core::MinHopsRes& res);
     std::vector<int> discoRoute(DiscoMode mode, const topologycontrol::TopologyControlBase* tC, int src, int dst);
     std::vector<int> discoRouteA2A(const topologycontrol::TopologyControlBase* tC, int src, int dst);
-    std::vector<int> discoRouteD2D(const topologycontrol::TopologyControlBase* tC, int src, int dst);
     std::vector<int> discoRouteA2D(const topologycontrol::TopologyControlBase* tC, int src, int dst);
-    std::vector<int> discoRouteD2A(const topologycontrol::TopologyControlBase* tC, int src, int dst);
 
    public:
     void initialize(int stage) override;

@@ -7,6 +7,7 @@
 
 #include "Ipv4Interceptor.h"
 
+#include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/NextHopAddressTag_m.h"
 
 namespace flora {
@@ -52,19 +53,18 @@ INetfilter::IHook::Result Ipv4Interceptor::datagramPreRoutingHook(Packet *datagr
 
 INetfilter::IHook::Result Ipv4Interceptor::datagramForwardHook(Packet *datagram) {
     Enter_Method("datagramForwardHook");
-    EV << "Check datagram forward " << datagram << endl;
+    // auto frame = datagram->peekAtFront<Ipv4Header>();
+    // int dstGsId = routingTable->getGroundstationFromAddress(frame->getDestAddress());
 
-    auto frame = datagram->peekAtFront<Ipv4Header>();
-    int dstGsId = routingTable->getGroundstationFromAddress(frame->getDestAddress());
-
-    if (dstGsId == gsId) {
-        datagram->removeTag<NextHopAddressReq>();
-        datagram->addTagIfAbsent<NextHopAddressReq>()->setNextHopAddress(routerAddr);
-        return INetfilter::IHook::ACCEPT;
-    } else {
-        send(datagram->dup(), "pgOut");
-        return INetfilter::IHook::DROP;
-    }
+    // if (dstGsId == gsId) {
+    //     datagram->removeTag<NextHopAddressReq>();
+    //     datagram->addTagIfAbsent<NextHopAddressReq>()->setNextHopAddress(routerAddr);
+    //     return INetfilter::IHook::ACCEPT;
+    // } else {
+    //     send(datagram->dup(), "pgOut");
+    //     return INetfilter::IHook::DROP;
+    // }
+    return INetfilter::IHook::ACCEPT;
 }
 
 INetfilter::IHook::Result Ipv4Interceptor::datagramPostRoutingHook(Packet *datagram) {
@@ -76,7 +76,10 @@ INetfilter::IHook::Result Ipv4Interceptor::datagramLocalInHook(Packet *datagram)
 }
 
 INetfilter::IHook::Result Ipv4Interceptor::datagramLocalOutHook(Packet *datagram) {
-    return INetfilter::IHook::ACCEPT;
+    Enter_Method("datagramLocalOutHook");
+
+    send(datagram->dup(), "pgOut");
+    return INetfilter::IHook::DROP;
 }
 
 }  // namespace networklayer

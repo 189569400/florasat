@@ -1,6 +1,5 @@
 <!--This has no real use and is more of an example-->
 <scenario>
     <at t="0s">
-        <set-isl-state satid="21" dir="UP" value="DISABLED" />
     </at>
 </scenario>

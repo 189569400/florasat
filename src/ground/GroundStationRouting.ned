@@ -27,14 +27,15 @@ import inet.linklayer.ethernet.EthernetInterface;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.Ipv4;
 import inet.transportlayer.tcp.Tcp;
-import inet.node.base.NetworkLayerNodeBase;
+import inet.node.inet.StandardHost;
 import inet.networklayer.contract.INetworkLayer;
 
-module GroundStationRouting extends NetworkLayerNodeBase
+module GroundStationRouting extends StandardHost
 {
     parameters:
         forwarding = true;
         hasIpv4 = true;
+        numEthInterfaces = default(1);
         @class(ground::GroundStationRouting);
         @display("i=device/receiverdish");
         int numGroundLinks = default(40);

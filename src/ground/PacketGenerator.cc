@@ -55,6 +55,7 @@ void PacketGenerator::handleMessage(cMessage *msg) {
     auto pkt = check_and_cast<inet::Packet *>(msg);
     if (msg->arrivedOn("satelliteLink$i")) {
         decapsulate(pkt);
+        pkt->addTagIfAbsent<InterfaceInd>()->setInterfaceId(101);
         send(pkt, "transportOut");
     } else if (pkt->arrivedOn("transportIn")) {
         auto frame = pkt->peekAtFront<Ipv4Header>();
