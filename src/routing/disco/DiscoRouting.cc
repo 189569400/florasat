@@ -18,111 +18,91 @@ void DiscoRouting::initialize(int stage) {
 
 void DiscoRouting::handleTopologyChange() {
     Enter_Method("handleTopologyChange");
-    auto src = 280;
-    auto dst = 154;
-    auto constellation = topologyControl->getSatellites();
 
-    bool srcAsc = constellation.at(src)->isAscending();
-    bool dstAsc = constellation.at(dst)->isAscending();
+    double raanDelta = topologyControl->getRaanDelta();
+    double phaseDiff = topologyControl->getPhaseDiff();
+    double phaseOffset = topologyControl->getPhaseOffset();
+    // auto srcSat = topologyControl->getSatellite(2);
+    // auto dstSat = topologyControl->getSatellite(266);
+    // auto res = core::minHops(srcSat->getMnAnomaly(), srcSat->getRAAN(), dstSat->getMnAnomaly(), dstSat->getRAAN(), raanDelta, phaseDiff, phaseOffset);
+    // discoRouteA2D(res, topologyControl, srcSat->getId(), dstSat->getId());
 
-    if (srcAsc == true && dstAsc == true) {
-        discoRoute(DiscoMode::A2A, topologyControl, src, dst);
-    } else if (srcAsc == false && dstAsc == false) {
-        discoRoute(DiscoMode::D2D, topologyControl, src, dst);
-    } else if (srcAsc == true && dstAsc == false) {
-        discoRoute(DiscoMode::A2D, topologyControl, src, dst);
-    } else if (srcAsc == false && dstAsc == true) {
-        discoRoute(DiscoMode::D2A, topologyControl, src, dst);
+    for (size_t src = 0; src < topologyControl->getNumberOfSatellites(); src++) {
+        // get src sat related data
+        auto srcSat = topologyControl->getSatellite(src);
+        auto srcAsc = srcSat->isAscending();
+        auto forwardingTable = static_cast<ForwardingTable*>(srcSat->getSubmodule("forwardingTable"));
+        forwardingTable->clearRoutes();
+
+        // iterate over all groundstations
+        for (size_t gsId = 0; gsId < topologyControl->getNumberOfGroundstations(); gsId++) {
+            auto gs = topologyControl->getGroundstationInfo(gsId);
+
+            SatelliteRoutingBase* nearestSat = nullptr;
+            core::MinHopsRes minHops;
+            int smallestHopCount = 999999999;
+
+            for (auto pLastSat : gs->getSatellites()) {
+                auto dstSat = topologyControl->getSatellite(pLastSat);
+                auto res = core::minHops(srcSat->getMnAnomaly(), srcSat->getRAAN(), dstSat->getMnAnomaly(), dstSat->getRAAN(), raanDelta, phaseDiff, phaseOffset);
+                if (res.minHops < smallestHopCount) {
+                    nearestSat = dstSat;
+                    minHops = res;
+                    smallestHopCount = res.minHops;
+                }
+            }
+
+            VALIDATE(nearestSat != nullptr);
+
+            // update forwarding table accordingly
+            if (nearestSat->getId() == src) {
+                forwardingTable->setRoute(gsId, isldirection::GROUNDLINK);
+            } else {
+                int nextSatId;
+
+                if (srcAsc == nearestSat->isAscending()) {
+                    nextSatId = discoRouteA2A(minHops, topologyControl, src, nearestSat->getId())[1];
+                } else {
+                    nextSatId = discoRouteA2D(minHops, topologyControl, src, nearestSat->getId())[1];
+                }
+
+                if (srcSat->hasLeftSat() && srcSat->getLeftSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::LEFT);
+                } else if (srcSat->hasUpSat() && srcSat->getUpSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::UP);
+                } else if (srcSat->hasRightSat() && srcSat->getRightSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::RIGHT);
+                } else if (srcSat->hasDownSat() && srcSat->getDownSatId() == nextSatId) {
+                    forwardingTable->setRoute(gsId, isldirection::DOWN);
+                } else {
+                    error("Path not found.");
+                }
+            }
+        }
     }
 }
 
 ISLDirection DiscoRouting::routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting* callerSat) {
     Enter_Method("routePacket");
-    return ISLDirection::RIGHT;
+
+    // check that its no unsupported packet
+    flora::Type type = rh->getType();
+    if(type != flora::Type::G2G) {
+        error("Unsupported Packet received!");
+    }
+    auto forwardingTable = static_cast<ForwardingTable*>(callerSat->getSubmodule("forwardingTable"));
+    return forwardingTable->getNextHop(rh->getDstGs());
 }
 
-SendInformationRes DiscoRouting::getSendInformation(const core::MinHopsRes& res) {
-    SendDirection dir = LEFT_UP;
-    int hopsLeftUp = res.interPlaneHops.west + res.intraPlaneHops.upLeft;
-    int hops = hopsLeftUp;
-    // check west down
-    int hopsLeftDown = res.interPlaneHops.west + res.intraPlaneHops.downLeft;
-    if (hopsLeftDown < hops) {
-        dir = LEFT_DOWN;
-        hops = hopsLeftDown;
-    }
-    // check east up
-    int hopsRightUp = res.interPlaneHops.east + res.intraPlaneHops.upRight;
-    if (hopsRightUp < hops) {
-        dir = RIGHT_UP;
-        hops = hopsRightUp;
-    }
-    // check east down
-    int hopsRightDown = res.interPlaneHops.east + res.intraPlaneHops.downRight;
-    if (hopsRightDown < hops) {
-        dir = RIGHT_DOWN;
-        hops = hopsRightDown;
-    }
-
-    int hHorizontal;
-    int hVertical;
-    switch (dir) {
-        case RIGHT_UP:
-            hVertical = res.intraPlaneHops.upRight;
-            hHorizontal = res.interPlaneHops.east;
-            break;
-        case RIGHT_DOWN:
-            hVertical = res.intraPlaneHops.downRight;
-            hHorizontal = res.interPlaneHops.east;
-            break;
-        case LEFT_UP:
-            hVertical = res.intraPlaneHops.upLeft;
-            hHorizontal = res.interPlaneHops.west;
-            break;
-        case LEFT_DOWN:
-            hVertical = res.intraPlaneHops.downLeft;
-            hHorizontal = res.interPlaneHops.west;
-            break;
-        default:
-            error("Error in DiscoRouting::GetSendInformation(): Unhandled SendDirection.");
-            break;
-    }
-    // std::cout << "Min Hops:" << endl;
-    // std::cout << "  West-Up: " << hopsLeftUp << endl;
-    // std::cout << "  West-Down: " << hopsLeftDown << endl;
-    // std::cout << "  East-Up: " << hopsRightUp << endl;
-    // std::cout << "  East-Down: " << hopsRightDown << endl;
-    // std::cout << endl;
-    return SendInformationRes{dir, hHorizontal, hVertical};
-}
-
-std::vector<int> DiscoRouting::discoRoute(DiscoMode mode, const topologycontrol::TopologyControlBase* tC, int src, int dst) {
-    if (mode == DiscoMode::A2A || mode == DiscoMode::D2D) {
-        return discoRouteA2A(tC, src, dst);
-    } else if (mode == DiscoMode::A2D || mode == DiscoMode::D2A) {
-        return discoRouteA2D(tC, src, dst);
-    }
-    throw new cRuntimeError("Error in DiscoRouting::discoRoute: Unexpected mode given.");
-}
-
-std::vector<int> DiscoRouting::discoRouteA2A(const topologycontrol::TopologyControlBase* tC, int src, int dst) {
+std::vector<int> DiscoRouting::discoRouteA2A(const core::MinHopsRes& minHops, const topologycontrol::TopologyControlBase* tC, int src, int dst) {
     ASSERT(tC != nullptr);
 
     auto srcSat = tC->getSatellite(src);
     auto dstSat = tC->getSatellite(dst);
-    auto raanDelta = tC->getRaanDelta();
-    auto phaseDiff = tC->getPhaseDiff();
-    auto phaseOffset = tC->getPhaseOffset();
+
     auto satsPerPlane = tC->getSatsPerPlane();
     auto numPlanes = tC->getPlaneCount();
     auto interPlaneSpacing = tC->getInterPlaneSpacing();
-    auto res = core::minHops(srcSat->getMnAnomaly(), srcSat->getRAAN(), dstSat->getMnAnomaly(), dstSat->getRAAN(), raanDelta, phaseDiff, phaseOffset);
-
-    // Get send direction and min hop count
-    auto sendInformationRes = getSendInformation(res);
-    auto dir = sendInformationRes.dir;
-    auto hHorizontal = sendInformationRes.hHorizontal;
-    auto hVertical = sendInformationRes.hVertical;
 
     std::deque<int> route_s{src};
     std::deque<int> route_t{dst};
@@ -134,14 +114,14 @@ std::vector<int> DiscoRouting::discoRouteA2A(const topologycontrol::TopologyCont
     int j_p = dstSat->getPlane();
     int j_n = dstSat->getNumberInPlane();
 
-    for (size_t time = 0; time < hHorizontal; time++) {
+    for (size_t time = 0; time < minHops.hHorizontal; time++) {
         int i_p_tmp;
         int j_p_tmp;
         int i_n_tmp = i_n;
         int j_n_tmp = j_n;
-        switch (dir) {
-            case LEFT_UP:
-            case LEFT_DOWN: {
+        switch (minHops.dir) {
+            case core::SendDirection::LEFT_UP:
+            case core::SendDirection::LEFT_DOWN: {
                 i_p_tmp = core::fpmod(i_p - 1, numPlanes);
                 j_p_tmp = core::fpmod(j_p + 1, numPlanes);
                 // care for inter plane spacing between last and first plane and vice versa
@@ -152,8 +132,8 @@ std::vector<int> DiscoRouting::discoRouteA2A(const topologycontrol::TopologyCont
                     j_n_tmp = core::fpmod(j_n_tmp + interPlaneSpacing, satsPerPlane);
                 }
             } break;
-            case RIGHT_UP:
-            case RIGHT_DOWN: {
+            case core::SendDirection::RIGHT_UP:
+            case core::SendDirection::RIGHT_DOWN: {
                 i_p_tmp = core::fpmod(i_p + 1, numPlanes);
                 j_p_tmp = core::fpmod(j_p - 1, numPlanes);
                 // care for inter plane spacing between last and first plane and vice versa
@@ -188,18 +168,18 @@ std::vector<int> DiscoRouting::discoRouteA2A(const topologycontrol::TopologyCont
 
     // std::cout << "Start: " << tC->calculateSatelliteId(i_p, i_n) << " in plane" << endl;
 
-    if (hVertical == 0) {
+    if (minHops.hVertical == 0) {
         route_t.pop_front();
     } else {
         int numInPlane = i_n;
-        for (size_t i = 1; i < hVertical; i++) {
-            switch (dir) {
-                case RIGHT_UP:
-                case LEFT_UP: {
+        for (size_t i = 1; i < minHops.hVertical; i++) {
+            switch (minHops.dir) {
+                case core::SendDirection::RIGHT_UP:
+                case core::SendDirection::LEFT_UP: {
                     numInPlane += 1;
                 } break;
-                case RIGHT_DOWN:
-                case LEFT_DOWN: {
+                case core::SendDirection::RIGHT_DOWN:
+                case core::SendDirection::LEFT_DOWN: {
                     numInPlane -= 1;
                 } break;
             }
@@ -219,8 +199,10 @@ std::vector<int> DiscoRouting::discoRouteA2A(const topologycontrol::TopologyCont
     return v;
 }
 
-std::vector<int> DiscoRouting::discoRouteA2D(const topologycontrol::TopologyControlBase* tC, int src, int dst) {
+std::vector<int> DiscoRouting::discoRouteA2D(const core::MinHopsRes& minHops, const topologycontrol::TopologyControlBase* tC, int src, int dst) {
     ASSERT(tC != nullptr);
+
+    // std::cout << endl << "From " << src << " to " << dst << endl;
 
     auto srcSat = tC->getSatellite(src);
     auto dstSat = tC->getSatellite(dst);
@@ -230,13 +212,6 @@ std::vector<int> DiscoRouting::discoRouteA2D(const topologycontrol::TopologyCont
     auto satsPerPlane = tC->getSatsPerPlane();
     auto numPlanes = tC->getPlaneCount();
     auto interPlaneSpacing = tC->getInterPlaneSpacing();
-    auto res = core::minHops(srcSat->getMnAnomaly(), srcSat->getRAAN(), dstSat->getMnAnomaly(), dstSat->getRAAN(), raanDelta, phaseDiff, phaseOffset);
-
-    // Get send direction and min hop count
-    auto sendInformationRes = getSendInformation(res);
-    auto dir = sendInformationRes.dir;
-    auto hHorizontal = sendInformationRes.hHorizontal;
-    auto hVertical = sendInformationRes.hVertical;
 
     std::deque<int> route_s{src};
     std::deque<int> route_t{dst};
@@ -246,22 +221,20 @@ std::vector<int> DiscoRouting::discoRouteA2D(const topologycontrol::TopologyCont
     int j_p = dstSat->getPlane();
     int j_n = dstSat->getNumberInPlane();
 
-    std::cout << "i_p" << i_p << ";"
-              << "i_n" << i_n << ";" << endl;
-    std::cout << "j_p" << j_p << ";"
-              << "j_n" << j_n << ";" << endl;
+    // std::cout << "i_p" << i_p << ";" << "i_n" << i_n << ";" << endl;
+    // std::cout << "j_p" << j_p << ";" << "j_n" << j_n << ";" << endl;
 
-    for (size_t time = 0; time < hVertical; time++) {
+    for (size_t time = 0; time < minHops.hVertical; time++) {
         int i_n_tmp;
         int j_n_tmp;
-        switch (dir) {
-            case LEFT_UP:
-            case RIGHT_UP: {
+        switch (minHops.dir) {
+            case core::SendDirection::LEFT_UP:
+            case core::SendDirection::RIGHT_UP: {
                 i_n_tmp = core::fpmod(i_n + 1, satsPerPlane);
                 j_n_tmp = core::fpmod(j_n - 1, satsPerPlane);
             } break;
-            case LEFT_DOWN:
-            case RIGHT_DOWN: {
+            case core::SendDirection::LEFT_DOWN:
+            case core::SendDirection::RIGHT_DOWN: {
                 i_n_tmp = core::fpmod(i_n - 1, satsPerPlane);
                 j_n_tmp = core::fpmod(j_n + 1, satsPerPlane);
             } break;
@@ -270,48 +243,47 @@ std::vector<int> DiscoRouting::discoRouteA2D(const topologycontrol::TopologyCont
         int next_sat_t = tC->calculateSatelliteId(j_p, j_n_tmp);
         double reward_s = abs(tC->findSatByPlaneAndNumberInPlane(i_p, i_n)->getLatitude() + tC->getSatellite(next_sat_s)->getLatitude());
         double reward_t = abs(tC->findSatByPlaneAndNumberInPlane(j_p, j_n)->getLatitude() + tC->getSatellite(next_sat_t)->getLatitude());
-
-        std::cout << "S: Check S(" << i_p << "," << i_n << ";" << tC->calculateSatelliteId(i_p, i_n) << ") -> S(" << i_p << "," << i_n_tmp << ";" << next_sat_s << "): Reward = "
-                  << reward_s << endl;
-        std::cout << "T: Check S(" << j_p << "," << j_n << ";" << tC->calculateSatelliteId(j_p, j_n) << ") -> S(" << j_p << "," << j_n_tmp << ";" << next_sat_t << "): Reward = "
-                  << reward_t << endl;
-
+        // std::cout << "S: Check S(" << i_p << "," << i_n << ";" << tC->calculateSatelliteId(i_p, i_n) << ") -> S(" << i_p << "," << i_n_tmp << ";" << next_sat_s << "): Reward = " << reward_s << endl;
+        // std::cout << "T: Check S(" << j_p << "," << j_n << ";" << tC->calculateSatelliteId(j_p, j_n) << ") -> S(" << j_p << "," << j_n_tmp << ";" << next_sat_t << "): Reward = " << reward_t << endl;
         if (reward_s < reward_t) {
-            std::cout << "  -> Select s: S(" << i_p << "," << i_n_tmp << ";" << next_sat_s << ")" << endl;
+            // std::cout << "  -> Select s: S(" << i_p << "," << i_n_tmp << ";" << next_sat_s << ")" << endl;
             route_s.push_back(next_sat_s);
             i_n = i_n_tmp;
         } else {
-            std::cout << "  -> Select t: S(" << j_p << "," << j_n_tmp << ";" << next_sat_t << ")" << endl;
+            // std::cout << "  -> Select t: S(" << j_p << "," << j_n_tmp << ";" << next_sat_t << ")" << endl;
             route_t.push_front(next_sat_t);
             j_n = j_n_tmp;
         }
     }
 
+    // std::cout << "i_p" << i_p << ";" << "i_n" << i_n << ";" << endl;
+    // std::cout << "j_p" << j_p << ";" << "j_n" << j_n << ";" << endl;
+
     // asserts needs to care if its the 0-th plane -> then we need to care about the phaseOffset
-    if (hHorizontal == 0 || (i_p != 0 && j_p != 0)) {
+    if (minHops.hHorizontal == 0) {
         VALIDATE(i_n == j_n);
     } else {
-        VALIDATE(i_n == core::fpmod(j_n + tC->getInterPlaneSpacing(), satsPerPlane) || j_n == core::fpmod(i_n + tC->getInterPlaneSpacing(), satsPerPlane));
+        // TODO: Add validation
     }
 
     // std::cout << "Start: S(" << i_p << "," << i_n << ";" << tC->calculateSatelliteId(i_p, i_n) << ") in plane" << endl;
 
-    if (hHorizontal == 0) {
+    if (minHops.hHorizontal == 0) {
         route_t.pop_front();
     } else {
         int plane = i_p;
-        for (size_t i = 1; i < hHorizontal; i++) {
-            switch (dir) {
-                case LEFT_UP:
-                case RIGHT_UP: {
+        for (size_t i = 1; i < minHops.hHorizontal; i++) {
+            switch (minHops.dir) {
+                case core::SendDirection::LEFT_UP:
+                case core::SendDirection::RIGHT_UP: {
                     // care for inter plane spacing between last and first plane and vice versa
                     if (plane == numPlanes - 1) {
                         i_n = core::fpmod(i_n + interPlaneSpacing, satsPerPlane);
                     }
                     plane += 1;
                 } break;
-                case LEFT_DOWN:
-                case RIGHT_DOWN: {
+                case core::SendDirection::LEFT_DOWN:
+                case core::SendDirection::RIGHT_DOWN: {
                     // care for inter plane spacing between last and first plane and vice versa
                     if (plane == 0) {
                         i_n = core::fpmod(i_n - interPlaneSpacing, satsPerPlane);

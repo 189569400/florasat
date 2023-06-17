@@ -18,6 +18,13 @@ namespace flora {
 namespace routing {
 namespace core {
 
+enum SendDirection {
+    LEFT_UP = 0,
+    LEFT_DOWN = 1,
+    RIGHT_UP = 2,
+    RIGHT_DOWN = 3,
+};
+
 /** @brief fmod which returns remainder in set [0,divisor[ */
 double fpmod(double dividend, double divisor = 360.0);
 
@@ -43,6 +50,14 @@ MinIntraPlaneHopsRes minIntraPlaneHops(MinInterPlaneHopsRes interPlaneHops, doub
 struct MinHopsRes {
     MinInterPlaneHopsRes interPlaneHops;
     MinIntraPlaneHopsRes intraPlaneHops;
+    int hopsWestUp;
+    int hopsWestDown;
+    int hopsEastUp;
+    int hopsEastDown;
+    int minHops;
+    core::SendDirection dir;
+    int hHorizontal;
+    int hVertical;
 };
 /** @brief Calculates the minimal hops for all directions. */
 MinHopsRes minHops(double uSrc, double raanSrc, double uDst, double raanDst, double raanDiff, double phaseDiff, double f);

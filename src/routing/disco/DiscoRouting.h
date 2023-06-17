@@ -21,33 +21,12 @@
 
 namespace flora {
 namespace routing {
-enum SendDirection {
-    LEFT_UP = 0,
-    LEFT_DOWN = 1,
-    RIGHT_UP = 2,
-    RIGHT_DOWN = 3,
-};
-
-struct SendInformationRes {
-    SendDirection dir;
-    int hHorizontal;
-    int hVertical;
-};
-
-enum DiscoMode {
-    A2A = 0,
-    D2D = 1,
-    A2D = 2,
-    D2A = 3,
-};
 
 class DiscoRouting : public RoutingBase {
    protected:
     int broadcastId = 0;
-    SendInformationRes getSendInformation(const core::MinHopsRes& res);
-    std::vector<int> discoRoute(DiscoMode mode, const topologycontrol::TopologyControlBase* tC, int src, int dst);
-    std::vector<int> discoRouteA2A(const topologycontrol::TopologyControlBase* tC, int src, int dst);
-    std::vector<int> discoRouteA2D(const topologycontrol::TopologyControlBase* tC, int src, int dst);
+    std::vector<int> discoRouteA2A(const core::MinHopsRes& minHops, const topologycontrol::TopologyControlBase* tC, int src, int dst);
+    std::vector<int> discoRouteA2D(const core::MinHopsRes& minHops, const topologycontrol::TopologyControlBase* tC, int src, int dst);
 
    public:
     void initialize(int stage) override;

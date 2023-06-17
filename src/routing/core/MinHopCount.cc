@@ -66,22 +66,74 @@ MinIntraPlaneHopsRes minIntraPlaneHops(MinInterPlaneHopsRes interPlaneHops, doub
     // std::cout << "  delta_U_East: " << delta_U_East << "(" << phaseAngleDiff << "-" << phasingAngleByEastInterPlaneHops << ")" << endl;
     // std::cout << "  delta_U_West: " << delta_U_West << "(" << phaseAngleDiff << "+" << phasingAngleByWestInterPlaneHops << ")" << endl;
     // std::cout << endl;
-    // std::cout << "  hV_UpLeft: " << hV_UpWest << endl;
-    // std::cout << "  hV_UpRight: " << hV_UpEast << endl;
-    // std::cout << "  hV_DownLeft: " << hV_DownWest << endl;
-    // std::cout << "  hV_DownRight: " << hV_DownEast << endl;
+    // std::cout << "  hV_UpWest: " << hV_UpWest << endl;
+    // std::cout << "  hV_UpEast: " << hV_UpEast << endl;
+    // std::cout << "  hV_DownWest: " << hV_DownWest << endl;
+    // std::cout << "  hV_DownEast: " << hV_DownEast << endl;
     // std::cout << endl;
     return MinIntraPlaneHopsRes{hV_UpWest, hV_UpEast, hV_DownWest, hV_DownEast};
 }
 
 MinHopsRes minHops(double uSrc, double raanSrc, double uDst, double raanDst, double raanDiff, double phaseDiff, double f) {
-    auto interPlaneRes = minInterplaneHops(raanSrc, raanDst, raanDiff);
-    auto intraPlaneRes = minIntraPlaneHops(interPlaneRes, uSrc, uDst, phaseDiff, f);
-    // auto leftUp = interPlaneRes.west + intraPlaneRes.upLeft;
-    // auto leftDown = interPlaneRes.west + intraPlaneRes.downLeft;
-    // auto rightUp = interPlaneRes.east + intraPlaneRes.upRight;
-    // auto rightDown = interPlaneRes.east + intraPlaneRes.downRight;
-    return MinHopsRes{interPlaneRes, intraPlaneRes};
+    MinInterPlaneHopsRes interPlaneRes = minInterplaneHops(raanSrc, raanDst, raanDiff);
+    MinIntraPlaneHopsRes intraPlaneRes = minIntraPlaneHops(interPlaneRes, uSrc, uDst, phaseDiff, f);
+    int hopsWestUp = interPlaneRes.west + intraPlaneRes.upLeft;
+    int hopsWestDown = interPlaneRes.west + intraPlaneRes.downLeft;
+    int hopsEastUp = interPlaneRes.east + intraPlaneRes.upRight;
+    int hopsEastDown = interPlaneRes.east + intraPlaneRes.downRight;
+
+    SendDirection dir = LEFT_UP;
+    int hops = hopsWestUp;
+    // check west down
+    if (hopsWestDown < hops) {
+        dir = LEFT_DOWN;
+        hops = hopsWestDown;
+    }
+    // check east up
+    if (hopsEastUp < hops) {
+        dir = RIGHT_UP;
+        hops = hopsEastUp;
+    }
+    // check east down
+    if (hopsEastDown < hops) {
+        dir = RIGHT_DOWN;
+        hops = hopsEastDown;
+    }
+
+    int hHorizontal;
+    int hVertical;
+    // std::cout << "Min Hops:" << endl;
+    switch (dir) {
+        case RIGHT_UP:
+            hHorizontal = interPlaneRes.east;
+            hVertical = intraPlaneRes.upRight;
+            // std::cout << "  Dir: RightUp" << endl;
+            break;
+        case RIGHT_DOWN:
+            hHorizontal = interPlaneRes.east;
+            hVertical = intraPlaneRes.downRight;
+            // std::cout << "  Dir: RightDown" << endl;
+            break;
+        case LEFT_UP:
+            hHorizontal = interPlaneRes.west;
+            hVertical = intraPlaneRes.upLeft;
+            // std::cout << "  Dir: LeftUp" << endl;
+            break;
+        case LEFT_DOWN:
+            hHorizontal = interPlaneRes.west;
+            hVertical = intraPlaneRes.downLeft;
+            // std::cout << "  Dir: LeftDown" << endl;
+            break;
+        default:
+            throw new cRuntimeError("Error in MinHopCount::minHops: Unhandled SendDirection.");
+            break;
+    }
+    // std::cout << "  West-Up: " << hopsWestUp << endl;
+    // std::cout << "  West-Down: " << hopsWestDown << endl;
+    // std::cout << "  East-Up: " << hopsEastUp << endl;
+    // std::cout << "  East-Down: " << hopsEastDown << endl;
+    // std::cout << endl;
+    return MinHopsRes{interPlaneRes, intraPlaneRes, hopsWestUp, hopsWestDown, hopsEastUp, hopsEastDown, hops, dir, hHorizontal, hVertical};
 }
 
 }  // namespace core

@@ -70,14 +70,6 @@ network DiscoRoutingStarlink
             @display("p=25,973.375");
         }
 
-        client[nrOfGS]: StandardHost;
-        router[nrOfGS]: Router;
-
     connections allowunconnected:
-        //GROUNDLINK LINKS (GS TO SATELLITE)
-        for i=0..nrOfGS-1 {
-            client[i].ethg++ <--> Eth1G <--> router[i].ethg++;
-            router[i].ethg++ <--> Eth1G <--> groundStation[i].ethg++;
-        }
         
 }
