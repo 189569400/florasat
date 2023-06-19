@@ -18,5 +18,6 @@ package flora.routing.dtn.contactplan;
 simple ContactPlan
 {
     parameters:
-        string fileName;
+        string fileName = default("");
+        string exportFileName = default("");
 }

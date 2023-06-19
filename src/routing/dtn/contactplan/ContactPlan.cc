@@ -6,14 +6,17 @@ Define_Module(ContactPlan);
 
 void ContactPlan::initialize(int stage) {
     if (stage == inet::INITSTAGE_LOCAL) {
-            fileName = par("fileName").stdstringValue();
-            EV << "Loaded parameters: "
-               << "fileName: " << fileName << endl;
+        fileName = par("fileName").stdstringValue();
+        EV << "Loaded parameters: "
+           << "fileName: " << fileName << endl;
     } else if (stage == inet::INITSTAGE_APPLICATION_LAYER) {
         EV << "Initializing ContactPlan: " << endl;
         groundStationCount = getSystemModule()->getSubmoduleVectorSize("groundStation");
         satelliteCount = getSystemModule()->getSubmoduleVectorSize("loRaGW");
-        this -> parseContactPlanFile(fileName, groundStationCount + satelliteCount, 0, -1);
+        this->contactIdsBySrc_.resize(groundStationCount + satelliteCount + 1);
+        if (fileName != "") {
+            this -> parseContactPlanFile(fileName, groundStationCount + satelliteCount, 0, -1);
+        }
     }
 }
 
@@ -29,8 +32,6 @@ void ContactPlan::initialize(int stage) {
  */
 void ContactPlan::parseContactPlanFile(string fileName, int nodesNumber, int mode, double failureProb)
 {
-    this->contactIdsBySrc_.resize(nodesNumber + 1);
-
     double start = 0.0;
     double end = 0.0;
     int sourceEid = 0;
@@ -511,11 +512,31 @@ void ContactPlan::printContactPlan()
 {
     vector<Contact>::iterator it;
     for (it = this->getContacts()->begin(); it != this->getContacts()->end(); ++it)
-        cout << "a contact +" << (*it).getStart() << " +" << (*it).getEnd() << " " << (*it).getSourceEid() << " " << (*it).getDestinationEid() << " " << (*it).getResidualVolume() << "/" << (*it).getVolume() << endl;
+        EV << "a contact +" << (*it).getStart() << " +" << (*it).getEnd() << " " << (*it).getSourceEid() << " " << (*it).getDestinationEid() << " " << (*it).getDataRate() << endl;
 
     for (it = this->getRanges()->begin(); it != this->getRanges()->end(); ++it)
-        cout << "a range +" << (*it).getStart() << " +" << (*it).getEnd() << " " << (*it).getSourceEid() << " " << (*it).getDestinationEid() << " " << (*it).getRange() << endl;
-    cout << endl;
+        EV << "a range +" << (*it).getStart() << " +" << (*it).getEnd() << " " << (*it).getSourceEid() << " " << (*it).getDestinationEid() << " " << (*it).getRange() << endl;
+    EV << endl;
+}
+
+
+
+void ContactPlan::exportContactPlan(string filename){
+    ofstream contactPlan;
+    contactPlan.open(filename);
+    vector<Contact>::iterator it;
+    for (it = this->getContacts()->begin(); it != this->getContacts()->end(); ++it)
+        contactPlan << "a contact +" << (*it).getStart() << " +" << (*it).getEnd() << " " << (*it).getSourceEid() << " " << (*it).getDestinationEid() << " " << (*it).getDataRate() << endl;
+
+    for (it = this->getRanges()->begin(); it != this->getRanges()->end(); ++it)
+        contactPlan << "a range +" << (*it).getStart() << " +" << (*it).getEnd() << " " << (*it).getSourceEid() << " " << (*it).getDestinationEid() << " " << (*it).getRange() << endl;
+    contactPlan << endl;
+    contactPlan.close();
+}
+
+void ContactPlan::finish(){
+    exportFileName = par("exportFileName").stdstringValue();
+    exportContactPlan(exportFileName);
 }
 
 vector<Contact>::iterator ContactPlan::deleteContactById(int contactId)

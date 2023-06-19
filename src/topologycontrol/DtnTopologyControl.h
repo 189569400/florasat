@@ -20,6 +20,7 @@ namespace flora {
 namespace topologycontrol {
 
 class DtnTopologyControl : public TopologyControlBase {
+
    protected:
     virtual void initialize(int stage) override;
     virtual void updateTopology() override;

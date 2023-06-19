@@ -68,7 +68,6 @@ void DtnTopologyControl::updateGroundstationLinksDtn() {
     if (contactPlan == nullptr) {
         error("Error in TopologyControl::updateNodeLinksDtn(): contactPlan is nullptr. Make sure the module exists.");
     }
-    // TODO: Improve time complexity in this function from O(n^3)
     for (size_t gsId = 0; gsId < numGroundStations; gsId++) {
         for (size_t satId = 0; satId < numSatellites; satId++) {
             vector<Contact> satContacts = contactPlan->getContactsBySrcDst(gsId, satId + numGroundStations);

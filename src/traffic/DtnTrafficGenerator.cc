@@ -31,8 +31,8 @@ namespace traffic {
 Define_Module(DtnTrafficGenerator);
 
 void DtnTrafficGenerator::initialize(int stage) {
-
-    if (stage == INITSTAGE_LOCAL) {
+    enable = par("enable");
+    if (stage == INITSTAGE_LOCAL && enable) {
         this->eid_ = this->getParentModule()->getIndex();
         parseBundlesNumber();
         parseDestinationsEid();

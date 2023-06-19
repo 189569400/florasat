@@ -13,10 +13,11 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package flora.ground;
+package flora.topologycontrol;
 
-simple PacketGenerator extends PacketGeneratorBase
+simple ContactPlanTopologyControl extends TopologyControlBase
 {
-   parameters:
-       @class(PacketGenerator);
+    parameters:
+        @class(topologycontrol::ContactPlanTopologyControl);
+        string distanceMode;
 }

@@ -7,6 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <queue>
+#include <iostream>
 #include "inet/common/INETDefs.h"
 
 using namespace omnetpp;
@@ -19,6 +20,7 @@ class ContactPlan : public cSimpleModule {
 
         virtual void initialize(int stage) override;
         virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+        virtual void finish() override;
 
         // Contact plan population functions
         int addContact(double start, double end, int sourceEid, int destinationEid, double dataRate, double confidence);
@@ -57,18 +59,17 @@ class ContactPlan : public cSimpleModule {
 
         // debug function
         void printContactPlan();
+        void exportContactPlan(string filename);
 
         //Checked when discovered/predicted contacts are inserted.
         bool overlapsWithContact(int sourceEid, int destinationEid, double start, double end);
         bool hasPredictedContact(int sourceEid, int destinationEid);
         bool hasDiscoveredContact(int sourceEid, int destinationEid);
-
-    private:
-
         void updateContactRanges();
         void sortContactIdsBySrcByStartTime();
 
 
+    private:
         static const int DELETED_CONTACT = -1;
         int nextContactId = 1;
         vector<int> currentNeighbors_; //The current neighbors of a node
@@ -82,6 +83,7 @@ class ContactPlan : public cSimpleModule {
         int satelliteCount;
         int groundStationCount;
         string fileName;
+        string exportFileName;
 };
 
 }
