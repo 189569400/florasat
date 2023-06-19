@@ -15,7 +15,7 @@
 
 package flora.ground;
 
-import leosatellites.mobility.GroundStationMobility;
+import flora.mobility.GroundStationMobility;
 
 import flora.traffic.UdpTrafficGenerator;
 

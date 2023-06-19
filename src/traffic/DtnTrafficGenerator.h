@@ -66,6 +66,7 @@ class DtnTrafficGenerator : public cSimpleModule
 
     private:
         int eid_;
+        bool enable;
         std::vector<int> bundlesNumber;
         std::vector<int> destinationsEid;
         std::vector<int> sizes;

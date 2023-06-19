@@ -29,11 +29,11 @@ cGate* GroundStationRoutingBase::getOutputGate(int index) {
 }
 
 double GroundStationRoutingBase::getLongitude() const {
-    return mobility->getLUTPositionX();
+    return mobility->getLongitude();
 }
 
 double GroundStationRoutingBase::getLatitude() const {
-    return mobility->getLUTPositionY();
+    return mobility->getLatitude();
 }
 
 double GroundStationRoutingBase::getAltitude() const {

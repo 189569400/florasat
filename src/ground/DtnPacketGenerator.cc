@@ -32,40 +32,6 @@ void DtnPacketGenerator::initialize(int stage) {
     }
 }
 
-void DtnPacketGenerator::parseBundlesNumber() {
-    const char* bundlesNumberChar = par("bundlesNumber");
-    cStringTokenizer bundlesNumberTokenizer(bundlesNumberChar, ",");
-    while (bundlesNumberTokenizer.hasMoreTokens()) {
-        bundlesNumber.push_back(atoi(bundlesNumberTokenizer.nextToken()));
-    }
-}
-
-void DtnPacketGenerator::parseDestinationsEid(){
-    const char *destinationEidChar = par("destinationEid");
-    cStringTokenizer destinationEidTokenizer(destinationEidChar, ",");
-    while (destinationEidTokenizer.hasMoreTokens())
-    {
-        std::string destinationEidStr = destinationEidTokenizer.nextToken();
-        int destinationEid = stoi(destinationEidStr);
-        ASSERT(destinationEid > this->getParentModule()->getVectorSize());
-        destinationsEid.push_back(destinationEid);
-    }
-}
-
-void DtnPacketGenerator::parseSizes(){
-    const char *sizeChar = par("size");
-    cStringTokenizer sizeTokenizer(sizeChar, ",");
-    while (sizeTokenizer.hasMoreTokens())
-        sizes.push_back(atoi(sizeTokenizer.nextToken()));
-}
-
-void DtnPacketGenerator::parseStarts(){
-    const char *startChar = par("start");
-    cStringTokenizer startTokenizer(startChar, ",");
-    while (startTokenizer.hasMoreTokens())
-        starts.push_back(atof(startTokenizer.nextToken()));
-}
-
 void DtnPacketGenerator::finish() {
     // This function is called by OMNeT++ at the end of the simulation.
     EV << "Sent:     " << numSent << endl;
