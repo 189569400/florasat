@@ -17,6 +17,8 @@ package flora.satellite;
 
 import flora.mobility.NoradA;
 import flora.mobility.SatMobility;
+import flora.satellite.ISLQueueInterface;
+import flora.satellite.GLQueueInterface;
 
 module SatelliteRoutingBase
 {
@@ -29,11 +31,18 @@ module SatelliteRoutingBase
         double lowerLatitudeBound = default(-70.0);
 
     gates:
-        inout left;
-        inout right;
-        inout up;
-        inout down;
-        inout groundLink[numGroundLinks];
+        // ISL gates
+        input leftIn;
+        output leftOut;
+        input upIn;
+        output upOut;
+        input rightIn;
+        output rightOut;
+        input downIn;
+        output downOut;
+
+        input groundLinkIn[numGroundLinks];
+        output groundLinkOut[numGroundLinks];
 
     submodules:
         satMobility: SatMobility {
@@ -42,5 +51,20 @@ module SatelliteRoutingBase
 
         NoradModule: NoradA {
             @display("p=300,100");
+        }
+        leftIf: ISLQueueInterface;
+        upIf: ISLQueueInterface;
+        rightIf: ISLQueueInterface;
+        downIf: ISLQueueInterface;
+        glIf: GLQueueInterface;
+
+    connections allowunconnected:
+        leftIf.out --> leftOut;
+        upIf.out --> upOut;
+        rightIf.out --> rightOut;
+        downIf.out --> downOut;
+
+        for i=0..numGroundLinks-1 {
+            glIf.out[i] --> groundLinkOut[i];
         }
 }

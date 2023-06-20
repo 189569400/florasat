@@ -17,17 +17,18 @@ Define_Module(PacketHandlerRouting);
 void PacketHandlerRouting::initialize(int stage) {
     ClockUserModuleMixin::initialize(stage);
     if (stage == inet::INITSTAGE_LOCAL) {
+        parentModule = check_and_cast<SatelliteRouting *>(getParentModule());
+        queue = check_and_cast<inet::queueing::PacketQueue *>(getParentModule()->getSubmodule("queue"));
+        routing = check_and_cast<routing::RoutingBase *>(getSystemModule()->getSubmodule("routing"));
+        tc = check_and_cast<TopologyControlBase *>(getSystemModule()->getSubmodule("topologyControl"));
+
         maxHops = par("maxHops");
         processingDelayParameter = &par("processingDelay");
         collectionTimer = new ClockEvent("CollectionTimer");
-
-        parentModule = check_and_cast<SatelliteRouting *>(getParentModule());
-        tc = check_and_cast<TopologyControlBase *>(getSystemModule()->getSubmodule("topologyControl"));
-        routing = check_and_cast<routing::RoutingBase *>(getSystemModule()->getSubmodule("routing"));
-
-        satIndex = parentModule->getId();
         numDroppedPackets = 0;
         WATCH(numDroppedPackets);
+        satIndex = parentModule->getId();
+        maxQueueSize = parentModule->getSubmodule("queue")->par("packetCapacity");
     }
 }
 
@@ -39,21 +40,13 @@ void PacketHandlerRouting::handleMessage(cMessage *msg) {
             // if there is another packet, start processing
             scheduleCollectionTimer();
         }
-        return;
-    }
-
-    // packets
-    auto pkt = check_and_cast<Packet *>(msg);
-
-    if (msg->isSelfMessage()) {  // rescheduled message
-        auto tag = pkt->removeTag<routing::NextGateTag>();
-        auto dir = isldirection::ISLDirection(tag->getDir());
-        auto reportDrop = tag->getReportDrop();
-        sendMessage(dir, pkt, pkt->peekAtFront<RoutingHeader>()->getDstGs(), reportDrop);
     } else {
-        emit(packetReceivedSignal, pkt);
-        // queue packet
-        send(pkt, "out");
+        // queue packets
+        inet::Packet *res = routing->handleQueueSize(parentModule, queue->getNumPackets(), maxQueueSize);
+        if (res != nullptr) {
+            broadcastMessage(res);
+        }
+        send(msg, "out");
     }
 }
 
@@ -81,9 +74,9 @@ void PacketHandlerRouting::collectPacket() {
             auto dir = routing->routePacket(frame, parentModule);
             // if packet has not reached dst and ttl is 0 -> drop packet
             if (dir != isldirection::ISLDirection::GROUNDLINK && frame->getTTL() == 0) {
-                dropPacket(pkt, PacketDropReason::HOP_LIMIT_REACHED);
+                dropPacket(pkt, PacketDropReason::HOP_LIMIT_REACHED, false);
             } else {
-                sendMessage(dir, pkt, true, frame->getDstGs());
+                sendMessage(dir, pkt, false, frame->getDstGs());
             }
             break;
         }
@@ -109,51 +102,66 @@ cGate *PacketHandlerRouting::getGate(isldirection::ISLDirection dir, int gsId) {
     cGate *outputGate = nullptr;
     switch (dir) {
         case isldirection::ISLDirection::DOWN: {
-            outputGate = gate("down1$o");
-            break;
-        }
+            outputGate = gate("downOut");
+        } break;
         case isldirection::ISLDirection::UP: {
-            outputGate = gate("up1$o");
-            break;
-        }
+            outputGate = gate("upOut");
+        } break;
         case isldirection::ISLDirection::LEFT: {
-            outputGate = gate("left1$o");
-            break;
-        }
+            outputGate = gate("leftOut");
+        } break;
         case isldirection::ISLDirection::RIGHT: {
-            outputGate = gate("right1$o");
-            break;
-        }
+            outputGate = gate("rightOut");
+        } break;
         case isldirection::ISLDirection::GROUNDLINK: {
             int gateIndex = routing->getGroundlinkIndex(satIndex, gsId);
             if (gateIndex == -1) error("No valid groundlink index found between %d and %d.", satIndex, gsId);
-            outputGate = gate("groundLink1$o", gateIndex);
-            break;
-        }
+            outputGate = gate("groundLinkOut", gateIndex);
+        } break;
         default: {
             error("Unexpected gate");
-            break;
-        }
+        } break;
     }
     ASSERT(outputGate != nullptr);
     return outputGate;
 }
 
-void PacketHandlerRouting::sendMessage(isldirection::ISLDirection dir, Packet *pkt, bool reportDrop, int dstGs) {
-    auto gate = getGate(dir, dstGs);
-
-    if (!gate->getNextGate()->isConnectedOutside()) {
-        dropPacket(pkt, PacketDropReason::INTERFACE_DOWN, reportDrop);
-        return;
+void PacketHandlerRouting::sendMessage(isldirection::ISLDirection dir, Packet *pkt, bool silent, int dstGs) {
+    bool drop = false;
+    switch (dir) {
+        case isldirection::ISLDirection::LEFT: {
+            if (!parentModule->gate("leftOut")->isConnectedOutside()) {
+                EV << "DROP PACKET -> left not connected" << endl;
+                drop = true;
+            }
+        } break;
+        case isldirection::ISLDirection::UP: {
+            if (!parentModule->gate("upOut")->isConnectedOutside()) {
+                EV << "DROP PACKET -> up not connected" << endl;
+                drop = true;
+            }
+        } break;
+        case isldirection::ISLDirection::RIGHT: {
+            if (!parentModule->gate("rightOut")->isConnectedOutside()) {
+                EV << "DROP PACKET -> right not connected" << endl;
+                drop = true;
+            }
+        } break;
+        case isldirection::ISLDirection::DOWN: {
+            if (!parentModule->gate("downOut")->isConnectedOutside()) {
+                EV << "DROP PACKET -> dopwn not connected" << endl;
+                drop = true;
+            }
+        } break;
+        case isldirection::ISLDirection::GROUNDLINK: {
+            // intentionally blank, as groundlink has no state currently
+        } break;
     }
-
-    if (gate->getTransmissionChannel()->isBusy()) {
-        auto tag = pkt->addTagIfAbsent<routing::NextGateTag>();
-        tag->setDir(routing::Dir(dir));
-        tag->setReportDrop(reportDrop);
-        scheduleAt(gate->getTransmissionChannel()->getTransmissionFinishTime(), pkt);
+    if (drop) {
+        dropPacket(pkt, PacketDropReason::INTERFACE_DOWN, silent);
     } else {
-        send(pkt, gate);
+        cGate *gatePtr = getGate(dir, dstGs);
+        send(pkt, gatePtr);
     }
 }
 
@@ -161,21 +169,29 @@ void PacketHandlerRouting::broadcastMessage(Packet *pkt) {
     VALIDATE(pkt != nullptr);
 
     take(pkt);
-
-    sendMessage(isldirection::ISLDirection::LEFT, pkt->dup(), false);
-    sendMessage(isldirection::ISLDirection::UP, pkt->dup(), false);
-    sendMessage(isldirection::ISLDirection::RIGHT, pkt->dup(), false);
-    sendMessage(isldirection::ISLDirection::DOWN, pkt->dup(), false);
+    if (parentModule->hasLeftSat()) {
+        sendMessage(isldirection::ISLDirection::LEFT, pkt->dup(), true);
+    }
+    if (parentModule->hasUpSat()) {
+        sendMessage(isldirection::ISLDirection::UP, pkt->dup(), true);
+    }
+    if (parentModule->hasRightSat()) {
+        sendMessage(isldirection::ISLDirection::RIGHT, pkt->dup(), true);
+    }
+    if (parentModule->hasDownSat()) {
+        sendMessage(isldirection::ISLDirection::DOWN, pkt->dup(), true);
+    }
     delete pkt;
 }
 
-void PacketHandlerRouting::dropPacket(Packet *pkt, PacketDropReason reason, bool reportDrop, int limit) {
-    if (reportDrop) {
-        auto res = routing->handlePacketDrop(pkt, parentModule, reason);
+void PacketHandlerRouting::dropPacket(Packet *pkt, PacketDropReason reason, bool silent, int limit) {
+    if (!silent) {
+        inet::Packet *res = routing->handlePacketDrop(pkt, parentModule, reason);
         if (res != nullptr) {
             broadcastMessage(res);
         }
     }
+
     PacketProcessorBase::dropPacket(pkt, reason);
     numDroppedPackets++;
     updateDisplayString();

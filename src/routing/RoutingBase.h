@@ -59,13 +59,33 @@ class RoutingBase : public cSimpleModule {
     virtual void handleMessage(inet::Packet *pkt, SatelliteRouting *callerSat){};
 
     /**
+     * Handler for omnetpp self messages.
+     * 
+     * -> Base implementation is intentionally blank, as not all algorithms require self messages.
+    */
+    virtual void handleMessage(cMessage *msg) override {
+        if(!msg->isSelfMessage()) {
+            error("Only accepts self messages!");
+        }
+    };
+
+    /**
      * Handler called if the packet handler dropps a packet.
      * Returns a pointer to a packet that is broadcasted afterwards.
      * Will do nothing if nullptr is returned.
      *
      * -> Base implementation is intentionally blank, as not all algorithms are dynamic.
      */
-    virtual inet::Packet *handlePacketDrop(inet::Packet *pkt, SatelliteRouting *callerSat, inet::PacketDropReason reason) { return nullptr; };
+    virtual inet::Packet *handlePacketDrop(const inet::Packet *pkt, SatelliteRouting *callerSat, inet::PacketDropReason reason) { return nullptr; };
+
+    /**
+     * Handler called if satellites enqueues a packet. Is called with the current queueSize.
+     * Returns a pointer to a packet that is broadcasted afterwards.
+     * Will do nothing if nullptr is returned.
+     *
+     * -> Base implementation is intentionally blank, as not all algorithms are dynamic.
+     */
+    virtual inet::Packet *handleQueueSize(SatelliteRouting *callerSat, int queueSize, int maxQueueSize) { return nullptr; };
 
     /** @brief Returns the index of a groundlink inside the groundlink gate vector.*/
     int getGroundlinkIndex(int satelliteId, int groundstationId);

@@ -19,18 +19,14 @@
 #include "routing/RoutingHeader_m.h"
 #include "routing/core/DijkstraShortestPath.h"
 
+
 namespace flora {
 namespace routing {
 
 class DsprRouting : public RoutingBase {
-   protected:
-    int broadcastId = 0;
-
    public:
     void initialize(int stage) override;
     virtual void handleTopologyChange() override;
-    void handleMessage(inet::Packet *pkt, SatelliteRouting *callerSat) override;
-    inet::Packet *handlePacketDrop(inet::Packet *pkt, SatelliteRouting *callerSat, inet::PacketDropReason reason) override;
     ISLDirection routePacket(inet::Ptr<const RoutingHeader> rh, SatelliteRouting *callerSat) override;
 };
 

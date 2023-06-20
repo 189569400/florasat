@@ -12,7 +12,7 @@ namespace routing {
 
 void RoutingBase::initialize(int stage) {
     if (stage == inet::INITSTAGE_LOCAL) {
-        topologyControl = check_and_cast<topologycontrol::TopologyControlBase *>(getSystemModule()->getSubmodule("topologyControl"));
+        topologyControl = check_and_cast<topologycontrol::TopologyControlBase*>(getSystemModule()->getSubmodule("topologyControl"));
         if (topologyControl == nullptr) {
             error("Error in DirectedRouting::initialize(): topologyControl is nullptr.");
         }
@@ -20,8 +20,8 @@ void RoutingBase::initialize(int stage) {
 }
 
 std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int dstGs) {
-    auto srcGsInfo = topologyControl->getGroundstationInfo(srcGs);
-    auto dstGsInfo = topologyControl->getGroundstationInfo(dstGs);
+    GroundStationRouting* srcGsInfo = topologyControl->getGroundstationInfo(srcGs);
+    GroundStationRouting* dstGsInfo = topologyControl->getGroundstationInfo(dstGs);
     if (!srcGsInfo->isConnectedToAnySat()) {
         error("Error in RoutingBase::calculateFirstAndLastSatellite: srcGsInfo has no satellite connections");
     }
@@ -36,16 +36,17 @@ std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int d
     EV_DEBUG << "<><><><><><><><>" << endl;
     EV_DEBUG << "Calculate first and last sat. Distances " << srcGs << "->" << dstGs << ":" << endl;
 
-    auto costMatrix = core::dspa::buildShortestPathCostMatrix(topologyControl->getSatellites());
+    std::vector<std::vector<int>> costMatrix = core::dspa::buildShortestPathCostMatrix(topologyControl->getNumberOfSatellites(), topologyControl->getSatellites());
 
-    for (auto pFirstSat : srcGsInfo->getSatellites()) {
-        core::dspa::DijkstraResult result = core::dspa::runDijkstra(pFirstSat, costMatrix);
-        for (auto pLastSat : dstGsInfo->getSatellites()) {
-            auto distance = result.distances[pLastSat];
-            auto glDistance = dstGsInfo->getDistance(*topologyControl->getSatellite(pLastSat));
+    for (int pFirstSat : srcGsInfo->getSatellites()) {
+        core::dspa::DijkstraResultFull result = core::dspa::runDijkstraFull(costMatrix, pFirstSat);
+
+        for (int pLastSat : dstGsInfo->getSatellites()) {
+            int distance = result.nodes[pLastSat].distance;
+            int glDistance = (int)round(dstGsInfo->getDistance(*topologyControl->getSatellite(pLastSat)));
 
 #ifndef NDEBUG
-            auto path = core::dspa::reconstructPath(pFirstSat, pLastSat, result.prev);
+            auto path = core::dspa::reconstructPath(result, lastSat);
             EV_DEBUG << "Distance(" << pFirstSat << "," << pLastSat << ") = " << distance << " + " << glDistance << "; Route: [" << flora::core::utils::vector::toString(path.begin(), path.end()) << "]" << endl;
 #endif
 
@@ -63,22 +64,23 @@ std::pair<int, int> RoutingBase::calculateFirstAndLastSatellite(int srcGs, int d
              << "| Distance: " << minDistance << "km" << endl;
     EV_DEBUG << "<><><><><><><><>" << endl;
 
-    ASSERT(firstSat != -1);
-    ASSERT(lastSat != -1);
-    ASSERT(minDistance != -1);
+    VALIDATE(firstSat != -1);
+    VALIDATE(lastSat != -1);
+    VALIDATE(minDistance != -1);
 
     return std::make_pair(firstSat, lastSat);
 }
 
 int RoutingBase::getGroundlinkIndex(int satelliteId, int groundstationId) {
     std::set<int> gsSatellites = getConnectedSatellites(groundstationId);
-    if (gsSatellites.find(satelliteId) != gsSatellites.end()) {
+
+    if (flora::core::utils::set::contains(gsSatellites, satelliteId)) {
         return topologyControl->getGroundstationSatConnection(groundstationId, satelliteId).satGateIndex;
     }
     return -1;
 }
 
-std::set<int> const &RoutingBase::getConnectedSatellites(int groundStationId) const {
+std::set<int> const& RoutingBase::getConnectedSatellites(int groundStationId) const {
     if (topologyControl == nullptr) error("Error in RoutingBase::GetGroundStationConnections(): topologyControl is nullptr. Did you call initialize on RoutingBase?");
     return topologyControl->getGroundstationInfo(groundStationId)->getSatellites();
 }

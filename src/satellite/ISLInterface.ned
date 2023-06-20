@@ -17,36 +17,23 @@ package flora.satellite;
 
 import inet.queueing.base.PacketSinkBase;
 import inet.queueing.contract.IActivePacketSink;
+import inet.queueing.queue.DropTailQueue;
 
-simple PacketHandlerRouting extends PacketSinkBase like IActivePacketSink
+simple ISLInterface extends PacketSinkBase like IActivePacketSink
 {
     parameters:
-        displayStringTextFormat = default("processed %p pk (%l)\ndropped %d pk");
-        @class(satellite::PacketHandlerRouting);
+        displayStringTextFormat = default("processed %p pk (%l)");
+        @class(satellite::ISLInterface);
         @display("i=block/app");
-        int numGroundLinks = default(40);
-        int maxHops = default(50);
 
         @signal[packetSent](type=inet::Packet);
         @signal[packetReceived](type=inet::Packet);
 
-        volatile double processingDelay @unit(s);
-
     gates:        
         // ISL gates
-        input leftIn;
-        output leftOut;
-        input upIn;
-        output upOut;
-        input rightIn;
-        output rightOut;
-        input downIn;
-        output downOut;
-
+        input islIn;
+        output islOut;
+        
         input in @labels(pull);
         output out;
-
-        // GroundStation gates
-        input groundLinkIn[numGroundLinks];
-        output groundLinkOut[numGroundLinks];
 }

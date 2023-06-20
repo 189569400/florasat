@@ -14,7 +14,6 @@
 #include "inet/common/Simsignals.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "inet/queueing/base/ActivePacketSinkBase.h"
-#include "inet/queueing/queue/PacketQueue.h"
 #include "mobility/INorad.h"
 #include "mobility/NoradA.h"
 #include "routing/RoutingBase.h"
@@ -29,19 +28,10 @@ using namespace flora::topologycontrol;
 namespace flora {
 namespace satellite {
 
-class PacketHandlerRouting : public ClockUserModuleMixin<ActivePacketSinkBase> {
+class ISLInterface : public ClockUserModuleMixin<ActivePacketSinkBase> {
    protected:
-    SatelliteRouting *parentModule = nullptr;        // cached pointer
-    inet::queueing::PacketQueue *queue = nullptr;        // cached pointer
-    flora::routing::RoutingBase *routing = nullptr;  // cached pointer
-    TopologyControlBase *tc = nullptr;               // cached pointer
-
-    int maxHops = -1;
-    cPar *processingDelayParameter = nullptr;
     ClockEvent *collectionTimer = nullptr;
-    int numDroppedPackets = -1;
-    int satIndex = -1;
-    int maxQueueSize = -1;
+    cGate *islOutGate = nullptr;
 
    protected:
     // cModule
@@ -49,17 +39,10 @@ class PacketHandlerRouting : public ClockUserModuleMixin<ActivePacketSinkBase> {
     virtual void handleMessage(cMessage *msg) override;
 
     // packet sink
-    virtual void scheduleCollectionTimer();
     virtual void collectPacket();
 
-    // packet handler
-    void sendMessage(isldirection::ISLDirection dir, Packet *pkt, bool silent, int dstGs = -1);
-    void dropPacket(Packet *msg, PacketDropReason reason, bool silent, int limit = -1);
-    cGate *getGate(isldirection::ISLDirection routingResult, int gsId);
-
    public:
-    virtual ~PacketHandlerRouting() { cancelAndDeleteClockEvent(collectionTimer); }
-    void broadcastMessage(Packet *pkt);
+    virtual ~ISLInterface() { cancelAndDeleteClockEvent(collectionTimer); }
 
     virtual void handleCanPullPacketChanged(cGate *gate) override;
     virtual void handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful) override;

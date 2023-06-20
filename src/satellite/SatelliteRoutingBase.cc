@@ -73,33 +73,58 @@ std::pair<cGate*, ISLState> SatelliteRoutingBase::getOutputGate(isldirection::IS
 }
 
 std::pair<cGate*, ISLState> SatelliteRoutingBase::getGate(isldirection::ISLDirection direction, cGate::Type type, int index) {
-    cGate* gate;
+    cGate* gatePtr;
     ISLState state;
     switch (direction) {
-        case isldirection::ISLDirection::LEFT:
-            gate = gateHalf(Constants::ISL_LEFT_NAME, type, -1);
-            state = type == cGate::Type::OUTPUT ? getLeftSendState() : getLeftRecvState();
-            break;
-        case isldirection::ISLDirection::UP:
-            gate = gateHalf(Constants::ISL_UP_NAME, type, -1);
-            state = type == cGate::Type::OUTPUT ? getUpSendState() : getUpRecvState();
-            break;
-        case isldirection::ISLDirection::RIGHT:
-            gate = gateHalf(Constants::ISL_RIGHT_NAME, type, -1);
-            state = type == cGate::Type::OUTPUT ? getRightSendState() : getRightRecvState();
-            break;
-        case isldirection::ISLDirection::DOWN:
-            gate = gateHalf(Constants::ISL_DOWN_NAME, type, -1);
-            state = type == cGate::Type::OUTPUT ? getDownSendState() : getDownRecvState();
-            break;
-        case isldirection::ISLDirection::GROUNDLINK:
-            gate = gateHalf(Constants::SAT_GROUNDLINK_NAME, type, index);
+        case isldirection::ISLDirection::LEFT: {
+            if (type == cGate::Type::OUTPUT) {
+                gatePtr = gate(Constants::ISL_LEFT_NAME_OUT);
+                state = getLeftSendState();
+            } else {
+                gatePtr = gate(Constants::ISL_LEFT_NAME_IN);
+                state = getLeftRecvState();
+            }
+        } break;
+
+        case isldirection::ISLDirection::UP:{
+            if (type == cGate::Type::OUTPUT) {
+                gatePtr = gate(Constants::ISL_UP_NAME_OUT);
+                state = getUpSendState();
+            } else {
+                gatePtr = gate(Constants::ISL_UP_NAME_IN);
+                state = getUpRecvState();
+            }
+        } break;
+        case isldirection::ISLDirection::RIGHT:{
+            if (type == cGate::Type::OUTPUT) {
+                gatePtr = gate(Constants::ISL_RIGHT_NAME_OUT);
+                state = getRightSendState();
+            } else {
+                gatePtr = gate(Constants::ISL_RIGHT_NAME_IN);
+                state = getRightRecvState();
+            }
+        } break;
+        case isldirection::ISLDirection::DOWN:{
+            if (type == cGate::Type::OUTPUT) {
+                gatePtr = gate(Constants::ISL_DOWN_NAME_OUT);
+                state = getDownSendState();
+            } else {
+                gatePtr = gate(Constants::ISL_DOWN_NAME_IN);
+                state = getDownRecvState();
+            }
+        } break;
+        case isldirection::ISLDirection::GROUNDLINK:{
+            if (type == cGate::Type::OUTPUT) {
+                gatePtr = gate(Constants::SAT_GROUNDLINK_NAME_OUT, index);
+            } else {
+                gatePtr = gate(Constants::SAT_GROUNDLINK_NAME_IN, index);
+            }
             state = ISLState::WORKING;
-            break;
+        } break;
         default:
             error("Unexpected gate");
     }
-    return std::make_pair(gate, state);
+    return std::make_pair(gatePtr, state);
 }
 
 bool SatelliteRoutingBase::hasLeftSat() const {

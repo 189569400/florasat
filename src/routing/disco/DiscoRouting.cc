@@ -1,7 +1,7 @@
 /*
  * DiscoRouting.cc
  *
- * Created on: Feb 04, 2023
+ * Created on: Jun 11, 2023
  *     Author: Robin Ohs
  */
 
@@ -194,7 +194,7 @@ std::vector<int> DiscoRouting::discoRouteA2A(const core::MinHopsRes& minHops, co
     v.insert(v.begin(), route_s.begin(), route_s.end());
     v.insert(v.end(), route_t.begin(), route_t.end());
 
-    std::cout << "Route: " << flora::core::utils::vector::toString(v.begin(), v.end()) << endl;
+    // std::cout << "Route: " << flora::core::utils::vector::toString(v.begin(), v.end()) << endl;
 
     return v;
 }
@@ -302,7 +302,7 @@ std::vector<int> DiscoRouting::discoRouteA2D(const core::MinHopsRes& minHops, co
     v.insert(v.begin(), route_s.begin(), route_s.end());
     v.insert(v.end(), route_t.begin(), route_t.end());
 
-    std::cout << "Route: " << flora::core::utils::vector::toString(v.begin(), v.end()) << endl;
+    // std::cout << "Route: " << flora::core::utils::vector::toString(v.begin(), v.end()) << endl;
 
     return v;
 }

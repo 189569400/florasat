@@ -12,65 +12,150 @@ namespace routing {
 namespace core {
 namespace dspa {
 
-DijkstraResult runDijkstra(int src, const std::vector<std::vector<double>> cost, int dst) {
+//
+// DIJKSTRA FULL
+//
+
+DijkstraResultFull runDijkstraFull(const std::vector<std::vector<int>>& cost, int src) {
+    std::vector<DijkstraNode> nodes = detail::runDijkstra(cost, src);
+    return DijkstraResultFull{src, nodes};
+}
+
+//////////////////////////////////////////////
+
+//
+// DIJKSTRA WITH EARLY ABORT
+//
+
+DijkstraResultEarlyAbort runDijkstraEarlyAbort(const std::vector<std::vector<int>>& cost, int src, int dst) {
+    std::vector<DijkstraNode> nodes = detail::runDijkstra(cost, src, dst);
+    return DijkstraResultEarlyAbort{src, dst, nodes};
+}
+
+//////////////////////////////////////////////
+
+//
+// GET NEAREST ID
+//
+
+/**
+ * Extracts the nearest id from the result of a dijkstra run.
+ * The considered ids come from the set of potential ids.
+ */
+int getNearestId(const DijkstraResultFull& dijkstraResult, const std::set<int>& potentialIds) {
+    // get lastSatellite with shortest distance + groundlink distance
+    int nearestId = -1;
+    int nearestDistance = INT_MAX;
+    for (int pId : potentialIds) {
+        ASSERT(pId >= 0 && pId < dijkstraResult.nodes.size());
+        // add distance between sat and gs for selecting optimal last satellites
+        int distance = dijkstraResult.nodes[pId].distance;
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestId = pId;
+        }
+    }
+    VALIDATE(nearestId != -1);
+    return nearestId;
+}
+
+//////////////////////////////////////////////
+
+//
+// DIJKSTRA RECONSTRUCT PATH
+//
+
+/**
+ * Constructs the path from the source to the destination, given the result of a DSPA run.
+ * Can be used to construct paths to arbitrary destination ids.
+ */
+std::vector<int> reconstructPath(DijkstraResultFull& dijkstraResultFull, int dst) {
+    return detail::reconstructPath(dijkstraResultFull.nodes, dijkstraResultFull.src, dst);
+}
+
+/**
+ * Constructs the path from the source to the destination, given the result of a DSPA run.
+ */
+std::vector<int> reconstructPath(DijkstraResultEarlyAbort& dijkstraResultEarlyAbort) {
+    return detail::reconstructPath(dijkstraResultEarlyAbort.nodes, dijkstraResultEarlyAbort.src, dijkstraResultEarlyAbort.dst);
+}
+
+//////////////////////////////////////////////
+
+std::vector<std::vector<int>> buildShortestPathCostMatrix(int constellationSize, const std::unordered_map<int, SatelliteRoutingBase*>& constellation) {
+    std::vector<std::vector<int>> cost(constellationSize, std::vector<int>(constellationSize, INT_MAX));
+
+    for (size_t i = 0; i < constellationSize; i++) {
+        const SatelliteRoutingBase* sat = constellation.at(i);
+        if (sat->hasLeftSat()) {
+            cost[i][sat->getLeftSatId()] = (int)round(sat->getLeftSatDistance());
+        }
+        if (sat->hasUpSat()) {
+            cost[i][sat->getUpSatId()] = (int)round(sat->getUpSatDistance());
+        }
+        if (sat->hasRightSat()) {
+            cost[i][sat->getRightSatId()] = (int)round(sat->getRightSatDistance());
+        }
+        if (sat->hasDownSat()) {
+            cost[i][sat->getDownSatId()] = (int)round(sat->getDownSatDistance());
+        }
+    }
+    return cost;
+}
+
+//
+// IMPLEMENTATION DETAILS
+//
+namespace detail {
+
+std::vector<DijkstraNode> runDijkstra(const std::vector<std::vector<int>>& cost, int src, int dst) {
     int size = cost.size();
     ASSERT(src >= 0 && src < size);
-    ASSERT(dst == -1 || (dst >= 0 && dst < size));
+    ASSERT(dst == -1 || dst >= 0 && dst < size);
 
-    std::vector<double> distance;
-    std::vector<int> prev;
-    std::vector<bool> visited;
+    std::vector<DijkstraNode> nodes(size);
 
     for (size_t i = 0; i < size; i++) {
-        distance.push_back(INF);
-        prev.push_back(-1);
-        visited.push_back(false);
+        auto node = DijkstraNode();
+        nodes.push_back(node);
     }
 
-    distance[src] = 0;
+    nodes[src].distance = 0;
 
     for (size_t i = 0; i < size; i++) {
-        int minValue = INF;
+        int minValue = INT_MAX;
         int nearest = -1;
         for (size_t j = 0; j < size; j++) {
-            if (!visited[j] && distance[j] < minValue) {
-                minValue = distance[j];
+            if (!nodes[j].visited && nodes[j].distance < minValue) {
+                minValue = nodes[j].distance;
                 nearest = j;
             }
         }
-        ASSERT(nearest != -1);
-        visited[nearest] = true;
+
+        VALIDATE(nearest != -1);
+
+        nodes[nearest].visited = true;
 
         // EARLY ABORT
         if (nearest == dst) break;
 
         for (size_t j = 0; j < size; j++) {
-            if (cost[nearest][j] != INF && distance[j] > distance[nearest] + cost[nearest][j]) {
-                distance[j] = distance[nearest] + cost[nearest][j];
-                prev[j] = nearest;
+            if (cost[nearest][j] != INT_MAX && nodes[j].distance > nodes[nearest].distance + cost[nearest][j]) {
+                nodes[j].distance = nodes[nearest].distance + cost[nearest][j];
+                nodes[j].prev = nearest;
             }
         }
     }
 
-    std::vector<double> vDistance;
-    for (size_t i = 0; i < size; i++) {
-        vDistance.push_back(distance[i]);
-    }
-
-    std::vector<int> vPrev;
-    for (size_t i = 0; i < size; i++) {
-        vPrev.push_back(prev[i]);
-    }
-
-    return DijkstraResult{vDistance, vPrev};
+    return nodes;
 }
 
-std::vector<int> reconstructPath(int src, int dst, std::vector<int> prev) {
+std::vector<int> reconstructPath(const std::vector<DijkstraNode>& nodes, int src, int dst) {
     std::deque<int> path;
     path.push_back(dst);
     int it = dst;
     while (it != src) {
-        it = prev[it];
+        it = nodes[it].prev;
         path.push_front(it);
     }
     std::vector<int> v(std::make_move_iterator(path.begin()),
@@ -78,47 +163,7 @@ std::vector<int> reconstructPath(int src, int dst, std::vector<int> prev) {
     return v;
 }
 
-const std::vector<std::vector<double>> buildShortestPathCostMatrix(const std::unordered_map<int, SatelliteRoutingBase*>& constellation) {
-    std::vector<std::vector<double>> cost;
-    size_t size = constellation.size();
-
-    for (size_t i = 0; i < size; i++) {
-        std::vector<double> v;
-        for (size_t j = 0; j < size; j++) {
-            v.push_back(INF);
-        }
-        const SatelliteRoutingBase* sat = constellation.at(i);
-        if (sat->hasLeftSat()) {
-            v[sat->getLeftSatId()] = sat->getLeftSatDistance();
-        }
-        if (sat->hasUpSat()) {
-            v[sat->getUpSatId()] = sat->getUpSatDistance();
-        }
-        if (sat->hasRightSat()) {
-            v[sat->getRightSatId()] = sat->getRightSatDistance();
-        }
-        if (sat->hasDownSat()) {
-            v[sat->getDownSatId()] = sat->getDownSatDistance();
-        }
-#ifndef NDEBUG
-        EV_DEBUG << i << " costs: ";
-        auto begin = v.begin();
-        auto end = v.end();
-        bool first = true;
-        for (; begin != end; begin++) {
-            if (!first)
-                EV_DEBUG << ", ";
-            auto val = std::lround(*begin);
-            auto print = val == INF ? "INF" : std::to_string(val);
-            EV_DEBUG << print;
-            first = false;
-        }
-        EV_DEBUG << endl;
-#endif
-        cost.emplace_back(v);
-    }
-    return cost;
-}
+}  // namespace detail
 
 }  // namespace dspa
 }  // namespace core

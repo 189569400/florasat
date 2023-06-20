@@ -46,11 +46,18 @@ module SatelliteRouting extends SatelliteRoutingBase
         queue.out --> packetHandler.in;
 
         // internal connections
-        packetHandler.down1  <--> down;
-        packetHandler.right1  <--> right;
-        packetHandler.left1  <--> left;
-        packetHandler.up1  <--> up;
+        packetHandler.leftIn <-- leftIn;
+        packetHandler.upIn <-- upIn;
+        packetHandler.rightIn <-- rightIn;
+        packetHandler.downIn <-- downIn;
+
+        packetHandler.leftOut --> leftIf.in;
+        packetHandler.upOut --> upIf.in;
+        packetHandler.rightOut --> rightIf.in;
+        packetHandler.downOut --> downIf.in;
+
         for i=0..numGroundLinks-1 {
-            packetHandler.groundLink1[i]  <--> groundLink[i];
+            packetHandler.groundLinkIn[i] <-- groundLinkIn[i];
+            packetHandler.groundLinkOut[i] --> glIf.in[i];
         }
 }
