@@ -25,9 +25,6 @@ network DtnSim
     submodules:
         groundStation[nrOfGS]: DtnGroundStationRouting;
         loRaGW[nrOfGW]: SatelliteRouting;
-        routing: DirectedRouting {
-            @display("p=-128,373.375;i=block/routing");
-        }
         
         contactPlan: ContactPlan {
         	@display("p=-128,373.375");
@@ -40,6 +37,10 @@ network DtnSim
         topologyControl: DtnTopologyControl {
             @display("p=-128,573.375");
         }
+        
+       	routing: DirectedRouting {
+       	 	@display("p=-128,573.375");
+       	}
 
         satMobilityOrchestrator: SatMobilityOrchestrator {
             @display("p=-128,673.375;i=block/rightarrow");

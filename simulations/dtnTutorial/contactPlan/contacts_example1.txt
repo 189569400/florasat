@@ -1,5 +1,5 @@
-a contact +10 +20 0 3 1000
-a contact +10 +20 3 0 1000
+a contact +1 +20 0 3 1000
+a contact +1 +20 3 0 1000
 a contact +8 +15 1 4 1000
 a contact +8 +15 4 1 1000
 a contact +25 +30 1 4 1000
@@ -11,7 +11,7 @@ a contact +5 +13 8 6 1000
 a contact +5 +19 7 9 1000
 a contact +5 +19 9 7 1000
 
-a range +10 +20 0 3 0
+a range + +20 0 3 0
 a range +8 +15 1 4 0
 a range +25 +30 1 4 0
 a range +5 +20 4 5 0

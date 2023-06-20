@@ -19,5 +19,6 @@ simple ContactPlanTopologyControl extends TopologyControlBase
 {
     parameters:
         @class(topologycontrol::ContactPlanTopologyControl);
-        string distanceMode;
+        int maxRangeIsl = default(7000);
+        int maxRangeGs = default(5000);
 }

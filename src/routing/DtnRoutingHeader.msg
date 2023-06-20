@@ -109,6 +109,6 @@ message ForwardingMsgStart {
     int contactId;
 };
 
-message CustodyTimout {
+message CustodyTimeout {
     int bundleId;
 };

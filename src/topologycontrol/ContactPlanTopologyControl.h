@@ -29,12 +29,14 @@ class ContactPlanTopologyControl : public TopologyControlBase {
     std::map<std::pair<int, int>, double> contactStarts;
 
    private:
-    void updateIntraSatelliteLinks();
     void updateInterSatelliteLinks();
-    void updateGroundstationLinksDtn();
+    void updateGroundstationLinks();
     int getShiftedSatelliteId(int satId);
-    string distanceMode;
+    int maxRangeIsl;
+    int maxRangeGs;
+    ContactPlan *contactPlan;
     bool isGroundStationContactValid(GroundStationRoutingBase *gs, SatelliteRoutingBase *sat);
+    bool isIslContactValid(SatelliteRoutingBase *sat1, SatelliteRoutingBase *sat2);
 };
 
 }  // namespace topologycontrol

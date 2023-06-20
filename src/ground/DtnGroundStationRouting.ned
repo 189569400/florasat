@@ -32,7 +32,7 @@ module DtnGroundStationRouting extends GroundStationRoutingBase
             @display("p=100,500");
         };
 
-        udpTrafficGenerator: DtnTrafficGenerator {
+        dtnTrafficGenerator: DtnTrafficGenerator {
             @display("p=500,500");
         };
 
@@ -43,6 +43,6 @@ module DtnGroundStationRouting extends GroundStationRoutingBase
             satelliteLink[i] <--> packetGenerator.satelliteLink[i];
         }
 
-        packetGenerator.transportOut --> udpTrafficGenerator.socketIn;
-        packetGenerator.transportIn <-- udpTrafficGenerator.socketOut;
+        packetGenerator.transportOut --> dtnTrafficGenerator.socketIn;
+        packetGenerator.transportIn <-- dtnTrafficGenerator.socketOut;
 }

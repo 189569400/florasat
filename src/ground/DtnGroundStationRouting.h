@@ -26,7 +26,7 @@ namespace flora {
 namespace ground {
 
 class DtnGroundStationRouting : public GroundStationRoutingBase {
-   protected:
+  protected:
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
 };

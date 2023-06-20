@@ -66,11 +66,11 @@ void DtnTopologyControl::updateIntraSatelliteLinks() {
 void DtnTopologyControl::updateGroundstationLinksDtn() {
     ContactPlan *contactPlan = check_and_cast<ContactPlan *>(getParentModule()->getSubmodule("contactPlan"));
     if (contactPlan == nullptr) {
-        error("Error in TopologyControl::updateNodeLinksDtn(): contactPlan is nullptr. Make sure the module exists.");
+        error("Error in DtnTopologyControl::updateGroundstationLinksDtn(): contactPlan is nullptr. Make sure the module exists.");
     }
     for (size_t gsId = 0; gsId < numGroundStations; gsId++) {
         for (size_t satId = 0; satId < numSatellites; satId++) {
-            vector<Contact> satContacts = contactPlan->getContactsBySrcDst(gsId, satId + numGroundStations);
+            vector<Contact> satContacts = contactPlan->getContactsBySrcDst(gsId, getShiftedSatelliteId(satId));
             for (size_t i = 0; i < satContacts.size(); i++) {
                 Contact contact = satContacts.at(i);
                 int shiftedSatId = getShiftedSatelliteId(satId);

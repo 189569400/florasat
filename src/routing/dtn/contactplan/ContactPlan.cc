@@ -536,7 +536,9 @@ void ContactPlan::exportContactPlan(string filename){
 
 void ContactPlan::finish(){
     exportFileName = par("exportFileName").stdstringValue();
-    exportContactPlan(exportFileName);
+    if (exportFileName != "") {
+        exportContactPlan(exportFileName);
+    }
 }
 
 vector<Contact>::iterator ContactPlan::deleteContactById(int contactId)

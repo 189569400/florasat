@@ -26,6 +26,8 @@
 #include "routing/dtn/MsgTypes.h"
 #include "routing/DtnRoutingHeader_m.h"
 #include "DtnTransportHeader_m.h"
+#include "routing/dtn/RoutingCgrModelRev17.h"
+#include "routing/dtn/CustodyModel.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -49,8 +51,9 @@ class DtnPacketGenerator : public cSimpleModule {
         cOutVector hopCountVector;
 
         topologycontrol::TopologyControlBase *topologycontrol;
-        routing::RoutingBase *routingModule;
+        routing::RoutingCgrModelRev17 *routingModule;
         networklayer::ConstellationRoutingTable *routingTable;
+        ContactPlan *contactPlan;
 
     protected:
         virtual void initialize(int stage) override;
@@ -60,6 +63,7 @@ class DtnPacketGenerator : public cSimpleModule {
         int sentPackets;
         int groundStationId;
         int numGroundStations;
+        int numSatellites;
 
     protected:
         virtual void handleMessage(cMessage *msg) override;
@@ -71,10 +75,16 @@ class DtnPacketGenerator : public cSimpleModule {
         std::vector<int> destinationsEid;
         std::vector<int> sizes;
         std::vector<double> starts;
+        // Forwarding threads
+        map<int, ForwardingMsgStart *> forwardingMsgs_;
+        routing::SdrModel sdr_;
         void parseBundlesNumber();
         void parseDestinationsEid();
         void parseSizes();
         void parseStarts();
+        routing::CustodyModel custodyModel_;
+        void dispatchBundle(DtnRoutingHeader *bundle);
+        void refreshForwarding();
 };
 
 }  // namespace flora

@@ -79,7 +79,6 @@ void DtnTrafficGenerator::parseDestinationsEid(){
     {
         std::string destinationEidStr = destinationEidTokenizer.nextToken();
         int destinationEid = stoi(destinationEidStr);
-        ASSERT(destinationEid > this->getParentModule()->getVectorSize());
         destinationsEid.push_back(destinationEid);
     }
 }
@@ -127,6 +126,14 @@ void DtnTrafficGenerator::handleMessage(cMessage *msg) {
         transportHeader->setInterval(trafficGenMsg->getInterval());
         transportHeader->setTtl(trafficGenMsg->getTtl());
         packet->insertAtFront(transportHeader);
+        packet->setKind(TRANSPORT_HEADER);
+
+        // Keep generating traffic
+        trafficGenMsg->setBundlesNumber((trafficGenMsg->getBundlesNumber() - 1));
+        if (trafficGenMsg->getBundlesNumber() == 0)
+            delete msg;
+        else
+            scheduleAt(simTime() + trafficGenMsg->getInterval(), msg);
         send(packet, "socketOut");
         appBundleSent++;
     }
